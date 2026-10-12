@@ -1,1 +1,2 @@
-id,name,phone,skills,status
+id,name,contact,location,skills,status,assignedEmergencyId
+V-1001,Sample Volunteer,0000000000,Central Hospital,First Aid|Driving,AVAILABLE,

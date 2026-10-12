@@ -1,1 +1,3 @@
-id,name,type,status,latitude,longitude
+id,name,type,location,quantity,available,provider
+R-1001,Sample Ambulance,AMBULANCE,Central Hospital,1,true,ResQNet
+R-1002,First Aid Kit,MEDICAL_KIT,Central Hospital,5,true,ResQNet
