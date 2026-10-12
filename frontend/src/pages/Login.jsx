@@ -24,7 +24,6 @@ const Login = () => {
 
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
-  const [showDemoAccounts, setShowDemoAccounts] = useState(false);
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [generalError, setGeneralError] = useState('');
@@ -91,12 +90,6 @@ const Login = () => {
       return;
     }
 
-    // Check if all fields are filled
-    if (!formData.email || !formData.password || !formData.role) {
-      setGeneralError('Please fill in all fields.');
-      return;
-    }
-
     setLoading(true);
 
     // Simulate API call with 1 second delay
@@ -121,7 +114,6 @@ const Login = () => {
       }
 
       // Successful login
-      // Store user data in localStorage
       const userData = {
         name: account.name,
         email: account.email,
@@ -138,9 +130,6 @@ const Login = () => {
         localStorage.removeItem('rememberedEmail');
       }
 
-      // Show success message
-      setGeneralError('');
-      
       // Redirect based on role
       const roleRoutes = {
         'Citizen': '/citizen-dashboard',
@@ -152,7 +141,6 @@ const Login = () => {
 
       const dashboardRoute = roleRoutes[account.role] || '/';
       
-      // Navigate to dashboard
       setTimeout(() => {
         navigate(dashboardRoute);
       }, 500);
@@ -171,43 +159,35 @@ const Login = () => {
     setShowPassword(false);
   };
 
-  // Quick login with demo account
-  const quickLogin = (account) => {
-    setFormData({
-      email: account.email,
-      password: account.password,
-      role: account.role
-    });
-    setShowDemoAccounts(false);
-  };
-
   return (
-    <div className="login-page">
-      <div className="login-container">
-        <div className="login-card">
+    <div className="auth-page">
+      <div className="auth-container">
+        <div className="auth-card">
           {/* Logo and Header */}
-          <div className="login-header">
-            <div className="logo-container">
+          <div className="auth-header">
+            <div className="logo-circle">
               <Icon icon="mdi:lifebuoy" className="logo-icon" />
             </div>
-            <h1 className="app-title">ResQNet</h1>
-            <p className="app-subtitle">Community Emergency Resource Management System</p>
+            <h1 className="auth-title">ResQNet</h1>
+            <p className="auth-subtitle">Community Emergency Resource Management System</p>
           </div>
 
+          <h2 className="form-title">Welcome Back</h2>
+
           {/* Login Form */}
-          <form onSubmit={handleLogin} className="login-form">
+          <form onSubmit={handleLogin} className="auth-form">
             {/* General Error Message */}
             {generalError && (
-              <div className={`alert ${generalError.includes('successful') ? 'alert-success' : 'alert-error'}`}>
-                <Icon icon={generalError.includes('successful') ? 'mdi:check-circle' : 'mdi:alert-circle'} />
+              <div className="alert-error">
+                <Icon icon="mdi:alert-circle-outline" />
                 <span>{generalError}</span>
               </div>
             )}
 
             {/* Email Field */}
-            <div className="form-group">
-              <label htmlFor="email">
-                <Icon icon="mdi:email" />
+            <div className="input-group">
+              <label htmlFor="email" className="input-label">
+                <Icon icon="mdi:email-outline" />
                 Email or Username
               </label>
               <input
@@ -216,20 +196,20 @@ const Login = () => {
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
-                placeholder="Enter your email"
-                className={errors.email ? 'error' : ''}
+                placeholder="Enter your email or username"
+                className={`input-field ${errors.email ? 'input-error' : ''}`}
                 disabled={loading}
               />
-              {errors.email && <span className="error-message">{errors.email}</span>}
+              {errors.email && <span className="error-text">{errors.email}</span>}
             </div>
 
             {/* Password Field */}
-            <div className="form-group">
-              <label htmlFor="password">
-                <Icon icon="mdi:lock" />
+            <div className="input-group">
+              <label htmlFor="password" className="input-label">
+                <Icon icon="mdi:lock-outline" />
                 Password
               </label>
-              <div className="password-input-container">
+              <div className="input-wrapper">
                 <input
                   type={showPassword ? 'text' : 'password'}
                   id="password"
@@ -237,26 +217,26 @@ const Login = () => {
                   value={formData.password}
                   onChange={handleChange}
                   placeholder="Enter your password"
-                  className={errors.password ? 'error' : ''}
+                  className={`input-field ${errors.password ? 'input-error' : ''}`}
                   disabled={loading}
                 />
                 <button
                   type="button"
-                  className="password-toggle"
+                  className="input-icon-btn"
                   onClick={() => setShowPassword(!showPassword)}
                   disabled={loading}
                   aria-label={showPassword ? 'Hide password' : 'Show password'}
                 >
-                  <Icon icon={showPassword ? 'mdi:eye-off' : 'mdi:eye'} />
+                  <Icon icon={showPassword ? 'mdi:eye-off-outline' : 'mdi:eye-outline'} />
                 </button>
               </div>
-              {errors.password && <span className="error-message">{errors.password}</span>}
+              {errors.password && <span className="error-text">{errors.password}</span>}
             </div>
 
             {/* Role Selection */}
-            <div className="form-group">
-              <label htmlFor="role">
-                <Icon icon="mdi:account-group" />
+            <div className="input-group">
+              <label htmlFor="role" className="input-label">
+                <Icon icon="mdi:account-group-outline" />
                 Role
               </label>
               <select
@@ -264,7 +244,7 @@ const Login = () => {
                 name="role"
                 value={formData.role}
                 onChange={handleChange}
-                className={errors.role ? 'error' : ''}
+                className={`input-field select-field ${errors.role ? 'input-error' : ''}`}
                 disabled={loading}
               >
                 <option value="">Select Role</option>
@@ -274,35 +254,35 @@ const Login = () => {
                 <option value="Emergency Coordinator">Emergency Coordinator</option>
                 <option value="Administrator">Administrator</option>
               </select>
-              {errors.role && <span className="error-message">{errors.role}</span>}
+              {errors.role && <span className="error-text">{errors.role}</span>}
             </div>
 
-            {/* Remember Me */}
+            {/* Remember Me & Forgot Password */}
             <div className="form-options">
-              <label className="checkbox-label">
+              <label className="checkbox-container">
                 <input
                   type="checkbox"
                   checked={rememberMe}
                   onChange={(e) => setRememberMe(e.target.checked)}
                   disabled={loading}
                 />
-                <span>Remember me</span>
+                <span className="checkbox-label">Remember me</span>
               </label>
-              <a href="/forgot-password" className="forgot-link">
+              <a href="/forgot-password" className="link-text">
                 Forgot password?
               </a>
             </div>
 
             {/* Action Buttons */}
-            <div className="form-actions">
+            <div className="button-group">
               <button
                 type="submit"
-                className="btn-login"
+                className="btn-primary"
                 disabled={loading}
               >
                 {loading ? (
                   <>
-                    <Icon icon="mdi:loading" className="spin" />
+                    <Icon icon="mdi:loading" className="spin-icon" />
                     Logging in...
                   </>
                 ) : (
@@ -314,70 +294,27 @@ const Login = () => {
               </button>
               <button
                 type="button"
-                className="btn-clear"
+                className="btn-secondary"
                 onClick={handleClear}
                 disabled={loading}
               >
-                <Icon icon="mdi:close-circle" />
+                <Icon icon="mdi:close-circle-outline" />
                 Clear
               </button>
             </div>
           </form>
 
-          {/* Demo Accounts Section */}
-          <div className="demo-section">
-            <button
-              className="demo-toggle"
-              onClick={() => setShowDemoAccounts(!showDemoAccounts)}
-            >
-              <Icon icon={showDemoAccounts ? 'mdi:chevron-up' : 'mdi:chevron-down'} />
-              {showDemoAccounts ? 'Hide' : 'Show'} Demo Accounts
-            </button>
-            
-            {showDemoAccounts && (
-              <div className="demo-accounts">
-                <p className="demo-info">
-                  <Icon icon="mdi:information" />
-                  Click any account to quick-fill the form
-                </p>
-                <div className="demo-accounts-grid">
-                  {demoAccounts.map((account, index) => (
-                    <div
-                      key={index}
-                      className="demo-account-card"
-                      onClick={() => quickLogin(account)}
-                    >
-                      <div className="demo-account-role">
-                        <Icon icon="mdi:account-circle" />
-                        {account.role}
-                      </div>
-                      <div className="demo-account-details">
-                        <small>{account.email}</small>
-                        <small>{account.password}</small>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-
           {/* Sign Up Link */}
-          <div className="signup-link">
-            <p>
-              Don't have an account?{' '}
-              <a href="/signup">Sign Up</a>
+          <div className="auth-footer">
+            <p className="footer-text">
+              Don't have an account? <a href="/signup" className="link-text">Sign Up</a>
             </p>
           </div>
         </div>
-
-        {/* Footer */}
-        <footer className="login-footer">
-          <p>© 2026 ResQNet | Community Emergency Resource Management System</p>
-        </footer>
       </div>
     </div>
   );
 };
 
 export default Login;
+
