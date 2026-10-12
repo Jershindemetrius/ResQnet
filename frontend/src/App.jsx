@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import Navbar from './components/Navbar.jsx';
+import Sidebar from './components/Sidebar.jsx';
 import DashboardView from './pages/DashboardView.jsx';
 import ReportEmergencyView from './pages/ReportEmergencyView.jsx';
 import DispatchCenterView from './pages/DispatchCenterView.jsx';
@@ -9,16 +9,22 @@ import VolunteerDirectoryView from './pages/VolunteerDirectoryView.jsx';
 export default function App() {
   return (
     <BrowserRouter>
-      <Navbar />
-      <main className="page">
-        <Routes>
-          <Route path="/" element={<DashboardView />} />
-          <Route path="/report" element={<ReportEmergencyView />} />
-          <Route path="/dispatch" element={<DispatchCenterView />} />
-          <Route path="/resources" element={<ResourceInventoryView />} />
-          <Route path="/volunteers" element={<VolunteerDirectoryView />} />
-        </Routes>
-      </main>
+      <div className="app-layout">
+        <Sidebar />
+        <main className="main-content">
+          <Routes>
+            <Route path="/" element={<DashboardView />} />
+            <Route path="/report" element={<ReportEmergencyView />} />
+            <Route path="/emergencies" element={<DispatchCenterView />} />
+            <Route path="/dispatch" element={<DispatchCenterView />} />
+            <Route path="/resources" element={<ResourceInventoryView />} />
+            <Route path="/volunteers" element={<VolunteerDirectoryView />} />
+            <Route path="/matcher" element={<DispatchCenterView />} />
+            <Route path="/analytics" element={<DashboardView />} />
+            <Route path="/settings" element={<DashboardView />} />
+          </Routes>
+        </main>
+      </div>
     </BrowserRouter>
   );
 }
