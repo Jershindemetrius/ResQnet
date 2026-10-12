@@ -929,6 +929,12 @@ button:disabled {
   gap: 12px;
 }
 
+.sidebar-logo-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .sidebar-logo {
   width: 48px;
   height: 48px;
@@ -986,9 +992,11 @@ button:disabled {
 }
 
 .sidebar-icon {
-  font-size: 18px;
   width: 24px;
   text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .sidebar-label {
@@ -1251,16 +1259,19 @@ button:disabled {
 }
 
 .marker-pin {
-  font-size: 24px;
-  text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
   animation: pulse 2s ease-in-out infinite;
 }
 
 .marker-pin.critical {
+  color: #e74c3c;
   filter: drop-shadow(0 0 8px #e74c3c);
 }
 
 .marker-pin.available {
+  color: #27ae60;
   filter: drop-shadow(0 0 4px #27ae60);
 }
 
@@ -1346,7 +1357,13 @@ button:disabled {
 }
 
 .legend-marker {
-  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.legend-marker.emergency {
+  color: #e74c3c;
 }
 
 .legend-line {
@@ -1453,12 +1470,12 @@ button:disabled {
   align-items: center;
   justify-content: center;
   color: white;
-  font-size: 20px;
 }
 
 .progress-step.active .progress-circle {
   background: var(--primary-blue);
   box-shadow: 0 0 0 4px rgba(108, 155, 214, 0.2);
+  color: white;
 }
 
 .progress-label {
@@ -1613,11 +1630,22 @@ button:disabled {
 /* Loading and Error States */
 .loading {
   display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
+  gap: 16px;
   padding: 60px;
   color: var(--text-light);
   font-size: 16px;
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 .error-message {

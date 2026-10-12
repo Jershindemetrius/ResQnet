@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { getDashboard } from '../api/resqnetApi.js';
+import { Icon } from '@iconify/react';
 import StatCard from '../components/StatCard.jsx';
 import DispatchMap from '../components/DispatchMap.jsx';
 
@@ -46,7 +47,10 @@ export default function DashboardView() {
   if (loading) {
     return (
       <div className="dashboard-container">
-        <div className="loading">Loading dashboard...</div>
+        <div className="loading">
+          <Icon icon="mdi:loading" className="spin" width="32" height="32" />
+          <span>Loading dashboard...</span>
+        </div>
       </div>
     );
   }
@@ -60,7 +64,9 @@ export default function DashboardView() {
       {/* Stats Cards Row */}
       <div className="dashboard-stats">
         <div className="stat-card-large red">
-          <div className="stat-icon">⚠️</div>
+          <div className="stat-icon">
+            <Icon icon="mdi:alert-circle" width="36" height="36" />
+          </div>
           <div className="stat-content">
             <div className="stat-label">ACTIVE EMERGENCIES:</div>
             <div className="stat-value">{dashboard?.activeEmergencies || 12}</div>
@@ -74,7 +80,9 @@ export default function DashboardView() {
         </div>
 
         <div className="stat-card-large blue">
-          <div className="stat-icon">👷</div>
+          <div className="stat-icon">
+            <Icon icon="mdi:account-group" width="36" height="36" />
+          </div>
           <div className="stat-content">
             <div className="stat-label">AVAILABLE VOLUNTEERS:</div>
             <div className="stat-value">{dashboard?.availableVolunteers || 18}</div>
@@ -82,7 +90,9 @@ export default function DashboardView() {
         </div>
 
         <div className="stat-card-large green">
-          <div className="stat-icon">🚗</div>
+          <div className="stat-icon">
+            <Icon icon="mdi:truck" width="36" height="36" />
+          </div>
           <div className="stat-content">
             <div className="stat-label">AVAILABLE VEHICLES:</div>
             <div className="stat-value">{dashboard?.availableResources || 6}</div>
@@ -90,7 +100,9 @@ export default function DashboardView() {
         </div>
 
         <div className="stat-card-large teal">
-          <div className="stat-icon">✓</div>
+          <div className="stat-icon">
+            <Icon icon="mdi:check-circle" width="36" height="36" />
+          </div>
           <div className="stat-content">
             <div className="stat-label">RESOLVED TODAY:</div>
             <div className="stat-value">{dashboard?.resolvedToday || 27}</div>
@@ -131,27 +143,37 @@ export default function DashboardView() {
             {/* Status Timeline */}
             <div className="status-progress">
               <div className="progress-step active">
-                <div className="progress-circle">●</div>
+                <div className="progress-circle">
+                  <Icon icon="mdi:clock-outline" width="16" height="16" />
+                </div>
                 <div className="progress-label">PENDING</div>
               </div>
               <div className="progress-line"></div>
               <div className="progress-step">
-                <div className="progress-circle">●</div>
+                <div className="progress-circle">
+                  <Icon icon="mdi:check" width="16" height="16" />
+                </div>
                 <div className="progress-label">RESOURCE<br/>ASSIGNED</div>
               </div>
               <div className="progress-line"></div>
               <div className="progress-step">
-                <div className="progress-circle">●</div>
+                <div className="progress-circle">
+                  <Icon icon="mdi:truck-fast" width="16" height="16" />
+                </div>
                 <div className="progress-label">RESPONDING</div>
               </div>
               <div className="progress-line"></div>
               <div className="progress-step">
-                <div className="progress-circle">●</div>
+                <div className="progress-circle">
+                  <Icon icon="mdi:map-marker-check" width="16" height="16" />
+                </div>
                 <div className="progress-label">ON-SITE</div>
               </div>
               <div className="progress-line"></div>
               <div className="progress-step">
-                <div className="progress-circle">●</div>
+                <div className="progress-circle">
+                  <Icon icon="mdi:check-circle" width="16" height="16" />
+                </div>
                 <div className="progress-label">RESOLVED</div>
               </div>
             </div>
@@ -196,10 +218,18 @@ export default function DashboardView() {
                   </span>
                 </td>
                 <td className="actions-cell">
-                  <button className="action-btn" title="View">📄</button>
-                  <button className="action-btn" title="Edit">✏️</button>
-                  <button className="action-btn" title="Delete">🗑️</button>
-                  <button className="action-btn" title="More">⋯</button>
+                  <button className="action-btn" title="View">
+                    <Icon icon="mdi:file-document" width="18" height="18" />
+                  </button>
+                  <button className="action-btn" title="Edit">
+                    <Icon icon="mdi:pencil" width="18" height="18" />
+                  </button>
+                  <button className="action-btn" title="Delete">
+                    <Icon icon="mdi:delete" width="18" height="18" />
+                  </button>
+                  <button className="action-btn" title="More">
+                    <Icon icon="mdi:dots-horizontal" width="18" height="18" />
+                  </button>
                 </td>
               </tr>
             ))}
