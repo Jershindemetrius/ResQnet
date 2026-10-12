@@ -19,9 +19,6 @@ public class Volunteer extends User implements Assignable {
         setSkillSet(skills);
         this.status = status == null ? Status.AVAILABLE : status;
         this.assignedEmergencyId = assignedEmergencyId;
-        if (this.status == Status.BUSY && (assignedEmergencyId == null || assignedEmergencyId.trim().isEmpty())) {
-            this.assignedEmergencyId = "assigned";
-        }
     }
 
     public Volunteer(String id, String name, String contact, String location, List<String> skills) {
