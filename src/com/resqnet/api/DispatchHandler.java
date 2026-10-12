@@ -107,12 +107,16 @@ public class DispatchHandler implements HttpHandler {
             return;
         }
 
+        Resource assignedResource = null;
+        Volunteer assignedVolunteer = null;
         if (next == RequestStatus.RESOLVED && emergency.getStatus() != RequestStatus.RESOLVED) {
             String resourceId = emergency.getAssignedResourceId();
-            if (resourceId != null) resources.getResource(resourceId).release();
+            if (resourceId != null) assignedResource = resources.getResource(resourceId);
             String volunteerId = emergency.getAssignedVolunteerId();
-            if (volunteerId != null) users.getVolunteer(volunteerId).release();
+            if (volunteerId != null) assignedVolunteer = users.getVolunteer(volunteerId);
         }
+        if (assignedResource != null) assignedResource.release();
+        if (assignedVolunteer != null) assignedVolunteer.release();
         emergency.setStatus(next);
         emergencies.refreshQueue();
         if (next == RequestStatus.RESOLVED) {

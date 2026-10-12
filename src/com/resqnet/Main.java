@@ -1,5 +1,6 @@
 package com.resqnet;
 
+import com.resqnet.api.AuthHandler;
 import com.resqnet.api.CorsFilter;
 import com.resqnet.api.DashboardHandler;
 import com.resqnet.api.DispatchHandler;
@@ -9,6 +10,7 @@ import com.resqnet.api.VolunteerHandler;
 import com.resqnet.model.emergency.EmergencyRequest;
 import com.resqnet.model.resource.Resource;
 import com.resqnet.model.user.Volunteer;
+import com.resqnet.service.AuthManager;
 import com.resqnet.service.EmergencyManager;
 import com.resqnet.service.MatchingEngine;
 import com.resqnet.service.ResourceManager;
@@ -17,6 +19,7 @@ import com.resqnet.storage.FileStorageManager;
 import com.sun.net.httpserver.HttpServer;
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.nio.file.Paths;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
@@ -32,6 +35,7 @@ public final class Main {
     public static void main(String[] args) throws IOException {
         int port = configuredPort();
         FileStorageManager storage = new FileStorageManager();
+        AuthManager authManager = new AuthManager(Paths.get("data", "auth_users.csv"));
         EmergencyManager emergencyManager = new EmergencyManager();
         ResourceManager resourceManager = new ResourceManager();
         UserManager userManager = new UserManager();
@@ -45,6 +49,7 @@ public final class Main {
         int threadCount = Math.max(4, Math.min(32, Runtime.getRuntime().availableProcessors()));
         ExecutorService executor = Executors.newFixedThreadPool(threadCount);
         server.setExecutor(executor);
+        server.createContext("/api/auth", new CorsFilter(new AuthHandler(authManager)));
         server.createContext("/api/emergencies", new CorsFilter(new EmergencyHandler(emergencyManager, storage)));
         server.createContext("/api/resources", new CorsFilter(new ResourceHandler(resourceManager, storage)));
         server.createContext("/api/volunteers", new CorsFilter(new VolunteerHandler(userManager, storage)));

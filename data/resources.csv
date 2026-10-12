@@ -1,3 +1,6 @@
-id,name,type,location,quantity,available,provider
-R-1001,Sample Ambulance,AMBULANCE,Central Hospital,1,true,ResQNet
-R-1002,First Aid Kit,MEDICAL_KIT,Central Hospital,5,true,ResQNet
+id,name,type,location,quantity,isAvailable,provider
+R101,Kovilpatti Govt Hospital Ambulance,AMBULANCE,Kovilpatti,1,true,Govt Hospital
+R102,Apollo First Response Kit,MEDICAL_KIT,New Road,5,true,Apollo Clinic
+R103,Rescue Van 1,VEHICLE,Main Bazaar,1,true,Fire Station
+R104,Community Hall Shelter,SHELTER,Bus Stand Road,50,true,Town Municipal
+R105,Red Cross Water Carrier,WATER,Pasumpon Nagar,100,true,Red Cross

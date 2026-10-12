@@ -27,6 +27,7 @@ public final class JsonSerializer {
     private JsonSerializer() { }
 
     public static Map<String, Object> parseObject(InputStream input) throws IOException {
+        if (input == null) throw new IllegalArgumentException("JSON input stream must not be null");
         ByteArrayOutputStream output = new ByteArrayOutputStream();
         byte[] buffer = new byte[4096];
         int read;
@@ -36,7 +37,9 @@ public final class JsonSerializer {
             }
             output.write(buffer, 0, read);
         }
-        Object parsed = parse(new String(output.toByteArray(), StandardCharsets.UTF_8));
+        String json = new String(output.toByteArray(), StandardCharsets.UTF_8);
+        if (json.trim().isEmpty()) return new LinkedHashMap<String, Object>();
+        Object parsed = parse(json);
         if (!(parsed instanceof Map)) throw new IllegalArgumentException("JSON body must be an object");
         @SuppressWarnings("unchecked")
         Map<String, Object> object = (Map<String, Object>) parsed;

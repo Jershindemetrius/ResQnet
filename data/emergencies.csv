@@ -1,2 +1,2 @@
 id,reporterName,contact,type,location,affectedPeopleCount,description,priority,requiredResourceType,status,assignedResourceId,assignedVolunteerId,resolvedAt
-E-1001,Sample Reporter,0000000000,MEDICAL,Central Hospital,1,Sample medical emergency,MEDIUM,AMBULANCE,PENDING,,,
+E-1001,Sample Reporter,0000000000,MEDICAL,Central Hospital,1,Sample medical emergency,MEDIUM,AMBULANCE,RESOLVED,,,2026-10-12T21:17:41
