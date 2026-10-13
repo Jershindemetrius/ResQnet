@@ -5,6 +5,7 @@ import ReportEmergencyView from './pages/ReportEmergencyView.jsx';
 import DispatchCenterView from './pages/DispatchCenterView.jsx';
 import ResourceInventoryView from './pages/ResourceInventoryView.jsx';
 import VolunteerDirectoryView from './pages/VolunteerDirectoryView.jsx';
+import AdminView from './pages/AdminView.jsx';
 
 export default function App() {
   return (
@@ -20,8 +21,9 @@ export default function App() {
             <Route path="/resources" element={<ResourceInventoryView />} />
             <Route path="/volunteers" element={<VolunteerDirectoryView />} />
             <Route path="/matcher" element={<DispatchCenterView />} />
-            <Route path="/analytics" element={<DashboardView />} />
-            <Route path="/settings" element={<DashboardView />} />
+            <Route path="/analytics" element={<AdminView initialTab="overview" />} />
+            <Route path="/admin" element={<AdminView initialTab="overview" />} />
+            <Route path="/settings" element={<AdminView initialTab="config" />} />
           </Routes>
         </main>
       </div>

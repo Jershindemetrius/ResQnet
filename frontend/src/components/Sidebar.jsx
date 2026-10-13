@@ -11,7 +11,8 @@ export default function Sidebar() {
     { path: '/volunteers', label: 'Volunteers Directory', icon: 'mdi:account-group' },
     { path: '/matcher', label: 'Automated Matcher', icon: 'mdi:auto-fix' },
     { path: '/analytics', label: 'Analytics & Reports', icon: 'mdi:chart-line' },
-    { path: '/settings', label: 'Settings', icon: 'mdi:cog' }
+    { path: '/admin', label: 'Admin Command', icon: 'mdi:shield-crown', badge: 'ROOT' },
+    { path: '/settings', label: 'System Settings', icon: 'mdi:cog' }
   ];
 
   return (
@@ -41,18 +42,18 @@ export default function Sidebar() {
       </nav>
       
       <div className="sidebar-footer">
-        <div className="user-profile">
-          <div className="user-avatar">
-            <Icon icon="mdi:account" width="24" height="24" />
+        <Link to="/admin" className="user-profile" style={{ textDecoration: 'none', color: 'inherit' }} title="Open Administrator Console">
+          <div className="user-avatar" style={{ background: '#e74c3c', color: 'white' }}>
+            <Icon icon="mdi:shield-account" width="22" height="22" />
           </div>
           <div className="user-info">
-            <div className="user-name">Arun (Coordinator)</div>
+            <div className="user-name">Admin (Super Root)</div>
             <div className="user-status">
               <span className="status-dot"></span>
-              Online
+              Console Ready
             </div>
           </div>
-        </div>
+        </Link>
       </div>
     </aside>
   );
