@@ -1,494 +1,560 @@
 import { useState, useEffect } from 'react';
 import { Icon } from '@iconify/react';
 import './AmbulanceDriverView.css';
-import {
-  getStoredOrders,
-  driverTakeOrder,
-  updateOrderStatus,
-  driverProfile
-} from '../data/ambulanceOrderStore.js';
+import CADSidebar from '../components/CADSidebar.jsx';
+import CADTopNav from '../components/CADTopNav.jsx';
 
 export default function AmbulanceDriverView() {
-  const [profile, setProfile] = useState(driverProfile);
-  const [orders, setOrders] = useState([]);
-  const [toastMessage, setToastMessage] = useState(null);
+  const [isPlayingAudio, setIsPlayingAudio] = useState(false);
+  const [isOrderAccepted, setIsOrderAccepted] = useState(false);
+  const [countdown, setCountdown] = useState(40);
+  const [vitalsTransmitted, setVitalsTransmitted] = useState(false);
 
-  // Sync orders from storage and listen to live events
+  // Countdown timer simulation for P1 broadcast
   useEffect(() => {
-    const sync = () => {
-      setOrders(getStoredOrders());
-    };
-    sync();
+    if (countdown <= 0) return;
+    const timer = setInterval(() => {
+      setCountdown(prev => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [countdown]);
 
-    const handleStorageChange = () => sync();
-    window.addEventListener('resqnet:orders-changed', handleStorageChange);
-    window.addEventListener('storage', handleStorageChange);
-
-    return () => {
-      window.removeEventListener('resqnet:orders-changed', handleStorageChange);
-      window.removeEventListener('storage', handleStorageChange);
-    };
-  }, []);
-
-  const showToast = (msg) => {
-    setToastMessage(msg);
-    setTimeout(() => setToastMessage(null), 3500);
+  const handleToggleAudio = () => {
+    setIsPlayingAudio(!isPlayingAudio);
   };
 
-  // Active in-progress trip for this driver
-  const activeTrip = orders.find(
-    o => o.assignedDriver?.driverId === profile.driverId &&
-         ['TAKEN', 'EN_ROUTE', 'ARRIVED', 'IN_TRANSIT'].includes(o.status)
-  );
-
-  // Available incoming orders awaiting a driver
-  const incomingOrders = orders.filter(o => o.status === 'PENDING');
-
-  // Completed trips by this driver
-  const completedTrips = orders.filter(
-    o => o.assignedDriver?.driverId === profile.driverId && o.status === 'COMPLETED'
-  );
-
-  // Take an incoming order
-  const handleTakeOrder = (orderId) => {
-    const updated = driverTakeOrder(orderId, profile);
-    showToast(`🚨 Order ${orderId} accepted! Dispatching ambulance immediately.`);
+  const handleAcceptOrder = () => {
+    setIsOrderAccepted(true);
+    alert('🚨 CAD ORDER #ER-2024-8841 ACCEPTED!\nRoute clearance armed: Green light wave enabled for Ambulance ALS-101.');
   };
 
-  // Advance active trip stage
-  const handleAdvanceTripStage = (orderId, currentStatus) => {
-    const stageMap = {
-      TAKEN: 'EN_ROUTE',
-      EN_ROUTE: 'ARRIVED',
-      ARRIVED: 'IN_TRANSIT',
-      IN_TRANSIT: 'COMPLETED'
-    };
-    const nextStatus = stageMap[currentStatus];
-    if (nextStatus) {
-      updateOrderStatus(orderId, nextStatus);
-      const stageLabels = {
-        EN_ROUTE: 'Ambulance is now En Route to Patient location',
-        ARRIVED: 'Arrived at patient location. Commencing field triage.',
-        IN_TRANSIT: 'Patient onboard. In transit to destination hospital.',
-        COMPLETED: 'Trip completed! Patient safely handed over to ER.'
-      };
-      showToast(stageLabels[nextStatus]);
-    }
+  const handleTransmitVitals = () => {
+    setVitalsTransmitted(true);
+    alert('📡 TELEMETRY TRANSMITTED: 12-Lead ECG & Patient vitals relayed to Kovilpatti GH Cath Lab.');
   };
 
   return (
-    <div className="driver-page">
-      {/* --------------------------------------------------------------------
-          DRIVER IDENTITY & OPERATIONAL STATUS HEADER
-          -------------------------------------------------------------------- */}
-      <section className="driver-header-bar">
-        <div className="driver-identity">
-          <div className="driver-avatar-badge">
-            <Icon icon="mdi:ambulance" width="36" height="36" />
-          </div>
-          <div className="driver-info">
-            <h1>
-              {profile.driverName}
-              <span className="vehicle-tag">{profile.vehicleNumber}</span>
-            </h1>
-            <p className="driver-subinfo">
-              <span>{profile.vehicleType}</span>
-              <span>&bull;</span>
-              <span><Icon icon="mdi:map-marker" width="14" height="14" style={{ verticalAlign: 'middle' }} /> {profile.currentLocationName}</span>
-              <span>&bull;</span>
-              <span>⭐ {profile.rating} Rating</span>
-            </p>
-          </div>
-        </div>
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+      {/* Top Header matching reference layout */}
+      <CADTopNav />
 
-        <div className="driver-controls">
-          <div className="duty-status-card">
-            <span style={{ fontSize: '12px', color: '#cbd5e1', fontWeight: 600 }}>DUTY STATUS:</span>
-            <button
-              className={`duty-toggle-btn ${profile.isOnline ? 'online' : 'offline'}`}
-              onClick={() => {
-                const next = !profile.isOnline;
-                setProfile({ ...profile, isOnline: next });
-                showToast(next ? 'You are now ONLINE & ready for incoming ambulance calls.' : 'You are now OFFLINE.');
-              }}
-            >
-              <Icon icon={profile.isOnline ? 'mdi:radio-tower' : 'mdi:power'} width="16" height="16" />
-              {profile.isOnline ? 'ON DUTY (LIVE RADAR)' : 'OFF DUTY'}
-            </button>
-          </div>
-        </div>
-      </section>
+      <div className="driver-hub-container">
+        {/* Left MDT Navigation Rails */}
+        <CADSidebar />
 
-      {/* --------------------------------------------------------------------
-          SHIFT KPI METRICS
-          -------------------------------------------------------------------- */}
-      <div className="driver-stats-grid">
-        <div className="driver-stat-card">
-          <div className="driver-stat-icon red">
-            <Icon icon="mdi:bell-ring" width="24" height="24" />
-          </div>
-          <div>
-            <div className="driver-stat-label">Pending Requests</div>
-            <div className="driver-stat-value">{incomingOrders.length} Available</div>
-          </div>
-        </div>
-
-        <div className="driver-stat-card">
-          <div className="driver-stat-icon green">
-            <Icon icon="mdi:check-decagram" width="24" height="24" />
-          </div>
-          <div>
-            <div className="driver-stat-label">Trips Completed Today</div>
-            <div className="driver-stat-value">{completedTrips.length + profile.todayTrips}</div>
-          </div>
-        </div>
-
-        <div className="driver-stat-card">
-          <div className="driver-stat-icon blue">
-            <Icon icon="mdi:speedometer" width="24" height="24" />
-          </div>
-          <div>
-            <div className="driver-stat-label">Avg Pickup Time</div>
-            <div className="driver-stat-value">3.2 Mins</div>
-          </div>
-        </div>
-
-        <div className="driver-stat-card">
-          <div className="driver-stat-icon amber">
-            <Icon icon="mdi:gas-station" width="24" height="24" />
-          </div>
-          <div>
-            <div className="driver-stat-label">Oxygen Tank Status</div>
-            <div className="driver-stat-value">94% Ready</div>
-          </div>
-        </div>
-      </div>
-
-      {/* --------------------------------------------------------------------
-          ACTIVE TRIP IN-PROGRESS DISPATCH CONSOLE
-          -------------------------------------------------------------------- */}
-      {activeTrip && (
-        <section className="active-trip-panel">
-          <div className="active-trip-header">
-            <div className="active-trip-title">
-              <span className="active-trip-pulse"></span>
-              <span>ACTIVE DISPATCH IN PROGRESS: {activeTrip.orderId}</span>
-            </div>
-            <div style={{ display: 'flex', gap: '10px' }}>
-              <a
-                href={`tel:${activeTrip.contactNumber}`}
-                className="btn-call-direct"
-                title="Call citizen phone straightly"
-              >
-                <Icon icon="mdi:phone-in-talk" width="18" height="18" />
-                Call Patient Straightly ({activeTrip.contactNumber})
-              </a>
-              <a
-                href="tel:108"
-                className="btn-call-direct"
-                style={{ background: '#3b82f6' }}
-                title="Call emergency ER desk"
-              >
-                <Icon icon="mdi:hospital-building" width="18" height="18" />
-                Call Hospital ER (108)
-              </a>
-            </div>
-          </div>
-
-          {/* Stepper */}
-          <div className="trip-stepper">
-            {[
-              { id: 'TAKEN', label: '1. Order Accepted' },
-              { id: 'EN_ROUTE', label: '2. En Route to Patient' },
-              { id: 'ARRIVED', label: '3. Arrived at Site' },
-              { id: 'IN_TRANSIT', label: '4. Heading to Hospital' },
-              { id: 'COMPLETED', label: '5. Patient Handover' }
-            ].map((step, idx) => {
-              const statusOrder = ['TAKEN', 'EN_ROUTE', 'ARRIVED', 'IN_TRANSIT', 'COMPLETED'];
-              const currentIdx = statusOrder.indexOf(activeTrip.status);
-              const isCompleted = currentIdx > idx;
-              const isActive = activeTrip.status === step.id;
-
-              return (
-                <div
-                  key={step.id}
-                  className={`stepper-step ${isCompleted ? 'completed' : ''} ${isActive ? 'active' : ''}`}
-                >
-                  <div className="stepper-circle">
-                    {isCompleted ? <Icon icon="mdi:check" width="18" height="18" /> : idx + 1}
-                  </div>
-                  <span className="stepper-label">{step.label}</span>
+        {/* Main Content Area */}
+        <main className="driver-hub-main">
+          {/* ----------------------------------------------------------------
+              1. UNIT STATUS & CREW TELEMETRY CARD
+              ---------------------------------------------------------------- */}
+          <section className="driver-unit-card">
+            <div className="driver-unit-left">
+              <div className="driver-unit-badge-box">
+                <Icon icon="mdi:ambulance" width="30" height="30" />
+                <span className="driver-notif-dot">1</span>
+              </div>
+              <div className="driver-unit-meta">
+                <div className="driver-unit-callsign-strip">
+                  <span className="driver-callsign-tag">CALLSIGN ALS-101</span>
+                  <span className="driver-callsign-tag">SECTOR 4 KOVILPATTI</span>
+                  <span className="driver-geofence-tag">
+                    <Icon icon="mdi:target" width="10" height="10" style={{ verticalAlign: 'middle', marginRight: '2px' }} />
+                    LIVE GEOFENCE LOCKED
+                  </span>
                 </div>
-              );
-            })}
-          </div>
+                <h2 className="driver-crew-names">Officer Raman &amp; EMT Arun Verma</h2>
+                <p className="driver-vehicle-specs">
+                  Unit: Advanced Cardiac Life Support Ambulance #12 &bull; Reg: TN-69-EM-8841
+                </p>
+              </div>
+            </div>
 
-          {/* Patient Details & Requirements */}
-          <div className="active-trip-grid">
-            <div className="active-info-block">
-              <div className="active-block-title">Patient Profile &amp; Location</div>
-              <div className="patient-highlight-name">
-                {activeTrip.patientName}
-                <span className="patient-age-badge">
-                  Age: {activeTrip.patientAge} ({activeTrip.ageCategory})
+            <div className="driver-unit-telemetry">
+              <div className="driver-telem-box">
+                <div className="telem-box-label">O₂ Payload</div>
+                <div className="telem-box-val blue">98%</div>
+                <div className="telem-box-sub">Pressure Safe</div>
+              </div>
+
+              <div className="driver-telem-box">
+                <div className="telem-box-label">Fuel Range</div>
+                <div className="telem-box-val">84%</div>
+                <div className="telem-box-sub">280 km left</div>
+              </div>
+
+              <div className="driver-telem-box">
+                <div className="telem-box-label">Telemetry</div>
+                <div className="telem-box-val">0 <span style={{ fontSize: '11px' }}>km/h</span></div>
+                <div className="telem-box-sub">Standby Idle</div>
+              </div>
+
+              <div className="driver-telem-box">
+                <div className="telem-box-label">Defib Unit</div>
+                <div className="telem-box-val green">READY</div>
+                <div className="telem-box-sub">Biphasic Self-Test OK</div>
+              </div>
+
+              <div>
+                <div style={{ fontSize: '8.5px', color: '#64748b', fontWeight: 800, textTransform: 'uppercase', marginBottom: '2px' }}>
+                  Unit State Control
+                </div>
+                <button className="driver-state-dropdown">
+                  <Icon icon="mdi:radiobox-marked" width="14" height="14" />
+                  ONLINE &amp; PATROLLING
+                  <Icon icon="mdi:chevron-down" width="14" height="14" />
+                </button>
+              </div>
+            </div>
+          </section>
+
+          {/* ----------------------------------------------------------------
+              2. PRIORITY-1 BROADCAST RECEIVED BANNER
+              ---------------------------------------------------------------- */}
+          <section className="driver-p1-broadcast-bar">
+            <div className="p1-left">
+              <Icon icon="mdi:broadcast" width="18" height="18" />
+              <span>PRIORITY-1 BROADCAST RECEIVED</span>
+              <span className="p1-distance-badge">1.2 KM AWAY</span>
+            </div>
+            <div className="p1-timer-box">
+              <span>Auto-Rerouting fallback in:</span>
+              <span className="p1-timer-badge">
+                <Icon icon="mdi:timer-outline" width="15" height="15" />
+                {countdown} s
+              </span>
+            </div>
+          </section>
+
+          {/* ----------------------------------------------------------------
+              3. ACTIVE CAD EMERGENCY ORDER CARD (#ER-2024-8841)
+              ---------------------------------------------------------------- */}
+          <section className="driver-dispatch-card">
+            <div>
+              <div className="cad-badge-row">
+                <span className="badge-code-red">CODE 2 RED</span>
+                <span className="cad-order-id-label">CAD ORDER #ER-2024-8841</span>
+              </div>
+
+              <h1 className="cad-incident-title">
+                Severe Cardiac Distress + Head Injury
+              </h1>
+
+              <div className="est-travel-time-pill">
+                <span className="est-time-label">Estimated Travel Time</span>
+                <span className="est-time-val">3 min 15 sec</span>
+              </div>
+
+              {/* 3 Columns Subject / Reporter / Location */}
+              <div className="incident-details-3col">
+                <div className="detail-col-item">
+                  <span className="detail-col-header">Subject</span>
+                  <span className="detail-col-val">58 yrs &bull; Male</span>
+                  <span className="detail-col-sub">Unconscious &bull; Diaphoretic</span>
+                </div>
+
+                <div className="detail-col-item">
+                  <span className="detail-col-header">Reported By</span>
+                  <span className="detail-col-val">Family Member (Son)</span>
+                  <span className="detail-col-sub">Incident Onset: ~7 mins ago</span>
+                </div>
+
+                <div className="detail-col-item">
+                  <span className="detail-col-header">Incident Location</span>
+                  <span className="detail-col-val">14/B Gandhi Rd</span>
+                  <span className="detail-col-sub">Near Old Bus Stand</span>
+                </div>
+              </div>
+
+              {/* Protocols requested */}
+              <div className="protocols-heading">Mandatory Kit &amp; Clinical Protocols Requested</div>
+              <div className="protocols-grid">
+                <div className="protocol-chip">
+                  <Icon icon="mdi:gas-cylinder" width="16" height="16" color="#dc2626" />
+                  High-Flow O₂ Support
+                </div>
+                <div className="protocol-chip">
+                  <Icon icon="mdi:bed-empty" width="16" height="16" color="#0284c7" />
+                  Hydraulic Stretcher
+                </div>
+                <div className="protocol-chip">
+                  <Icon icon="mdi:medical-bag" width="16" height="16" color="#dc2626" />
+                  Cervical Trauma Kit
+                </div>
+                <div className="protocol-chip">
+                  <Icon icon="mdi:hospital-building" width="16" height="16" color="#2563eb" />
+                  ICU Pre-Alert ER
+                </div>
+              </div>
+
+              {/* Audio Briefing Player */}
+              <div className="audio-briefing-bar">
+                <button
+                  className="audio-play-btn"
+                  onClick={handleToggleAudio}
+                  title="Listen to caller briefing"
+                >
+                  <Icon icon={isPlayingAudio ? 'mdi:pause' : 'mdi:play'} width="18" height="18" />
+                </button>
+                <div className="audio-info-col">
+                  <div className="audio-header-line">
+                    <span>Caller 12s Audio Briefing</span>
+                    <span style={{ color: '#64748b', fontSize: '10px' }}>00:12</span>
+                  </div>
+                  <p className="audio-transcript-quote">
+                    &ldquo;Father collapsed in hall, breathing heavily, please hurry...&rdquo;
+                  </p>
+                </div>
+                <div className="audio-radio-tag">
+                  <Icon icon="mdi:radio-handheld" width="14" height="14" color="#0284c7" />
+                  VHF CH 4: ACTIVE MONITOR
+                </div>
+              </div>
+            </div>
+
+            {/* Quick Dispatch Decision Right Box */}
+            <div className="dispatch-decision-box">
+              <div>
+                <div className="decision-box-top-label">
+                  <span>Quick Dispatch Decision</span>
+                  <span>ALS-101 Primary Lock</span>
+                </div>
+
+                <div className="target-hospital-panel">
+                  <span className="target-hosp-label">Target Hospital</span>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <h4 className="target-hosp-name">Govt Hospital Kovilpatti</h4>
+                    <span style={{ fontSize: '10px', background: '#e0f2fe', color: '#0369a1', padding: '2px 6px', borderRadius: '4px', fontWeight: 800 }}>
+                      6 ICU Beds Free
+                    </span>
+                  </div>
+                  <div className="target-hosp-meta">
+                    3.4 km from incident &bull; Trauma Level 2 Active
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <button
+                  className="btn-accept-order"
+                  onClick={handleAcceptOrder}
+                  style={{ background: isOrderAccepted ? '#15803d' : '#b91c1c' }}
+                >
+                  <Icon icon={isOrderAccepted ? 'mdi:check-circle' : 'mdi:steering'} width="18" height="18" />
+                  {isOrderAccepted ? 'ORDER ACCEPTED • EN ROUTE' : 'ACCEPT ORDER & START ROUTE ➔'}
+                </button>
+
+                <a
+                  href="tel:+919442188301"
+                  className="btn-call-citizen"
+                  title="Call citizen phone straightly"
+                >
+                  <Icon icon="mdi:phone-in-talk" width="16" height="16" />
+                  DIRECT CALL CITIZEN (+91 94421 88301)
+                </a>
+
+                <button
+                  className="btn-decline-order"
+                  onClick={() => alert('Order rerouted to secondary backup unit ALS-104.')}
+                >
+                  <Icon icon="mdi:arrow-u-left-top" width="14" height="14" />
+                  DECLINE / PASS TO BACKUP UNIT (ALS-104)
+                </button>
+              </div>
+            </div>
+          </section>
+
+          {/* ----------------------------------------------------------------
+              4. MIDDLE: GIS ROUTING (LEFT) & HOSPITAL HANDOFF (RIGHT)
+              ---------------------------------------------------------------- */}
+          <div className="driver-mid-grid">
+            {/* GIS Routing Left Card */}
+            <section className="gis-routing-card">
+              <div className="gis-card-header">
+                <div className="gis-header-title">
+                  <span className="gis-subtag">GIS Telemetry Routing &bull; Real-time GPS Feed</span>
+                  <h3>Route Navigation to 14/B Gandhi Rd</h3>
+                </div>
+                <button
+                  className="btn-decline-order"
+                  style={{ padding: '4px 10px', fontSize: '11px', color: '#0284c7' }}
+                  onClick={() => alert('Corridor cleared via police dispatch')}
+                >
+                  <Icon icon="mdi:shield-check" width="14" height="14" />
+                  CLEAR CORRIDOR VIA MAIN BYPASS
+                </button>
+              </div>
+
+              {/* Turn instruction banner */}
+              <div className="turn-instruction-box">
+                <div className="turn-icon-wrap">
+                  <Icon icon="mdi:arrow-top-right" width="22" height="22" />
+                </div>
+                <div>
+                  <div className="turn-dist-lead">IN 240 METERS</div>
+                  <div className="turn-street-name">Turn right onto Gandhi Main Road</div>
+                  <div className="turn-beacon-note">Bypass police barricade (Emergency beacon priority granted)</div>
+                </div>
+              </div>
+
+              {/* Graphical Canvas / Route Illustration */}
+              <div className="gis-route-map-canvas">
+                <svg className="gis-map-svg" viewBox="0 0 500 180">
+                  {/* Grid background lines */}
+                  <line x1="0" y1="40" x2="500" y2="40" stroke="#dbeafe" strokeWidth="1" strokeDasharray="4 4" />
+                  <line x1="0" y1="90" x2="500" y2="90" stroke="#dbeafe" strokeWidth="1" strokeDasharray="4 4" />
+                  <line x1="0" y1="140" x2="500" y2="140" stroke="#dbeafe" strokeWidth="1" strokeDasharray="4 4" />
+                  <line x1="120" y1="0" x2="120" y2="180" stroke="#dbeafe" strokeWidth="1" strokeDasharray="4 4" />
+                  <line x1="280" y1="0" x2="280" y2="180" stroke="#dbeafe" strokeWidth="1" strokeDasharray="4 4" />
+                  <line x1="420" y1="0" x2="420" y2="180" stroke="#dbeafe" strokeWidth="1" strokeDasharray="4 4" />
+
+                  {/* Route corridor glow */}
+                  <path
+                    d="M 60 140 C 140 130, 200 100, 260 70 C 320 40, 390 50, 440 60"
+                    fill="none"
+                    stroke="#fee2e2"
+                    strokeWidth="12"
+                    strokeLinecap="round"
+                  />
+                  {/* Active route line */}
+                  <path
+                    d="M 60 140 C 140 130, 200 100, 260 70 C 320 40, 390 50, 440 60"
+                    fill="none"
+                    stroke="#dc2626"
+                    strokeWidth="4"
+                    strokeDasharray="6 3"
+                    strokeLinecap="round"
+                  />
+
+                  {/* Ambulance starting point marker */}
+                  <circle cx="60" cy="140" r="10" fill="#0284c7" />
+                  <circle cx="60" cy="140" r="5" fill="#ffffff" />
+                  <text x="60" y="165" fontSize="10" fontWeight="bold" fill="#0369a1" textAnchor="middle">ALS-101</text>
+
+                  {/* Patient target pin */}
+                  <circle cx="440" cy="60" r="10" fill="#dc2626" />
+                  <circle cx="440" cy="60" r="4" fill="#ffffff" />
+                  <text x="440" y="80" fontSize="10" fontWeight="bold" fill="#b91c1c" textAnchor="middle">PATIENT (14/B GANDHI RD)</text>
+                </svg>
+
+                <div className="gis-map-hud-overlay">
+                  <div className="hud-item">
+                    <span>REMAINING</span>
+                    <strong>1.2 km (800m via Bypass)</strong>
+                  </div>
+                  <div className="hud-item">
+                    <span>TARGET SPEED</span>
+                    <strong style={{ color: '#0284c7' }}>42-55 km/h recommended</strong>
+                  </div>
+                </div>
+
+                <div className="green-wave-tag">
+                  <Icon icon="mdi:traffic-light" width="14" height="14" />
+                  TRAFFIC LIGHT GREEN WAVE ARMED
+                </div>
+              </div>
+
+              {/* 3 Stage Step Progress */}
+              <div className="gis-stages-row">
+                <div className="stage-node-box">
+                  <Icon icon="mdi:play-circle-outline" width="18" height="18" color="#64748b" />
+                  <div>
+                    <strong>Dispatch Point</strong>
+                    <div style={{ fontSize: '9px', color: '#64748b' }}>Sector 4 Kovilpatti Base</div>
+                  </div>
+                </div>
+
+                <div className="stage-node-box active">
+                  <Icon icon="mdi:account-arrow-right" width="18" height="18" color="#dc2626" />
+                  <div>
+                    <strong style={{ color: '#b91c1c' }}>Step 1: Patient Extrication</strong>
+                    <div style={{ fontSize: '9px', color: '#64748b' }}>14/B Gandhi Rd (ETA 3m 15s)</div>
+                  </div>
+                </div>
+
+                <div className="stage-node-box">
+                  <Icon icon="mdi:hospital-box-outline" width="18" height="18" color="#64748b" />
+                  <div>
+                    <strong>Step 2: Transfer to Hospital</strong>
+                    <div style={{ fontSize: '9px', color: '#64748b' }}>Kovilpatti GH (Pre-Alerted ICU Bed #4)</div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            {/* Hospital Handoff Right Card */}
+            <section className="hospital-handoff-card">
+              <div className="handoff-header">
+                <h3>Hospital Handoff</h3>
+                <span style={{ fontSize: '9.5px', background: '#eff6ff', color: '#1d4ed8', padding: '2px 6px', borderRadius: '4px', fontWeight: 800 }}>
+                  CAD VERIFIED
                 </span>
               </div>
-              <div style={{ fontSize: '13px', color: '#cbd5e1', marginTop: '6px' }}>
-                <div><strong>📍 Pickup:</strong> {activeTrip.pickupLocation}</div>
-                {activeTrip.landmark && <div><strong>🏷️ Landmark:</strong> {activeTrip.landmark}</div>}
-                <div style={{ marginTop: '4px' }}><strong>🏥 Destination:</strong> {activeTrip.destinationHospital}</div>
+
+              <div className="handoff-photo-wrap">
+                <img
+                  src="/images/hospital_kovilpatti.jpg"
+                  alt="Govt Hospital Kovilpatti"
+                  className="handoff-photo"
+                />
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '9px', color: '#64748b', fontWeight: 800, textTransform: 'uppercase' }}>
+                  Pre-Allocated Facility
+                </span>
+                <span style={{ fontSize: '10px', color: '#059669', fontWeight: 800 }}>Dist: 3.4 KM</span>
+              </div>
+
+              <h4 className="handoff-facility-name">Govt Hospital Kovilpatti (GH)</h4>
+              <p className="handoff-address">Main Bypass Junction, Kovilpatti, TN</p>
+
+              <div className="handoff-stats-2col">
+                <div className="handoff-stat-tile">
+                  <div className="label">Free ICU Beds</div>
+                  <div className="val">06</div>
+                </div>
+                <div className="handoff-stat-tile">
+                  <div className="label">Cardiologist on Duty</div>
+                  <div className="val" style={{ fontSize: '13px', color: '#0f172a' }}>Dr. S. Kabilan</div>
+                </div>
+              </div>
+
+              <div className="radio-protocol-card">
+                <strong>ER Radio Protocol:</strong> ICU team alerted via CAD. Cath lab on standby for acute myocardial infarction protocol upon our signal.
+              </div>
+
+              <button
+                className="btn-transmit-vitals"
+                onClick={handleTransmitVitals}
+                style={{ background: vitalsTransmitted ? '#15803d' : '#0284c7' }}
+              >
+                <Icon icon={vitalsTransmitted ? 'mdi:check-all' : 'mdi:send'} width="16" height="16" />
+                {vitalsTransmitted ? 'PATIENT VITALS TRANSMITTED' : 'TRANSMIT PATIENT VITALS TO GH'}
+              </button>
+
+              <div className="handoff-shift-footer">
+                <span>Shift Duration: <strong>06h 42m</strong></span>
+                <span>Logged as <strong>EMT Arun</strong></span>
+              </div>
+            </section>
+          </div>
+
+          {/* ----------------------------------------------------------------
+              5. BOTTOM SECTION: PERFORMANCE LOGS
+              ---------------------------------------------------------------- */}
+          <section className="driver-performance-card">
+            <div className="perf-header-strip">
+              <div className="perf-title-group">
+                <span style={{ fontSize: '9px', color: '#64748b', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  PERFORMANCE LOGS &bull; Duty Shift #1
+                </span>
+                <h3>My Accepted Trips Today (4 Orders Fulfilled)</h3>
+              </div>
+
+              <div className="perf-badges-group">
+                <div className="perf-badge-item">
+                  <span style={{ fontSize: '8.5px', color: '#64748b', display: 'block' }}>AVG RESPONSE TIME</span>
+                  <span style={{ color: '#0284c7', fontSize: '13px' }}>4.2 mins</span>
+                </div>
+                <div className="perf-badge-item">
+                  <span style={{ fontSize: '8.5px', color: '#64748b', display: 'block' }}>LIVES TRANSPORTED</span>
+                  <span style={{ fontSize: '13px' }}>4 Patients</span>
+                </div>
+                <div className="perf-badge-item">
+                  <span style={{ fontSize: '8.5px', color: '#64748b', display: 'block' }}>TELEMETRY AUDIT</span>
+                  <span style={{ color: '#16a34a', fontSize: '13px' }}>100% Pass</span>
+                </div>
               </div>
             </div>
 
-            <div className="active-info-block">
-              <div className="active-block-title">Required Medical Equipment &amp; Triage</div>
-              <div style={{ fontSize: '13px', color: '#f87171', fontWeight: 600 }}>
-                Notes: {activeTrip.notes}
-              </div>
-              <div className="requirements-pills-wrap">
-                {activeTrip.requirements?.map((req, i) => (
-                  <span key={i} className="req-pill">
-                    <Icon icon="mdi:check-circle" width="13" height="13" style={{ verticalAlign: 'middle', marginRight: '4px' }} />
-                    {req}
-                  </span>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Stage Progression Action */}
-          <div className="active-trip-actions">
-            {activeTrip.status === 'TAKEN' && (
-              <button
-                className="btn-trip-stage"
-                onClick={() => handleAdvanceTripStage(activeTrip.orderId, 'TAKEN')}
-              >
-                <Icon icon="mdi:steering" width="20" height="20" />
-                Start Drive: Mark En Route to Patient
-              </button>
-            )}
-
-            {activeTrip.status === 'EN_ROUTE' && (
-              <button
-                className="btn-trip-stage"
-                onClick={() => handleAdvanceTripStage(activeTrip.orderId, 'EN_ROUTE')}
-              >
-                <Icon icon="mdi:map-marker-check" width="20" height="20" />
-                Arrived on Site: Mark at Patient Location
-              </button>
-            )}
-
-            {activeTrip.status === 'ARRIVED' && (
-              <button
-                className="btn-trip-stage"
-                onClick={() => handleAdvanceTripStage(activeTrip.orderId, 'ARRIVED')}
-              >
-                <Icon icon="mdi:hospital-box" width="20" height="20" />
-                Patient Onboard: Head to {activeTrip.destinationHospital}
-              </button>
-            )}
-
-            {activeTrip.status === 'IN_TRANSIT' && (
-              <button
-                className="btn-trip-stage"
-                style={{ background: '#10b981' }}
-                onClick={() => handleAdvanceTripStage(activeTrip.orderId, 'IN_TRANSIT')}
-              >
-                <Icon icon="mdi:check-all" width="20" height="20" />
-                Reached ER: Handover Patient &amp; Complete Trip
-              </button>
-            )}
-          </div>
-        </section>
-      )}
-
-      {/* --------------------------------------------------------------------
-          INCOMING EMERGENCY ORDERS RADAR (NEARBY BOOKINGS)
-          -------------------------------------------------------------------- */}
-      <section className="radar-panel-card">
-        <div className="radar-header">
-          <h2>
-            <Icon icon="mdi:radar" width="24" height="24" color="#e74c3c" />
-            Nearby Emergency Orders Radar
-            <span className="radar-count-badge">
-              {incomingOrders.length} New Citizen Bookings
-            </span>
-          </h2>
-          <span style={{ fontSize: '12px', color: '#64748b' }}>
-            Coverage Zone: Kovilpatti Sector &bull; Search Radius: 15 km
-          </span>
-        </div>
-
-        {incomingOrders.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '48px 20px', background: '#f8fafc', borderRadius: '12px', border: '1px dashed #cbd5e1' }}>
-            <Icon icon="mdi:ambulance" width="48" height="48" color="#94a3b8" />
-            <h3 style={{ margin: '12px 0 4px', color: '#334155' }}>No Pending Ambulance Orders</h3>
-            <p style={{ margin: 0, fontSize: '13px', color: '#64748b' }}>
-              Your radar is actively listening for incoming citizen emergency bookings in Kovilpatti.
-            </p>
-          </div>
-        ) : (
-          <div className="order-cards-stack">
-            {incomingOrders.map(order => (
-              <div
-                key={order.orderId}
-                className={`driver-order-card priority-${order.priority.toLowerCase()}`}
-              >
-                <div className="order-card-top">
-                  <div className="order-card-id-wrap">
-                    <span className="order-id-chip">{order.orderId}</span>
-                    <span style={{ fontWeight: 800, color: order.priority === 'CRITICAL' ? '#dc2626' : '#d97706', fontSize: '13px' }}>
-                      ● {order.priority} PRIORITY
-                    </span>
-                    <span className="order-time-ago">&bull; Booked {order.bookedAt}</span>
-                  </div>
-                  <div>
-                    <span style={{ fontSize: '12px', background: '#f1f5f9', padding: '3px 8px', borderRadius: '4px', fontWeight: 600 }}>
-                      Distance: ~1.4 km (ETA 3 mins)
-                    </span>
-                  </div>
-                </div>
-
-                <div>
-                  <div className="order-patient-name">
-                    {order.patientName}
-                    <span className="order-patient-age">
-                      Age: {order.patientAge} Years ({order.ageCategory})
-                    </span>
-                  </div>
-                  <div style={{ fontSize: '13px', color: '#475569', marginTop: '4px' }}>
-                    {order.notes}
-                  </div>
-                </div>
-
-                <div className="order-card-details-grid">
-                  <div className="order-detail-item">
-                    <Icon icon="mdi:map-marker-radius" width="18" height="18" color="#e74c3c" />
-                    <div>
-                      <strong>Pickup Location:</strong>
-                      <div>{order.pickupLocation}</div>
-                      {order.landmark && <div style={{ fontSize: '11.5px', color: '#64748b' }}>Near {order.landmark}</div>}
-                    </div>
-                  </div>
-
-                  <div className="order-detail-item">
-                    <Icon icon="mdi:hospital-building" width="18" height="18" color="#3b82f6" />
-                    <div>
-                      <strong>Destination Hospital:</strong>
-                      <div>{order.destinationHospital}</div>
-                    </div>
-                  </div>
-
-                  <div className="order-detail-item">
-                    <Icon icon="mdi:phone" width="18" height="18" color="#059669" />
-                    <div>
-                      <strong>Citizen Phone:</strong>
-                      <div>{order.contactNumber} ({order.callerType})</div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="order-requirements-bar">
-                  <span className="order-req-label">Required Equipment:</span>
-                  {order.requirements?.map((req, i) => (
-                    <span key={i} className="req-pill" style={{ background: '#fee2e2', color: '#991b1b', borderColor: '#fca5a5' }}>
-                      {req}
-                    </span>
-                  ))}
-                </div>
-
-                <div className="order-actions-bar">
-                  <a
-                    href={`tel:${order.contactNumber}`}
-                    className="btn-call-direct"
-                    title="Call patient straightaway"
-                  >
-                    <Icon icon="mdi:phone-in-talk" width="18" height="18" />
-                    Call Patient Straightaway ({order.contactNumber})
-                  </a>
-
-                  <button
-                    className="btn-take-order"
-                    onClick={() => handleTakeOrder(order.orderId)}
-                  >
-                    <Icon icon="mdi:steering" width="18" height="18" />
-                    Accept &amp; Take Order Now
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
-
-      {/* --------------------------------------------------------------------
-          COMPLETED SHIFT RUNS
-          -------------------------------------------------------------------- */}
-      <section className="radar-panel-card">
-        <h2 style={{ fontSize: '16px', fontWeight: 800, margin: '0 0 16px', color: '#0f172a' }}>
-          <Icon icon="mdi:history" width="20" height="20" color="#059669" style={{ verticalAlign: 'middle', marginRight: '6px' }} />
-          Shift Completed Runs ({completedTrips.length})
-        </h2>
-
-        {completedTrips.length === 0 ? (
-          <p style={{ margin: 0, fontSize: '13px', color: '#64748b' }}>No completed runs recorded yet this shift.</p>
-        ) : (
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
-              <thead>
-                <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0', textAlign: 'left' }}>
-                  <th style={{ padding: '10px 14px' }}>Order ID</th>
-                  <th style={{ padding: '10px 14px' }}>Patient</th>
-                  <th style={{ padding: '10px 14px' }}>Age</th>
-                  <th style={{ padding: '10px 14px' }}>Pickup Location</th>
-                  <th style={{ padding: '10px 14px' }}>Hospital Delivered</th>
-                  <th style={{ padding: '10px 14px' }}>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {completedTrips.map(t => (
-                  <tr key={t.orderId} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                    <td style={{ padding: '12px 14px', fontWeight: 700 }}>{t.orderId}</td>
-                    <td style={{ padding: '12px 14px' }}>{t.patientName}</td>
-                    <td style={{ padding: '12px 14px' }}>{t.patientAge} yrs</td>
-                    <td style={{ padding: '12px 14px' }}>{t.pickupLocation}</td>
-                    <td style={{ padding: '12px 14px' }}>{t.destinationHospital}</td>
-                    <td style={{ padding: '12px 14px' }}>
-                      <span style={{ background: '#d1fae5', color: '#065f46', padding: '3px 8px', borderRadius: '4px', fontWeight: 700, fontSize: '11px' }}>
-                        COMPLETED
+            <div className="perf-table-wrap">
+              <table className="perf-table">
+                <thead>
+                  <tr>
+                    <th>CAD Order ID</th>
+                    <th>Patient Profile</th>
+                    <th>Emergency Nature</th>
+                    <th>Time to Scene</th>
+                    <th>Drop Destination</th>
+                    <th>CAD Status</th>
+                    <th style={{ textAlign: 'right' }}>Log / Audio</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td style={{ fontWeight: 800, color: '#0284c7' }}>#ER-102</td>
+                    <td>
+                      <strong>Muthu Krishnan (72M)</strong>
+                      <div style={{ fontSize: '10px', color: '#64748b' }}>Pickup: Pasuvanthanai Rd</div>
+                    </td>
+                    <td>
+                      <span style={{ background: '#fee2e2', color: '#991b1b', fontSize: '10px', fontWeight: 800, padding: '2px 6px', borderRadius: '4px' }}>
+                        Acute Stroke / FAST+
                       </span>
                     </td>
+                    <td style={{ fontWeight: 800 }}>3 min 40 sec</td>
+                    <td>Govt Hospital Kovilpatti</td>
+                    <td>
+                      <span className="status-badge-delivered">DELIVERED &bull; CLOSED</span>
+                    </td>
+                    <td style={{ textAlign: 'right' }}>
+                      <button className="btn-decline-order" style={{ padding: '3px 8px', fontSize: '10px', marginLeft: 'auto' }}>
+                        <Icon icon="mdi:headphones" width="12" height="12" /> Call Rec (22s)
+                      </button>
+                    </td>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </section>
 
-      {/* Floating Toast Feedback */}
-      {toastMessage && (
-        <div style={{
-          position: 'fixed',
-          bottom: '24px',
-          right: '24px',
-          background: '#0f172a',
-          color: 'white',
-          padding: '14px 20px',
-          borderRadius: '10px',
-          boxShadow: '0 10px 25px rgba(0,0,0,0.3)',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '10px',
-          zIndex: 3000,
-          borderLeft: '4px solid #e74c3c',
-          fontSize: '13.5px',
-          fontWeight: 600
-        }}>
-          <Icon icon="mdi:information" width="20" height="20" color="#f87171" />
-          <span>{toastMessage}</span>
-        </div>
-      )}
+                  <tr>
+                    <td style={{ fontWeight: 800, color: '#0284c7' }}>#ER-098</td>
+                    <td>
+                      <strong>Priya Selvam (31F)</strong>
+                      <div style={{ fontSize: '10px', color: '#64748b' }}>Pickup: Kadambur Bypass</div>
+                    </td>
+                    <td>
+                      <span style={{ background: '#f1f5f9', color: '#334155', fontSize: '10px', fontWeight: 800, padding: '2px 6px', borderRadius: '4px' }}>
+                        Road Trauma / Fracture
+                      </span>
+                    </td>
+                    <td style={{ fontWeight: 800 }}>4 min 12 sec</td>
+                    <td>Apollo Reach Specialty</td>
+                    <td>
+                      <span className="status-badge-delivered">DELIVERED &bull; CLOSED</span>
+                    </td>
+                    <td style={{ textAlign: 'right' }}>
+                      <button className="btn-decline-order" style={{ padding: '3px 8px', fontSize: '10px', marginLeft: 'auto' }}>
+                        <Icon icon="mdi:headphones" width="12" height="12" /> Call Rec (18s)
+                      </button>
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <td style={{ fontWeight: 800, color: '#0284c7' }}>#ER-091</td>
+                    <td>
+                      <strong>Ananya R. (8F)</strong>
+                      <div style={{ fontSize: '10px', color: '#64748b' }}>Pickup: Lakshmi Mills qtrs</div>
+                    </td>
+                    <td>
+                      <span style={{ background: '#eff6ff', color: '#1d4ed8', fontSize: '10px', fontWeight: 800, padding: '2px 6px', borderRadius: '4px' }}>
+                        Pediatric Anaphylaxis
+                      </span>
+                    </td>
+                    <td style={{ fontWeight: 800 }}>4 min 50 sec</td>
+                    <td>Govt Hospital Kovilpatti</td>
+                    <td>
+                      <span className="status-badge-delivered">DELIVERED &bull; CLOSED</span>
+                    </td>
+                    <td style={{ textAlign: 'right' }}>
+                      <button className="btn-decline-order" style={{ padding: '3px 8px', fontSize: '10px', marginLeft: 'auto' }}>
+                        <Icon icon="mdi:headphones" width="12" height="12" /> Call Rec (35s)
+                      </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </main>
+      </div>
     </div>
   );
 }
