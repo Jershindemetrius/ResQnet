@@ -6,6 +6,8 @@ export default function Sidebar() {
   
   const menuItems = [
     { path: '/', label: 'Dashboard', icon: 'mdi:view-dashboard' },
+    { path: '/report', label: 'Book Ambulance / SOS', icon: 'mdi:phone-alert', badge: 'SOS' },
+    { path: '/driver', label: 'Ambulance Driver', icon: 'mdi:ambulance', badge: 'PILOT' },
     { path: '/emergencies', label: 'Emergency Requests', icon: 'mdi:alert-circle', badge: 12 },
     { path: '/resources', label: 'Resources Directory', icon: 'mdi:package-variant' },
     { path: '/volunteers', label: 'Volunteers Directory', icon: 'mdi:account-group' },

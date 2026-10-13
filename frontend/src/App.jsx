@@ -6,6 +6,7 @@ import DispatchCenterView from './pages/DispatchCenterView.jsx';
 import ResourceInventoryView from './pages/ResourceInventoryView.jsx';
 import VolunteerDirectoryView from './pages/VolunteerDirectoryView.jsx';
 import AdminView from './pages/AdminView.jsx';
+import AmbulanceDriverView from './pages/AmbulanceDriverView.jsx';
 
 export default function App() {
   return (
@@ -16,6 +17,9 @@ export default function App() {
           <Routes>
             <Route path="/" element={<DashboardView />} />
             <Route path="/report" element={<ReportEmergencyView />} />
+            <Route path="/book-ambulance" element={<ReportEmergencyView />} />
+            <Route path="/driver" element={<AmbulanceDriverView />} />
+            <Route path="/ambulance-driver" element={<AmbulanceDriverView />} />
             <Route path="/emergencies" element={<DispatchCenterView />} />
             <Route path="/dispatch" element={<DispatchCenterView />} />
             <Route path="/resources" element={<ResourceInventoryView />} />

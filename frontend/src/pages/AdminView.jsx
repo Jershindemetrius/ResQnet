@@ -8,6 +8,7 @@ import {
   initialAuditLogs,
   threatLevels
 } from '../data/mockAdminData.js';
+import { getStoredOrders } from '../data/ambulanceOrderStore.js';
 
 export default function AdminView({ initialTab = 'overview' }) {
   // Navigation & View State
@@ -35,6 +36,38 @@ export default function AdminView({ initialTab = 'overview' }) {
     const saved = localStorage.getItem('resqnet_admin_audit');
     return saved ? JSON.parse(saved) : initialAuditLogs;
   });
+
+  // Ambulance Driver Orders Intake State
+  const [driverOrders, setDriverOrders] = useState(() => getStoredOrders());
+  const [orderSearch, setOrderSearch] = useState('');
+  const [orderStatusFilter, setOrderStatusFilter] = useState('ALL');
+
+  useEffect(() => {
+    const sync = () => setDriverOrders(getStoredOrders());
+    window.addEventListener('resqnet:orders-changed', sync);
+    window.addEventListener('storage', sync);
+    return () => {
+      window.removeEventListener('resqnet:orders-changed', sync);
+      window.removeEventListener('storage', sync);
+    };
+  }, []);
+
+  const orderStats = useMemo(() => {
+    const total = driverOrders.length;
+    const taken = driverOrders.filter(o => o.status !== 'PENDING');
+    const enRoute = driverOrders.filter(o => ['TAKEN', 'EN_ROUTE', 'ARRIVED', 'IN_TRANSIT'].includes(o.status));
+    const completed = driverOrders.filter(o => o.status === 'COMPLETED');
+    const pending = driverOrders.filter(o => o.status === 'PENDING');
+    const rate = total > 0 ? ((taken.length / total) * 100).toFixed(1) : 0;
+    return {
+      total,
+      takenCount: taken.length,
+      enRouteCount: enRoute.length,
+      completedCount: completed.length,
+      pendingCount: pending.length,
+      rate
+    };
+  }, [driverOrders]);
 
   // User Filter & Search State
   const [userSearch, setUserSearch] = useState('');
@@ -508,6 +541,15 @@ export default function AdminView({ initialTab = 'overview' }) {
           <Icon icon="mdi:history" width="18" height="18" />
           Audit Trail &amp; Logs
         </button>
+
+        <button
+          className={`admin-tab-btn ${activeTab === 'orders' ? 'active' : ''}`}
+          onClick={() => setActiveTab('orders')}
+        >
+          <Icon icon="mdi:ambulance" width="18" height="18" />
+          Driver Orders Intake
+          <span className="tab-badge">{driverOrders.length}</span>
+        </button>
       </nav>
 
       {/* ====================================================================
@@ -542,6 +584,20 @@ export default function AdminView({ initialTab = 'overview' }) {
               <div className="kpi-subtext">
                 <span className="kpi-badge up">+{userStats.volunteers} Volunteers</span>
                 <span>{userStats.coordinators} Coordinators</span>
+              </div>
+            </div>
+
+            <div className="admin-kpi-card">
+              <div className="kpi-top">
+                <span className="kpi-title">Ambulance Driver Intake</span>
+                <div className="kpi-icon-wrap red" style={{ background: '#fef2f2', color: '#e74c3c' }}>
+                  <Icon icon="mdi:ambulance" width="22" height="22" />
+                </div>
+              </div>
+              <div className="kpi-value">{orderStats.rate}%</div>
+              <div className="kpi-subtext">
+                <span className="kpi-badge up">{orderStats.takenCount} / {orderStats.total} Orders Taken</span>
+                <span>{orderStats.pendingCount} Pending</span>
               </div>
             </div>
 
@@ -1338,6 +1394,259 @@ export default function AdminView({ initialTab = 'overview' }) {
                       </tr>
                     ))
                   )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ====================================================================
+          TAB 6: AMBULANCE DRIVER ORDERS & INTAKE TRACKING
+          ==================================================================== */}
+      {activeTab === 'orders' && (
+        <div className="tab-pane-fade">
+          <div className="admin-card">
+            <div className="admin-card-header">
+              <div>
+                <h2>
+                  <Icon icon="mdi:ambulance" width="22" height="22" color="#e74c3c" />
+                  Ambulance Orders Intake &amp; Driver Allocation Monitor
+                </h2>
+                <p className="admin-card-desc">
+                  Real-time telemetry on citizen ambulance bookings, driver acceptance rates, and in-transit units
+                </p>
+              </div>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <a
+                  href="/driver"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="admin-btn admin-btn-outline"
+                >
+                  <Icon icon="mdi:open-in-new" width="16" height="16" />
+                  Open Driver View
+                </a>
+              </div>
+            </div>
+
+            {/* Quick Metrics */}
+            <div className="admin-kpi-grid" style={{ marginBottom: '20px' }}>
+              <div className="admin-kpi-card">
+                <div className="kpi-top">
+                  <span className="kpi-title">Total User Orders</span>
+                  <div className="kpi-icon-wrap blue">
+                    <Icon icon="mdi:clipboard-list" width="22" height="22" />
+                  </div>
+                </div>
+                <div className="kpi-value">{orderStats.total}</div>
+                <div className="kpi-subtext">Citizen Ambulance Calls</div>
+              </div>
+
+              <div className="admin-kpi-card">
+                <div className="kpi-top">
+                  <span className="kpi-title">Orders Taken by Drivers</span>
+                  <div className="kpi-icon-wrap emerald">
+                    <Icon icon="mdi:steering" width="22" height="22" />
+                  </div>
+                </div>
+                <div className="kpi-value">{orderStats.takenCount}</div>
+                <div className="kpi-subtext">
+                  <span className="kpi-badge up">{orderStats.rate}% Intake Rate</span>
+                </div>
+              </div>
+
+              <div className="admin-kpi-card">
+                <div className="kpi-top">
+                  <span className="kpi-title">Currently En Route</span>
+                  <div className="kpi-icon-wrap amber">
+                    <Icon icon="mdi:ambulance" width="22" height="22" />
+                  </div>
+                </div>
+                <div className="kpi-value">{orderStats.enRouteCount}</div>
+                <div className="kpi-subtext">Active Dispatches on Road</div>
+              </div>
+
+              <div className="admin-kpi-card">
+                <div className="kpi-top">
+                  <span className="kpi-title">Awaiting Driver Take</span>
+                  <div className="kpi-icon-wrap red">
+                    <Icon icon="mdi:timer-sand" width="22" height="22" />
+                  </div>
+                </div>
+                <div className="kpi-value">{orderStats.pendingCount}</div>
+                <div className="kpi-subtext">
+                  <span className={`kpi-badge ${orderStats.pendingCount > 0 ? 'warn' : 'up'}`}>
+                    {orderStats.pendingCount > 0 ? 'Urgent Attention' : 'All Orders Assigned'}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Toolbar */}
+            <div className="admin-toolbar">
+              <div className="admin-search-wrap">
+                <Icon icon="mdi:magnify" width="18" height="18" className="search-icon-inside" />
+                <input
+                  type="text"
+                  className="admin-search-input"
+                  placeholder="Search by patient name, phone, driver name, vehicle, or pickup area..."
+                  value={orderSearch}
+                  onChange={(e) => setOrderSearch(e.target.value)}
+                />
+              </div>
+
+              <div className="admin-filters-wrap">
+                <select
+                  className="admin-select"
+                  value={orderStatusFilter}
+                  onChange={(e) => setOrderStatusFilter(e.target.value)}
+                >
+                  <option value="ALL">All Order Statuses</option>
+                  <option value="PENDING">Awaiting Driver (PENDING)</option>
+                  <option value="TAKEN">Driver Accepted (TAKEN)</option>
+                  <option value="EN_ROUTE">En Route (EN ROUTE)</option>
+                  <option value="IN_TRANSIT">To Hospital (IN TRANSIT)</option>
+                  <option value="COMPLETED">Completed Trips</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Orders Intake Table */}
+            <div className="admin-table-container">
+              <table className="admin-table">
+                <thead>
+                  <tr>
+                    <th>Order ID / Time</th>
+                    <th>Patient Name &amp; Phone</th>
+                    <th>Patient Age</th>
+                    <th>Required Medical Equipment</th>
+                    <th>Assigned Driver &amp; Ambulance</th>
+                    <th>Intake Status</th>
+                    <th>Destination Hospital</th>
+                    <th style={{ textAlign: 'right' }}>Direct Calling</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {driverOrders
+                    .filter(o => {
+                      const matchesSearch =
+                        o.orderId.toLowerCase().includes(orderSearch.toLowerCase()) ||
+                        o.patientName.toLowerCase().includes(orderSearch.toLowerCase()) ||
+                        o.contactNumber.includes(orderSearch) ||
+                        o.pickupLocation.toLowerCase().includes(orderSearch.toLowerCase()) ||
+                        (o.assignedDriver?.driverName || '').toLowerCase().includes(orderSearch.toLowerCase()) ||
+                        (o.assignedDriver?.vehicleNumber || '').toLowerCase().includes(orderSearch.toLowerCase());
+                      const matchesStatus = orderStatusFilter === 'ALL' || o.status === orderStatusFilter;
+                      return matchesSearch && matchesStatus;
+                    })
+                    .map(o => (
+                      <tr key={o.orderId}>
+                        <td>
+                          <strong>{o.orderId}</strong>
+                          <div style={{ fontSize: '11px', color: '#64748b' }}>{o.bookedAt}</div>
+                        </td>
+                        <td>
+                          <div style={{ fontWeight: 700, color: '#0f172a' }}>{o.patientName}</div>
+                          <div style={{ fontSize: '11.5px', color: '#64748b' }}>📍 {o.pickupLocation}</div>
+                        </td>
+                        <td>
+                          <span style={{
+                            background: '#fee2e2',
+                            color: '#991b1b',
+                            padding: '3px 8px',
+                            borderRadius: '4px',
+                            fontWeight: 700,
+                            fontSize: '11.5px',
+                            whiteSpace: 'nowrap'
+                          }}>
+                            {o.patientAge} yrs ({o.ageCategory})
+                          </span>
+                        </td>
+                        <td>
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', maxWidth: '240px' }}>
+                            {o.requirements?.map((req, i) => (
+                              <span
+                                key={i}
+                                style={{
+                                  fontSize: '10.5px',
+                                  background: '#f1f5f9',
+                                  color: '#334155',
+                                  padding: '2px 6px',
+                                  borderRadius: '4px',
+                                  border: '1px solid #e2e8f0',
+                                  whiteSpace: 'nowrap'
+                                }}
+                              >
+                                {req}
+                              </span>
+                            ))}
+                          </div>
+                        </td>
+                        <td>
+                          {o.assignedDriver ? (
+                            <div>
+                              <div style={{ fontWeight: 700, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                <Icon icon="mdi:steering" width="14" height="14" color="#059669" />
+                                {o.assignedDriver.driverName}
+                              </div>
+                              <div style={{ fontSize: '11.5px', color: '#64748b' }}>
+                                Unit: <strong style={{ color: '#dc2626' }}>{o.assignedDriver.vehicleNumber}</strong>
+                              </div>
+                            </div>
+                          ) : (
+                            <span style={{
+                              background: '#fee2e2',
+                              color: '#dc2626',
+                              padding: '3px 8px',
+                              borderRadius: '4px',
+                              fontSize: '11px',
+                              fontWeight: 700
+                            }}>
+                              🚨 Awaiting Nearby Driver
+                            </span>
+                          )}
+                        </td>
+                        <td>
+                          <span className={`status-pill ${o.status === 'COMPLETED' ? 'ACTIVE' : o.status === 'PENDING' ? 'SUSPENDED' : 'ACTIVE'}`}
+                            style={{
+                              background: o.status === 'PENDING' ? '#fee2e2' : o.status === 'COMPLETED' ? '#ecfdf5' : '#eff6ff',
+                              color: o.status === 'PENDING' ? '#dc2626' : o.status === 'COMPLETED' ? '#059669' : '#2563eb'
+                            }}
+                          >
+                            <span className="status-pill-dot"></span>
+                            {o.status.replace('_', ' ')}
+                          </span>
+                        </td>
+                        <td style={{ fontSize: '12px', color: '#475569' }}>
+                          {o.destinationHospital}
+                        </td>
+                        <td>
+                          <div className="table-actions" style={{ justifyContent: 'flex-end', gap: '6px' }}>
+                            <a
+                              href={`tel:${o.contactNumber}`}
+                              className="admin-btn admin-btn-sm admin-btn-outline"
+                              title="Call patient straightly"
+                              style={{ padding: '4px 8px', fontSize: '11.5px' }}
+                            >
+                              <Icon icon="mdi:phone-in-talk" width="14" height="14" color="#059669" />
+                              Patient
+                            </a>
+                            {o.assignedDriver && (
+                              <a
+                                href={`tel:${o.assignedDriver.phone}`}
+                                className="admin-btn admin-btn-sm admin-btn-primary"
+                                title="Call driver straightly"
+                                style={{ padding: '4px 8px', fontSize: '11.5px' }}
+                              >
+                                <Icon icon="mdi:steering" width="14" height="14" />
+                                Driver
+                              </a>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
                 </tbody>
               </table>
             </div>
