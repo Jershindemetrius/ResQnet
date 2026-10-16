@@ -1,0 +1,512 @@
+/* ==========================================================================
+   ResQNet - Coordinator Admin Command Center Styles
+   Font Family: Times New Roman, Times, Georgia, serif
+   ========================================================================== */
+
+.admin-cad-container {
+  font-family: 'Times New Roman', Times, Georgia, serif;
+  display: flex;
+  min-height: calc(100vh - 58px);
+  background: #f8fafc;
+  color: #0f172a;
+}
+
+.admin-cad-main {
+  flex: 1;
+  padding: 18px 24px;
+  overflow-y: auto;
+}
+
+/* --------------------------------------------------------------------------
+   Top Hub Header Strip
+   -------------------------------------------------------------------------- */
+.admin-hub-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 20px;
+  background: #ffffff;
+  border: 1px solid #d9e2ec;
+  border-radius: 8px;
+  padding: 16px 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+}
+
+.admin-hub-title-block {
+  display: flex;
+  flex-direction: column;
+}
+
+.admin-hub-node-tag {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  font-weight: 800;
+  color: #dc2626;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 4px;
+}
+
+.mesh-node-badge {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.admin-hub-heading {
+  font-size: 24px;
+  font-weight: 900;
+  color: #0f172a;
+  margin: 0;
+  line-height: 1.15;
+}
+
+.admin-hub-subtext {
+  font-size: 12.5px;
+  color: #64748b;
+  margin: 4px 0 0;
+}
+
+.admin-hub-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.latency-chip {
+  background: #eff6ff;
+  color: #0284c7;
+  border: 1px solid #bfdbfe;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-code3-backup {
+  background: #dc2626;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.25);
+  transition: background 0.15s;
+}
+
+.btn-code3-backup:hover {
+  background: #b91c1c;
+}
+
+.btn-routing-params {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-routing-params:hover {
+  background: #dbeafe;
+}
+
+/* --------------------------------------------------------------------------
+   4 Top Key Metrics Cards
+   -------------------------------------------------------------------------- */
+.admin-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.metric-card {
+  background: #ffffff;
+  border: 1px solid #d9e2ec;
+  border-radius: 8px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+.metric-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 8px;
+}
+
+.metric-label {
+  font-size: 9.5px;
+  font-weight: 800;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.metric-icon-box {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background: #eff6ff;
+  color: #0284c7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.metric-value-huge {
+  font-size: 32px;
+  font-weight: 900;
+  color: #0f172a;
+  line-height: 1;
+  margin-bottom: 8px;
+}
+
+.metric-card-foot {
+  font-size: 11px;
+  color: #475569;
+  border-top: 1px solid #f1f5f9;
+  padding-top: 6px;
+}
+
+/* --------------------------------------------------------------------------
+   2-Column Middle Grid: Citizen Queue (Left) & Gear/Roster (Right)
+   -------------------------------------------------------------------------- */
+.admin-middle-2col {
+  display: grid;
+  grid-template-columns: 1.6fr 1.1fr;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+/* Left Queue Section */
+.dispatch-queue-card {
+  background: #ffffff;
+  border: 1px solid #d9e2ec;
+  border-radius: 8px;
+  padding: 18px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+.queue-header-strip {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.queue-title-wrap h3 {
+  font-size: 16px;
+  font-weight: 900;
+  color: #0f172a;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.queue-title-sub {
+  font-size: 11px;
+  color: #64748b;
+  margin: 2px 0 0;
+}
+
+.queue-header-filters {
+  display: flex;
+  gap: 6px;
+}
+
+.chip-filter {
+  font-size: 10px;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 4px;
+  border: 1px solid #bfdbfe;
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+/* Queue Incident Cards */
+.queue-card-item {
+  border: 1px solid #cbd5e1;
+  border-left: 5px solid #dc2626;
+  border-radius: 6px;
+  padding: 14px;
+  margin-bottom: 12px;
+  background: #ffffff;
+}
+
+.queue-card-top-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  margin-bottom: 8px;
+}
+
+.queue-tag-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.queue-req-id {
+  font-weight: 900;
+  color: #0f172a;
+}
+
+.queue-time-tag {
+  color: #64748b;
+  font-size: 10.5px;
+}
+
+.queue-content-2col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  font-size: 12.5px;
+  margin-bottom: 10px;
+}
+
+.queue-patient-title {
+  font-size: 14px;
+  font-weight: 800;
+  color: #0f172a;
+  margin-bottom: 2px;
+}
+
+.queue-actions-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid #f1f5f9;
+  padding-top: 8px;
+}
+
+.status-badge-enroute {
+  background: #fee2e2;
+  color: #b91c1c;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 4px;
+}
+
+.status-badge-onsite {
+  background: #fef3c7;
+  color: #b45309;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 4px;
+}
+
+.btn-queue-action {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+  margin-left: 6px;
+}
+
+.btn-queue-action.red {
+  background: #dc2626;
+  color: white;
+  border: none;
+}
+
+/* Right Column Gear Stock & Roster */
+.right-column-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.medical-gear-card,
+.cadre-roster-card {
+  background: #ffffff;
+  border: 1px solid #d9e2ec;
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+.gear-header-strip {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.gear-header-strip h4 {
+  font-size: 15px;
+  font-weight: 900;
+  color: #0f172a;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.gear-item-block {
+  margin-bottom: 12px;
+}
+
+.gear-item-line {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  font-weight: 800;
+  color: #1e293b;
+  margin-bottom: 4px;
+}
+
+.gear-progress-bar {
+  height: 6px;
+  background: #e2e8f0;
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 4px;
+}
+
+.gear-progress-fill {
+  height: 100%;
+  background: #0284c7;
+}
+
+.gear-sub-info {
+  display: flex;
+  justify-content: space-between;
+  font-size: 9.5px;
+  color: #64748b;
+}
+
+/* Volunteer & Paramedic Cadre */
+.roster-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.roster-row-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  background: #f8fafc;
+}
+
+.roster-user-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.roster-avatar-square {
+  width: 26px;
+  height: 26px;
+  background: #0284c7;
+  color: white;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.roster-name-title {
+  font-size: 12px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.roster-unit-desc {
+  font-size: 10px;
+  color: #64748b;
+}
+
+/* --------------------------------------------------------------------------
+   Bottom Tactical GIS Map Preview
+   -------------------------------------------------------------------------- */
+.tactical-gis-card {
+  background: #ffffff;
+  border: 1px solid #d9e2ec;
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.gis-header-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.gis-header-line h3 {
+  font-size: 16px;
+  font-weight: 900;
+  color: #0f172a;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.gis-map-canvas-container {
+  height: 220px;
+  background: #eef2f6;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  position: relative;
+  overflow: hidden;
+}
+
+.gis-map-canvas-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.9;
+}
+
+@media (max-width: 1100px) {
+  .admin-metrics-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .admin-middle-2col {
+    grid-template-columns: 1fr;
+  }
+}

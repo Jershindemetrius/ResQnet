@@ -1,0 +1,93 @@
+/* ==========================================================================
+   ResQNet - MDT Navigation Rails Sidebar
+   ========================================================================== */
+
+.cad-sidebar {
+  font-family: 'Times New Roman', Times, Georgia, serif;
+  width: 190px;
+  background: #ffffff;
+  border-right: 1px solid #d9e2ec;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 16px 10px;
+  min-height: calc(100vh - 58px);
+  flex-shrink: 0;
+}
+
+.cad-sidebar-header {
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: #64748b;
+  letter-spacing: 0.08em;
+  padding: 0 8px 12px;
+  border-bottom: 1px solid #e2e8f0;
+  margin-bottom: 12px;
+}
+
+.cad-sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.cad-rail-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #334155;
+  text-decoration: none;
+  border-radius: 6px;
+  transition: all 0.15s ease;
+}
+
+.cad-rail-btn:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+.cad-rail-btn.active {
+  background: #dc2626;
+  color: #ffffff;
+  box-shadow: 0 2px 6px rgba(220, 38, 38, 0.3);
+}
+
+.cad-rail-icon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.cad-sidebar-bottom {
+  padding-top: 14px;
+  border-top: 1px solid #e2e8f0;
+  font-size: 10px;
+  color: #64748b;
+  line-height: 1.4;
+}
+
+.cad-telemetry-tag {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #059669;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  margin-bottom: 4px;
+}
+
+.cad-coords-text {
+  font-family: monospace;
+  font-size: 10px;
+  color: #475569;
+}
+
+@media (max-width: 900px) {
+  .cad-sidebar {
+    display: none;
+  }
+}
