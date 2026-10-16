@@ -9,6 +9,12 @@ export default function AmbulanceDriverView() {
   const [isOrderAccepted, setIsOrderAccepted] = useState(false);
   const [countdown, setCountdown] = useState(40);
   const [vitalsTransmitted, setVitalsTransmitted] = useState(false);
+  const [toastMessage, setToastMessage] = useState(null);
+
+  const showToast = (msg) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 4000);
+  };
 
   // Countdown timer simulation for P1 broadcast
   useEffect(() => {
@@ -21,20 +27,27 @@ export default function AmbulanceDriverView() {
 
   const handleToggleAudio = () => {
     setIsPlayingAudio(!isPlayingAudio);
+    showToast(!isPlayingAudio ? '🔊 Dispatch Radio Audio Channel Armed' : '🔇 Dispatch Audio Muted');
   };
 
   const handleAcceptOrder = () => {
     setIsOrderAccepted(true);
-    alert('🚨 CAD ORDER #ER-2024-8841 ACCEPTED!\nRoute clearance armed: Green light wave enabled for Ambulance ALS-101.');
+    showToast('🚨 CAD ORDER #ER-2024-8841 ACCEPTED! Route clearance armed: Green light wave enabled for Ambulance ALS-101.');
   };
 
   const handleTransmitVitals = () => {
     setVitalsTransmitted(true);
-    alert('📡 TELEMETRY TRANSMITTED: 12-Lead ECG & Patient vitals relayed to Kovilpatti GH Cath Lab.');
+    showToast('📡 TELEMETRY TRANSMITTED: 12-Lead ECG & Patient vitals relayed to Kovilpatti GH Cath Lab.');
   };
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+      {toastMessage && (
+        <div className="dash-floating-toast" style={{ zIndex: 3000 }}>
+          <Icon icon="mdi:radio-tower" width="20" height="20" />
+          <span>{toastMessage}</span>
+        </div>
+      )}
       {/* Top Header matching reference layout */}
       <CADTopNav />
 
@@ -254,7 +267,7 @@ export default function AmbulanceDriverView() {
 
                 <button
                   className="btn-decline-order"
-                  onClick={() => alert('Order rerouted to secondary backup unit ALS-104.')}
+                  onClick={() => showToast('⚠️ Order rerouted to secondary backup unit ALS-104.')}
                 >
                   <Icon icon="mdi:arrow-u-left-top" width="14" height="14" />
                   DECLINE / PASS TO BACKUP UNIT (ALS-104)
@@ -277,7 +290,7 @@ export default function AmbulanceDriverView() {
                 <button
                   className="btn-decline-order"
                   style={{ padding: '4px 10px', fontSize: '11px', color: '#0284c7' }}
-                  onClick={() => alert('Corridor cleared via police dispatch')}
+                  onClick={() => showToast('🚦 Main Bypass Corridor cleared via police traffic priority override.')}
                 >
                   <Icon icon="mdi:shield-check" width="14" height="14" />
                   CLEAR CORRIDOR VIA MAIN BYPASS

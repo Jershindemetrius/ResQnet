@@ -97,6 +97,13 @@ export default function ReportEmergencyView() {
     }
   };
 
+  const [toastMessage, setToastMessage] = useState(null);
+
+  const showToast = (msg) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 3800);
+  };
+
   // Handle Quick Age Selection
   const handleSelectAgeGroup = (category, defaultAge) => {
     setAgeCategory(category);
@@ -107,11 +114,11 @@ export default function ReportEmergencyView() {
   const handleBookAmbulance = (e) => {
     e.preventDefault();
     if (!patientName.trim()) {
-      alert('Please enter patient or reporter name.');
+      showToast('⚠️ Please enter the patient or reporter name.');
       return;
     }
     if (!contactNumber.trim()) {
-      alert('Please enter your contact phone number.');
+      showToast('⚠️ Please enter your contact phone number for dispatch callback.');
       return;
     }
 
@@ -156,6 +163,12 @@ export default function ReportEmergencyView() {
 
   return (
     <div className="client-booking-page">
+      {toastMessage && (
+        <div className="dash-floating-toast">
+          <Icon icon="mdi:alert-circle" width="18" height="18" />
+          <span>{toastMessage}</span>
+        </div>
+      )}
       {/* --------------------------------------------------------------------
           TOP MODE TABS
           -------------------------------------------------------------------- */}

@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Icon } from '@iconify/react';
 import './CADTopNav.css';
@@ -13,12 +14,27 @@ export default function CADTopNav() {
     { path: '/settings', label: 'System Hub' }
   ];
 
+  const [sirenActive, setSirenActive] = useState(false);
+  const [toastMessage, setToastMessage] = useState(null);
+
   const handleTriggerSiren = () => {
-    alert('🚨 SIREN CODE 3 ACTIVATED - Emergency Beacon Broadcasting on All Regional Channels');
+    const nextState = !sirenActive;
+    setSirenActive(nextState);
+    const msg = nextState
+      ? '🚨 SIREN CODE 3 ACTIVATED - Emergency Beacon Broadcasting on All Regional Channels'
+      : '🔕 Siren Code 3 Standdown - Returning to Standard Telemetry';
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 4000);
   };
 
   return (
     <header className="cad-top-nav">
+      {toastMessage && (
+        <div className="dash-floating-toast" style={{ bottom: 'auto', top: '70px', right: '20px' }}>
+          <Icon icon="mdi:alarm-light" width="18" height="18" />
+          <span>{toastMessage}</span>
+        </div>
+      )}
       {/* Brand & Unit Callsign Area */}
       <div className="cad-brand-area">
         <Link to="/" className="cad-logo-wrap">
