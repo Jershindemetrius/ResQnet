@@ -89,8 +89,14 @@ export default function DispatchCenterView() {
     try {
       setLoading(true);
       const data = await getEmergencies();
-      setEmergencies(data);
-      if (data.length > 0) setSelectedEmergency(data[0]);
+      if (Array.isArray(data) && data.length > 0) {
+        setEmergencies(data);
+        setSelectedEmergency(data[0]);
+      } else {
+        setEmergencies(fallbackEmergencies);
+        setSelectedEmergency(fallbackEmergencies[0]);
+        loadFallbackSuggestions('ER102');
+      }
     } catch {
       // Graceful fallback to demo dataset
       setEmergencies(fallbackEmergencies);

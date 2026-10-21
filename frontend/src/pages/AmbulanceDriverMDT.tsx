@@ -46,6 +46,11 @@ import {
   transmitDriverVitals,
   clearDriverCorridor
 } from '../services/apiClient';
+import {
+  getStoredOrders,
+  driverTakeOrder,
+  updateOrderStatus
+} from '../data/ambulanceOrderStore';
 
 // Types for Driver MDT
 export type MDTUnitStatus =
@@ -193,30 +198,64 @@ export default function AmbulanceDriverMDT() {
     return () => clearInterval(timer);
   }, [runStatus, countdown]);
 
-  // Load backend orders from API if available
+  // Load active emergency dispatch orders from store and API
   useEffect(() => {
-    async function fetchOrders() {
+    const syncOrders = () => {
       try {
-        const liveOrders = await getDriverOrders();
-        if (Array.isArray(liveOrders) && liveOrders.length > 0) {
-          const first = liveOrders[0];
-          setOrder(prev => ({
-            ...prev,
-            cadId: `CAD #${first.id || 'ER-2024-8841'}`,
-            title: first.patientName ? `${first.type || 'Emergency'} - ${first.patientName}` : prev.title,
-            patientSummary: {
-              ...prev.patientSummary,
-              patient: first.patientName ? `${first.patientAge || '58'} yrs • ${first.patientGender || 'Male'} (${first.type || 'Critical'})` : prev.patientSummary.patient,
-              location: first.pickupLocation || prev.patientSummary.location
-            },
-            contactPhone: first.callerPhone || prev.contactPhone
-          }));
+        const stored = getStoredOrders();
+        if (Array.isArray(stored) && stored.length > 0) {
+          const active = stored.find((o: any) => o.status === 'PENDING' || o.status === 'TAKEN' || o.status === 'EN_ROUTE') || stored[0];
+          if (active) {
+            setOrder(prev => ({
+              ...prev,
+              cadId: `CAD #${active.orderId || active.id || 'ER-2024-8841'}`,
+              priority: active.priority || 'PRIORITY 1',
+              code: active.priority === 'CRITICAL' ? 'CODE RED' : 'CODE YELLOW',
+              title: active.patientName ? `Emergency Dispatch - ${active.patientName}` : prev.title,
+              reportedTime: active.bookedAt || 'Just now',
+              eta: active.assignedDriver?.etaMinutes ? `${active.assignedDriver.etaMinutes} mins` : prev.eta,
+              distance: active.assignedDriver?.currentDistance || prev.distance,
+              patientSummary: {
+                patient: active.patientName ? `${active.patientAge || '54'} yrs • ${active.patientName} (${active.ageCategory || 'Adult'})` : prev.patientSummary.patient,
+                reporter: `${active.callerType || 'Citizen'} • ${active.contactNumber || 'N/A'}`,
+                location: `${active.pickupLocation || 'Kovilpatti'}${active.landmark ? ` (${active.landmark})` : ''}`,
+                coordinates: typeof active.coordinates === 'object'
+                  ? `${active.coordinates.lat}° N, ${active.coordinates.lng}° E`
+                  : `${active.coordinates || prev.patientSummary.coordinates}`
+              },
+              clinicalKits: active.requirements || prev.clinicalKits,
+              audioTranscript: active.notes || prev.audioTranscript,
+              hospitalTarget: {
+                ...prev.hospitalTarget,
+                name: active.destinationHospital || prev.hospitalTarget.name
+              },
+              contactPhone: active.contactNumber || prev.contactPhone
+            }));
+
+            if (active.status === 'TAKEN' || active.status === 'EN_ROUTE') {
+              setRunStatus('ACCEPTED');
+              setUnitStatus('DISPATCHED_EN_ROUTE');
+            } else if (active.status === 'ARRIVED') {
+              setRunStatus('ON_SCENE');
+              setUnitStatus('ON_SCENE');
+            } else if (active.status === 'IN_TRANSIT') {
+              setRunStatus('TRANSPORTING');
+              setUnitStatus('IN_TRANSIT_HOSPITAL');
+            }
+          }
         }
       } catch (err) {
-        console.warn('Driver MDT API load error (cached order used):', err);
+        console.warn('Driver MDT local store sync error:', err);
       }
-    }
-    fetchOrders();
+    };
+
+    syncOrders();
+    window.addEventListener('resqnet:orders-changed', syncOrders);
+    window.addEventListener('storage', syncOrders);
+    return () => {
+      window.removeEventListener('resqnet:orders-changed', syncOrders);
+      window.removeEventListener('storage', syncOrders);
+    };
   }, []);
 
   // Speed simulation when en-route
@@ -278,22 +317,32 @@ export default function AmbulanceDriverMDT() {
     setCorridorCleared(true);
     showToast('🚨 ORDER ACCEPTED! CAD green-wave corridor armed. En route Code-3.', 'success');
 
+    const cleanId = order.cadId.replace('CAD #', '').trim();
     try {
-      await takeDriverOrder(order.cadId.replace('CAD #', ''), 'ALS-101 (Officer Raman)');
-      await clearDriverCorridor(order.cadId.replace('CAD #', ''));
+      driverTakeOrder(cleanId);
+    } catch {}
+
+    try {
+      await takeDriverOrder(cleanId, 'ALS-101 (Officer Raman)');
+      await clearDriverCorridor(cleanId);
     } catch {
       // Offline fallback
     }
   };
 
   const handleProgressRun = async () => {
+    const cleanId = order.cadId.replace('CAD #', '').trim();
+
     if (runStatus === 'ACCEPTED') {
       setRunStatus('ON_SCENE');
       setUnitStatus('ON_SCENE');
       setIsSirenActive(false);
       showToast('📍 ON SCENE: Patient contact initiated. Medical crew assessing vitals.', 'info');
       try {
-        await updateDriverOrderStatus(order.cadId.replace('CAD #', ''), 'ARRIVED');
+        updateOrderStatus(cleanId, 'ARRIVED');
+      } catch {}
+      try {
+        await updateDriverOrderStatus(cleanId, 'ARRIVED');
       } catch {}
     } else if (runStatus === 'ON_SCENE') {
       setRunStatus('TRANSPORTING');
@@ -301,8 +350,11 @@ export default function AmbulanceDriverMDT() {
       setIsSirenActive(true);
       showToast('🚑 TRANSPORTING: En route to Kovilpatti GH Cath Lab. Telemetry transmitting.', 'warn');
       try {
-        await updateDriverOrderStatus(order.cadId.replace('CAD #', ''), 'IN_TRANSIT');
-        await transmitDriverVitals(order.cadId.replace('CAD #', ''), {
+        updateOrderStatus(cleanId, 'IN_TRANSIT');
+      } catch {}
+      try {
+        await updateDriverOrderStatus(cleanId, 'IN_TRANSIT');
+        await transmitDriverVitals(cleanId, {
           hr: telemetry.heartRate,
           bp: telemetry.bp,
           spo2: telemetry.spo2
@@ -314,7 +366,10 @@ export default function AmbulanceDriverMDT() {
       setIsSirenActive(false);
       showToast('🏥 MISSION COMPLETE: Patient safely handed off to Dr. Sundaram in Bay 02.', 'success');
       try {
-        await updateDriverOrderStatus(order.cadId.replace('CAD #', ''), 'COMPLETED');
+        updateOrderStatus(cleanId, 'COMPLETED');
+      } catch {}
+      try {
+        await updateDriverOrderStatus(cleanId, 'COMPLETED');
       } catch {}
     } else if (runStatus === 'COMPLETED') {
       setRunStatus('PENDING');

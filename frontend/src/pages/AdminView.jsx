@@ -11,8 +11,20 @@ import {
 import { getStoredOrders } from '../data/ambulanceOrderStore.js';
 
 export default function AdminView({ initialTab = 'overview' }) {
+  const normalizeTab = (tab) => {
+    if (tab === 'emergencies' || tab === 'dispatches') return 'orders';
+    if (tab === 'fleet') return 'incidents';
+    if (tab === 'telemetry' || tab === 'telematics') return 'overview';
+    return tab || 'overview';
+  };
+
   // Navigation & View State
-  const [activeTab, setActiveTab] = useState(initialTab);
+  const [activeTab, setActiveTab] = useState(() => normalizeTab(initialTab));
+
+  useEffect(() => {
+    setActiveTab(normalizeTab(initialTab));
+  }, [initialTab]);
+
   const [threatLevel, setThreatLevel] = useState('LEVEL_1_NORMAL');
   const [activeBroadcast, setActiveBroadcast] = useState(null);
 

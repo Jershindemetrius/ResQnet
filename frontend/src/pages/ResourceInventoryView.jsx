@@ -43,7 +43,11 @@ export default function ResourceInventoryView() {
     try {
       setLoading(true);
       const data = await getResources();
-      setResources(data);
+      if (Array.isArray(data) && data.length > 0) {
+        setResources(data);
+      } else {
+        setResources(fallbackResources);
+      }
     } catch {
       setResources(fallbackResources);
     } finally {

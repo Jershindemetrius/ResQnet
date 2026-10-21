@@ -42,7 +42,11 @@ export default function VolunteerDirectoryView() {
     try {
       setLoading(true);
       const data = await getVolunteers();
-      setVolunteers(data);
+      if (Array.isArray(data) && data.length > 0) {
+        setVolunteers(data);
+      } else {
+        setVolunteers(fallbackVolunteers);
+      }
     } catch {
       setVolunteers(fallbackVolunteers);
     } finally {

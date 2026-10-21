@@ -35,9 +35,11 @@ export const AppRoutes: React.FC = () => {
           ==================================================================== */}
       <Route element={<PublicLayout />}>
         <Route path="/" element={<DashboardView />} />
+        <Route path="/dashboard" element={<Navigate to="/" replace />} />
         <Route path="/report" element={<ReportEmergencyView />} />
         <Route path="/book-ambulance" element={<ReportEmergencyView />} />
         <Route path="/emergencies" element={<DispatchCenterView />} />
+        <Route path="/dispatch" element={<Navigate to="/emergencies" replace />} />
         <Route path="/resources" element={<ResourceInventoryView />} />
         <Route path="/volunteers" element={<VolunteerDirectoryView />} />
       </Route>
@@ -71,12 +73,12 @@ export const AppRoutes: React.FC = () => {
         <Route path="/admin" element={<AdminLayout />}>
           <Route index element={<Navigate to="/admin/overview" replace />} />
           <Route path="overview" element={<AdminView initialTab="overview" />} />
-          <Route path="dispatches" element={<AdminView initialTab="emergencies" />} />
+          <Route path="dispatches" element={<AdminView initialTab="orders" />} />
           <Route path="matcher" element={<DispatchCenterView />} />
-          <Route path="fleet" element={<AdminView initialTab="fleet" />} />
-          <Route path="hospitals" element={<AdminView initialTab="hospitals" />} />
+          <Route path="fleet" element={<AdminView initialTab="incidents" />} />
+          <Route path="hospitals" element={<ResourceInventoryView />} />
           <Route path="users" element={<AdminView initialTab="users" />} />
-          <Route path="telematics" element={<AdminView initialTab="telemetry" />} />
+          <Route path="telematics" element={<DriverTelemetryPage />} />
           <Route path="config" element={<AdminView initialTab="config" />} />
           <Route path="audit" element={<AdminView initialTab="audit" />} />
         </Route>
