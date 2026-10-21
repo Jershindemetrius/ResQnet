@@ -335,41 +335,41 @@ export default function AmbulanceDriverMDT() {
   const statusConfig = useMemo(() => {
     switch (unitStatus) {
       case 'ONLINE_PATROLLING':
-        return { label: 'Online & Patrolling', color: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/30', dot: 'bg-emerald-500 animate-pulse' };
+        return { label: 'Online & Patrolling', color: 'text-emerald-700', bg: 'bg-emerald-50', border: 'border-emerald-200', dot: 'bg-emerald-500 animate-pulse' };
       case 'DISPATCHED_EN_ROUTE':
-        return { label: 'Dispatched • En Route Code-3', color: 'text-rose-400', bg: 'bg-rose-500/10', border: 'border-rose-500/30', dot: 'bg-rose-500 animate-ping' };
+        return { label: 'Dispatched • En Route Code-3', color: 'text-rose-700', bg: 'bg-rose-50', border: 'border-rose-200', dot: 'bg-rose-500 animate-ping' };
       case 'ON_SCENE':
-        return { label: 'On Scene • Patient Contact', color: 'text-amber-400', bg: 'bg-amber-500/10', border: 'border-amber-500/30', dot: 'bg-amber-500' };
+        return { label: 'On Scene • Patient Contact', color: 'text-amber-800', bg: 'bg-amber-50', border: 'border-amber-200', dot: 'bg-amber-500' };
       case 'IN_TRANSIT_HOSPITAL':
-        return { label: 'In Transit • Destination GH', color: 'text-cyan-400', bg: 'bg-cyan-500/10', border: 'border-cyan-500/30', dot: 'bg-cyan-500 animate-pulse' };
+        return { label: 'In Transit • Destination GH', color: 'text-cyan-800', bg: 'bg-cyan-50', border: 'border-cyan-200', dot: 'bg-cyan-500 animate-pulse' };
       case 'PATIENT_HANDOFF':
-        return { label: 'Hospital Patient Handoff', color: 'text-indigo-400', bg: 'bg-indigo-500/10', border: 'border-indigo-500/30', dot: 'bg-indigo-500' };
+        return { label: 'Hospital Patient Handoff', color: 'text-indigo-800', bg: 'bg-indigo-50', border: 'border-indigo-200', dot: 'bg-indigo-500' };
       case 'OUT_OF_SERVICE':
-        return { label: 'Out of Service / Refuel', color: 'text-slate-400', bg: 'bg-slate-500/10', border: 'border-slate-500/30', dot: 'bg-slate-500' };
+        return { label: 'Out of Service / Refuel', color: 'text-slate-600', bg: 'bg-slate-100', border: 'border-slate-200', dot: 'bg-slate-400' };
     }
   }, [unitStatus]);
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-slate-950 font-sans text-slate-100 select-none">
+    <div className="flex h-full w-full overflow-hidden bg-slate-50 font-sans text-slate-800 select-none">
       {/* ----------------------------------------------------------------------
           FLOATING IN-APP TOAST
           ---------------------------------------------------------------------- */}
       {toast && (
-        <div className="fixed top-16 right-6 z-50 flex items-center gap-3 rounded-xl border border-slate-700 bg-slate-900/95 px-4 py-3 shadow-2xl backdrop-blur-md animate-in fade-in slide-in-from-top-3">
+        <div className="fixed top-16 right-6 z-50 flex items-center gap-3 rounded-xl border border-slate-200 bg-white/95 px-4 py-3 shadow-2xl backdrop-blur-md animate-in fade-in slide-in-from-top-3">
           <div
             className={`flex h-8 w-8 items-center justify-center rounded-lg ${
               toast.type === 'danger'
-                ? 'bg-rose-500/20 text-rose-400'
+                ? 'bg-rose-50 text-rose-600'
                 : toast.type === 'warn'
-                ? 'bg-amber-500/20 text-amber-400'
+                ? 'bg-amber-50 text-amber-600'
                 : toast.type === 'success'
-                ? 'bg-emerald-500/20 text-emerald-400'
-                : 'bg-cyan-500/20 text-cyan-400'
+                ? 'bg-emerald-50 text-emerald-600'
+                : 'bg-cyan-50 text-cyan-600'
             }`}
           >
             {toast.type === 'danger' ? <AlertTriangle className="h-4 w-4" /> : <Radio className="h-4 w-4" />}
           </div>
-          <span className="text-xs font-semibold text-slate-200">{toast.message}</span>
+          <span className="text-xs font-semibold text-slate-800">{toast.message}</span>
         </div>
       )}
 
@@ -377,7 +377,7 @@ export default function AmbulanceDriverMDT() {
           LEFT SLIM ICON DOCK (Collapsible Global Shell for 95%+ Viewport Width)
           ---------------------------------------------------------------------- */}
       <aside
-        className={`flex flex-col items-center justify-between border-r border-slate-800 bg-slate-900/90 py-3 transition-all duration-300 z-30 ${
+        className={`flex flex-col items-center justify-between border-r border-slate-200 bg-white py-3 transition-all duration-300 z-30 shadow-xs ${
           isSidebarDockCollapsed ? 'w-14' : 'w-16'
         }`}
       >
@@ -386,7 +386,7 @@ export default function AmbulanceDriverMDT() {
           <Link
             to="/"
             title="ResQNet CAD Home Dashboard"
-            className="group relative flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-rose-600 to-rose-700 text-white shadow-lg shadow-rose-900/40 ring-1 ring-rose-500/40 transition hover:scale-105"
+            className="group relative flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-rose-600 to-rose-700 text-white shadow-lg shadow-rose-200 ring-1 ring-rose-400 transition hover:scale-105"
           >
             <Ambulance className="h-6 w-6" />
             <span className="absolute -top-1 -right-1 flex h-3 w-3">
@@ -395,12 +395,12 @@ export default function AmbulanceDriverMDT() {
             </span>
           </Link>
 
-          <div className="h-px w-8 bg-slate-800" />
+          <div className="h-px w-8 bg-slate-200" />
 
           {/* Nav Action Icons with min 44px hit targets */}
           <nav className="flex flex-col items-center gap-2">
             <button
-              className="flex h-11 w-11 items-center justify-center rounded-xl bg-rose-600/20 text-rose-400 ring-1 ring-rose-500/30 transition hover:bg-rose-600/30"
+              className="flex h-11 w-11 items-center justify-center rounded-xl bg-rose-50 text-rose-600 ring-1 ring-rose-200 transition hover:bg-rose-100"
               title="Active MDT Console (Current)"
             >
               <Crosshair className="h-5 w-5" />
@@ -408,7 +408,7 @@ export default function AmbulanceDriverMDT() {
 
             <Link
               to="/emergencies"
-              className="flex h-11 w-11 items-center justify-center rounded-xl text-slate-400 hover:bg-slate-800 hover:text-slate-200 transition"
+              className="flex h-11 w-11 items-center justify-center rounded-xl text-slate-500 hover:bg-slate-100 hover:text-slate-900 transition"
               title="Dispatch Incidents Queue"
             >
               <Activity className="h-5 w-5" />
@@ -416,7 +416,7 @@ export default function AmbulanceDriverMDT() {
 
             <Link
               to="/resources"
-              className="flex h-11 w-11 items-center justify-center rounded-xl text-slate-400 hover:bg-slate-800 hover:text-slate-200 transition"
+              className="flex h-11 w-11 items-center justify-center rounded-xl text-slate-500 hover:bg-slate-100 hover:text-slate-900 transition"
               title="Fleet Diagnostics & Telematics"
             >
               <Gauge className="h-5 w-5" />
@@ -424,7 +424,7 @@ export default function AmbulanceDriverMDT() {
 
             <button
               onClick={() => setCallModalOpen(true)}
-              className="flex h-11 w-11 items-center justify-center rounded-xl text-slate-400 hover:bg-slate-800 hover:text-rose-400 transition"
+              className="flex h-11 w-11 items-center justify-center rounded-xl text-slate-500 hover:bg-slate-100 hover:text-rose-600 transition"
               title="Direct Hotline 911/CAD"
             >
               <Phone className="h-5 w-5" />
@@ -436,7 +436,7 @@ export default function AmbulanceDriverMDT() {
         <div className="flex flex-col items-center gap-2">
           <button
             onClick={toggleFullscreen}
-            className="flex h-10 w-10 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-800 hover:text-slate-200 transition"
+            className="flex h-10 w-10 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition"
             title={isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen MDT'}
           >
             {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
@@ -444,7 +444,7 @@ export default function AmbulanceDriverMDT() {
 
           <Link
             to="/"
-            className="flex h-10 w-10 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-800 hover:text-slate-300 transition"
+            className="flex h-10 w-10 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition"
             title="Return to Public Citizen Overview"
           >
             <Home className="h-4 w-4" />
@@ -459,14 +459,14 @@ export default function AmbulanceDriverMDT() {
         {/* --------------------------------------------------------------------
             TOP UTILITY & STATUS STRIP (Height: 52px)
             -------------------------------------------------------------------- */}
-        <header className="flex h-[52px] shrink-0 items-center justify-between border-b border-slate-800 bg-slate-900/95 px-4 backdrop-blur-md">
+        <header className="flex h-[52px] shrink-0 items-center justify-between border-b border-slate-200 bg-white/95 px-4 backdrop-blur-md shadow-xs">
           {/* Left: ResQNet Logo, Callsign Badge, Unit Status Dropdown */}
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2">
-              <span className="text-base font-extrabold tracking-tight text-white">
-                ResQNet <span className="text-rose-500">MDT</span>
+              <span className="text-base font-extrabold tracking-tight text-slate-900">
+                ResQNet <span className="text-rose-600">MDT</span>
               </span>
-              <span className="rounded-md border border-cyan-500/30 bg-cyan-500/10 px-2 py-0.5 font-mono text-[11px] font-bold tracking-wider text-cyan-400">
+              <span className="rounded-md border border-cyan-200 bg-cyan-50 px-2 py-0.5 font-mono text-[11px] font-bold tracking-wider text-cyan-800">
                 ALS-101
               </span>
             </div>
@@ -483,7 +483,7 @@ export default function AmbulanceDriverMDT() {
 
               {/* Status Picker Menu */}
               {isStatusMenuOpen && (
-                <div className="absolute top-10 left-0 z-50 w-64 rounded-xl border border-slate-700 bg-slate-900 p-1.5 shadow-2xl backdrop-blur-lg animate-in fade-in zoom-in-95">
+                <div className="absolute top-10 left-0 z-50 w-64 rounded-xl border border-slate-200 bg-white p-1.5 shadow-2xl backdrop-blur-lg animate-in fade-in zoom-in-95">
                   <div className="px-2 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400">
                     Set Unit CAD Status
                   </div>
@@ -502,10 +502,10 @@ export default function AmbulanceDriverMDT() {
                         setIsStatusMenuOpen(false);
                         showToast(`Unit state updated to: ${s.label}`, 'info');
                       }}
-                      className="flex w-full flex-col rounded-lg px-2.5 py-1.5 text-left transition hover:bg-slate-800"
+                      className="flex w-full flex-col rounded-lg px-2.5 py-1.5 text-left transition hover:bg-slate-100"
                     >
-                      <span className="text-xs font-semibold text-slate-200">{s.label}</span>
-                      <span className="text-[10px] text-slate-400">{s.desc}</span>
+                      <span className="text-xs font-semibold text-slate-800">{s.label}</span>
+                      <span className="text-[10px] text-slate-500">{s.desc}</span>
                     </button>
                   ))}
                 </div>
@@ -514,37 +514,37 @@ export default function AmbulanceDriverMDT() {
           </div>
 
           {/* Center: Integrated Telemetry Ribbon in One Unified Pill */}
-          <div className="hidden md:flex items-center gap-5 rounded-full border border-slate-800 bg-slate-950/70 px-4 py-1.5 font-mono text-xs shadow-inner">
+          <div className="hidden md:flex items-center gap-5 rounded-full border border-slate-200 bg-slate-50 px-4 py-1.5 font-mono text-xs shadow-inner">
             <div className="flex items-center gap-1.5" title="Diesel Fuel Reserve">
-              <Fuel className="h-3.5 w-3.5 text-slate-400" />
-              <span className="text-[10px] uppercase text-slate-400 font-sans">Fuel</span>
-              <span className="font-bold text-slate-200">{telemetry.fuelPercent}%</span>
-              <span className="text-[10px] text-slate-500">({telemetry.fuelKm}km)</span>
+              <Fuel className="h-3.5 w-3.5 text-slate-500" />
+              <span className="text-[10px] uppercase text-slate-500 font-sans">Fuel</span>
+              <span className="font-bold text-slate-800">{telemetry.fuelPercent}%</span>
+              <span className="text-[10px] text-slate-400">({telemetry.fuelKm}km)</span>
             </div>
 
-            <div className="h-3 w-px bg-slate-800" />
+            <div className="h-3 w-px bg-slate-200" />
 
             <div className="flex items-center gap-1.5" title="Medical Oxygen Tank Payload">
-              <Wind className="h-3.5 w-3.5 text-cyan-400" />
-              <span className="text-[10px] uppercase text-slate-400 font-sans">O₂ Tank</span>
-              <span className="font-bold text-cyan-300">{telemetry.o2Percent}%</span>
-              <span className="text-[10px] text-slate-500">Safe</span>
+              <Wind className="h-3.5 w-3.5 text-cyan-600" />
+              <span className="text-[10px] uppercase text-slate-500 font-sans">O₂ Tank</span>
+              <span className="font-bold text-cyan-700">{telemetry.o2Percent}%</span>
+              <span className="text-[10px] text-slate-400">Safe</span>
             </div>
 
-            <div className="h-3 w-px bg-slate-800" />
+            <div className="h-3 w-px bg-slate-200" />
 
             <div className="flex items-center gap-1.5" title="Zoll X-Series Biphasic Defibrillator">
-              <Zap className="h-3.5 w-3.5 text-emerald-400" />
-              <span className="text-[10px] uppercase text-slate-400 font-sans">Defib</span>
-              <span className="font-bold text-emerald-400">READY</span>
+              <Zap className="h-3.5 w-3.5 text-emerald-600" />
+              <span className="text-[10px] uppercase text-slate-500 font-sans">Defib</span>
+              <span className="font-bold text-emerald-700">READY</span>
             </div>
 
-            <div className="h-3 w-px bg-slate-800" />
+            <div className="h-3 w-px bg-slate-200" />
 
             <div className="flex items-center gap-1.5" title="GPS Telemetry Speed">
-              <Gauge className="h-3.5 w-3.5 text-slate-400" />
-              <span className="text-[10px] uppercase text-slate-400 font-sans">Speed</span>
-              <span className={`font-bold ${telemetry.speedKmh > 0 ? 'text-amber-400 font-mono' : 'text-slate-300'}`}>
+              <Gauge className="h-3.5 w-3.5 text-slate-500" />
+              <span className="text-[10px] uppercase text-slate-500 font-sans">Speed</span>
+              <span className={`font-bold ${telemetry.speedKmh > 0 ? 'text-amber-700 font-mono' : 'text-slate-800'}`}>
                 {telemetry.speedKmh} <span className="text-[10px]">km/h</span>
               </span>
             </div>
@@ -557,8 +557,8 @@ export default function AmbulanceDriverMDT() {
               onClick={handleToggleSiren}
               className={`flex h-8 items-center gap-1.5 rounded-lg border px-3 text-xs font-bold transition ${
                 isSirenActive
-                  ? 'animate-pulse border-rose-500 bg-rose-600 text-white shadow-lg shadow-rose-600/50'
-                  : 'border-slate-700 bg-slate-800/80 text-slate-300 hover:border-slate-600 hover:text-white'
+                  ? 'animate-pulse border-rose-500 bg-rose-600 text-white shadow-lg shadow-rose-200'
+                  : 'border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 hover:text-slate-900'
               }`}
               title="Toggle Siren Code 3 & High-Beam Strobes"
             >
@@ -570,15 +570,15 @@ export default function AmbulanceDriverMDT() {
             <div className="relative">
               <button
                 onClick={() => setIsRadioMenuOpen(!isRadioMenuOpen)}
-                className="hidden sm:flex h-8 items-center gap-1.5 rounded-lg border border-slate-800 bg-slate-800/60 px-2.5 text-xs text-slate-300 hover:bg-slate-800"
+                className="hidden sm:flex h-8 items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-2.5 text-xs text-slate-700 hover:bg-slate-100"
               >
-                <Radio className="h-3.5 w-3.5 text-cyan-400" />
+                <Radio className="h-3.5 w-3.5 text-cyan-600" />
                 <span className="font-mono text-[11px]">{radioChannel.split('•')[0]}</span>
                 <ChevronDown className="h-3 w-3 opacity-60" />
               </button>
 
               {isRadioMenuOpen && (
-                <div className="absolute top-10 right-0 z-50 w-56 rounded-xl border border-slate-700 bg-slate-900 p-1.5 shadow-2xl backdrop-blur-md">
+                <div className="absolute top-10 right-0 z-50 w-56 rounded-xl border border-slate-200 bg-white p-1.5 shadow-2xl backdrop-blur-md">
                   <div className="px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">
                     CAD Voice Channels
                   </div>
@@ -595,9 +595,9 @@ export default function AmbulanceDriverMDT() {
                         setIsRadioMenuOpen(false);
                         showToast(`Radio switched to ${ch}`, 'info');
                       }}
-                      className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-xs font-medium text-slate-300 hover:bg-slate-800 hover:text-white"
+                      className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-xs font-medium text-slate-700 hover:bg-slate-100 hover:text-slate-900"
                     >
-                      <Radio className="h-3 w-3 text-cyan-400" />
+                      <Radio className="h-3 w-3 text-cyan-600" />
                       <span>{ch}</span>
                     </button>
                   ))}
@@ -606,8 +606,8 @@ export default function AmbulanceDriverMDT() {
             </div>
 
             {/* CAD Military Synchronized Clock */}
-            <div className="flex items-center gap-1.5 rounded-lg border border-slate-800 bg-slate-950/80 px-2.5 py-1 font-mono text-xs font-bold text-slate-200">
-              <Clock className="h-3 w-3 text-rose-500" />
+            <div className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 font-mono text-xs font-bold text-slate-800">
+              <Clock className="h-3 w-3 text-rose-600" />
               <span>{currentTime || '10:35:00'}</span>
             </div>
           </div>
@@ -616,7 +616,7 @@ export default function AmbulanceDriverMDT() {
         {/* --------------------------------------------------------------------
             MAIN OPERATIONAL GRID (Split View: 7:5 Layout)
             -------------------------------------------------------------------- */}
-        <main className="flex-1 overflow-y-auto p-4">
+        <main className="flex-1 overflow-y-auto p-4 bg-slate-50">
           <div className="grid grid-cols-12 gap-4">
             {/* ----------------------------------------------------------------
                 LEFT COLUMN (col-span-12 lg:col-span-7):
@@ -624,28 +624,28 @@ export default function AmbulanceDriverMDT() {
                 ---------------------------------------------------------------- */}
             <div className="col-span-12 lg:col-span-7 flex flex-col gap-4">
               {/* Primary Dispatch Hero Card */}
-              <div className="rounded-2xl border border-slate-800 bg-slate-900/90 p-5 shadow-2xl backdrop-blur-md relative overflow-hidden">
+              <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm relative overflow-hidden">
                 {/* Subtle top emergency gradient line */}
                 <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-rose-600 via-rose-500 to-amber-500" />
 
                 {/* 1. Header Banner */}
-                <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-slate-800/80">
+                <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-slate-100">
                   <div className="flex items-center gap-2.5">
-                    <span className="flex items-center gap-1.5 rounded-lg bg-rose-600 px-3 py-1 text-xs font-black tracking-wider text-white shadow-md shadow-rose-900/40">
+                    <span className="flex items-center gap-1.5 rounded-lg bg-rose-600 px-3 py-1 text-xs font-black tracking-wider text-white shadow-md shadow-rose-200">
                       <AlertTriangle className="h-3.5 w-3.5" />
                       {order.priority} • {order.code}
                     </span>
 
                     {/* Auto-routing fallback timer pill */}
-                    <span className="flex items-center gap-1.5 rounded-lg border border-rose-500/30 bg-rose-500/10 px-2.5 py-1 font-mono text-[11px] font-bold text-rose-400">
+                    <span className="flex items-center gap-1.5 rounded-lg border border-rose-200 bg-rose-50 px-2.5 py-1 font-mono text-[11px] font-bold text-rose-700">
                       <Clock className="h-3 w-3 animate-spin" />
                       Auto-routing fallback: {countdown}s
                     </span>
                   </div>
 
-                  <div className="flex items-center gap-2 text-xs font-mono text-slate-400">
+                  <div className="flex items-center gap-2 text-xs font-mono text-slate-500">
                     <span>{order.cadId}</span>
-                    <span className="h-1 w-1 rounded-full bg-slate-600" />
+                    <span className="h-1 w-1 rounded-full bg-slate-300" />
                     <span>Reported {order.reportedTime}</span>
                   </div>
                 </div>
@@ -653,17 +653,17 @@ export default function AmbulanceDriverMDT() {
                 {/* 2. Incident Hero Block */}
                 <div className="pt-4 pb-4">
                   <div className="flex flex-wrap items-start justify-between gap-3">
-                    <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">
+                    <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
                       {order.title}
                     </h1>
 
                     {/* ETA Badge with dynamic pulse */}
-                    <div className="flex items-center gap-2 rounded-xl border border-rose-500/30 bg-gradient-to-r from-rose-950/60 to-rose-900/30 px-3.5 py-1.5 shadow-inner">
-                      <Navigation className="h-4 w-4 text-rose-400 animate-pulse" />
+                    <div className="flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-3.5 py-1.5 shadow-xs">
+                      <Navigation className="h-4 w-4 text-rose-600 animate-pulse" />
                       <div>
-                        <div className="text-[9px] uppercase tracking-wider text-rose-300/80 font-bold">Estimated Arrival</div>
-                        <div className="font-mono text-sm font-black text-rose-300">
-                          {order.eta} <span className="text-xs font-normal text-rose-400/70">({order.distance})</span>
+                        <div className="text-[9px] uppercase tracking-wider text-rose-800 font-bold">Estimated Arrival</div>
+                        <div className="font-mono text-sm font-black text-rose-900">
+                          {order.eta} <span className="text-xs font-normal text-rose-700">({order.distance})</span>
                         </div>
                       </div>
                     </div>
@@ -672,52 +672,52 @@ export default function AmbulanceDriverMDT() {
                   {/* 3-Column Patient & Location Summary Grid */}
                   <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
                     {/* Patient info */}
-                    <div className="rounded-xl border border-slate-800/90 bg-slate-950/60 p-3">
-                      <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                        <User className="h-3 w-3 text-cyan-400" />
+                    <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                      <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                        <User className="h-3 w-3 text-cyan-700" />
                         Patient Details
                       </div>
-                      <p className="mt-1 text-xs font-semibold text-slate-200 leading-snug">
+                      <p className="mt-1 text-xs font-semibold text-slate-800 leading-snug">
                         {order.patientSummary.patient}
                       </p>
                     </div>
 
                     {/* Reporter info */}
-                    <div className="rounded-xl border border-slate-800/90 bg-slate-950/60 p-3">
-                      <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                        <Phone className="h-3 w-3 text-emerald-400" />
+                    <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                      <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                        <Phone className="h-3 w-3 text-emerald-700" />
                         Caller / Reporter
                       </div>
-                      <p className="mt-1 text-xs font-semibold text-slate-200 leading-snug">
+                      <p className="mt-1 text-xs font-semibold text-slate-800 leading-snug">
                         {order.patientSummary.reporter}
                       </p>
                     </div>
 
                     {/* Location with Copy & External Nav Buttons */}
-                    <div className="rounded-xl border border-slate-800/90 bg-slate-950/60 p-3">
-                      <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                    <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                      <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-slate-500">
                         <span className="flex items-center gap-1.5">
-                          <MapPin className="h-3 w-3 text-rose-400" />
+                          <MapPin className="h-3 w-3 text-rose-600" />
                           Incident Scene
                         </span>
                         <div className="flex items-center gap-1">
                           <button
                             onClick={handleCopyCoordinates}
-                            className="rounded p-1 hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition"
+                            className="rounded p-1 hover:bg-slate-200 text-slate-500 hover:text-slate-900 transition"
                             title="Copy GPS coordinates"
                           >
-                            {copiedCoords ? <Check className="h-3 w-3 text-emerald-400" /> : <Copy className="h-3 w-3" />}
+                            {copiedCoords ? <Check className="h-3 w-3 text-emerald-600" /> : <Copy className="h-3 w-3" />}
                           </button>
                           <button
                             onClick={handleOpenNavigation}
-                            className="rounded p-1 hover:bg-slate-800 text-slate-400 hover:text-cyan-400 transition"
+                            className="rounded p-1 hover:bg-slate-200 text-slate-500 hover:text-cyan-700 transition"
                             title="Open in External Navigation"
                           >
                             <ExternalLink className="h-3 w-3" />
                           </button>
                         </div>
                       </div>
-                      <p className="mt-1 text-xs font-semibold text-slate-200 leading-snug truncate" title={order.patientSummary.location}>
+                      <p className="mt-1 text-xs font-semibold text-slate-800 leading-snug truncate" title={order.patientSummary.location}>
                         {order.patientSummary.location}
                       </p>
                     </div>
@@ -726,16 +726,16 @@ export default function AmbulanceDriverMDT() {
 
                 {/* 3. Mandatory Clinical Kits & Protocols */}
                 <div className="pt-2 pb-4">
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-2">
                     Mandatory Clinical Kits &amp; Protocols
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {order.clinicalKits.map(kit => (
                       <span
                         key={kit}
-                        className="flex items-center gap-1.5 rounded-lg border border-slate-700/80 bg-slate-800/70 px-3 py-1.5 text-xs font-semibold text-slate-200 shadow-sm"
+                        className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-xs"
                       >
-                        <Stethoscope className="h-3.5 w-3.5 text-rose-400" />
+                        <Stethoscope className="h-3.5 w-3.5 text-rose-600" />
                         {kit}
                       </span>
                     ))}
@@ -743,7 +743,7 @@ export default function AmbulanceDriverMDT() {
                 </div>
 
                 {/* 4. Caller Audio Briefing Player */}
-                <div className="mt-2 rounded-xl border border-slate-800 bg-slate-950/80 p-3.5">
+                <div className="mt-2 rounded-xl border border-slate-200 bg-slate-50 p-3.5">
                   <div className="flex items-center justify-between gap-3">
                     <div className="flex items-center gap-3">
                       <button
@@ -758,8 +758,8 @@ export default function AmbulanceDriverMDT() {
                         }}
                         className={`flex h-11 w-11 items-center justify-center rounded-xl text-white shadow-md transition ${
                           isAudioPlaying
-                            ? 'bg-rose-600 shadow-rose-900/40 animate-pulse'
-                            : 'bg-slate-800 hover:bg-slate-700 text-slate-200'
+                            ? 'bg-rose-600 shadow-rose-200 animate-pulse'
+                            : 'bg-slate-200 hover:bg-slate-300 text-slate-800'
                         }`}
                         title={isAudioPlaying ? 'Pause caller audio' : 'Play caller audio'}
                       >
@@ -768,24 +768,24 @@ export default function AmbulanceDriverMDT() {
 
                       <div>
                         <div className="flex items-center gap-2">
-                          <span className="text-xs font-bold text-slate-200">911 Audio Briefing</span>
-                          <span className="rounded bg-rose-500/20 px-1.5 py-0.5 font-mono text-[10px] font-bold text-rose-400">
+                          <span className="text-xs font-bold text-slate-800">911 Audio Briefing</span>
+                          <span className="rounded bg-rose-100 px-1.5 py-0.5 font-mono text-[10px] font-bold text-rose-800 border border-rose-200">
                             0:24 SEC
                           </span>
                         </div>
-                        <p className="mt-0.5 text-xs italic text-slate-400 max-w-md line-clamp-1">
+                        <p className="mt-0.5 text-xs italic text-slate-600 max-w-md line-clamp-1">
                           "{order.audioTranscript}"
                         </p>
                       </div>
                     </div>
 
                     {/* Animated soundwave visualizer */}
-                    <div className="hidden sm:flex items-center gap-1 h-7 px-3 rounded-lg bg-slate-900 border border-slate-800">
+                    <div className="hidden sm:flex items-center gap-1 h-7 px-3 rounded-lg bg-slate-100 border border-slate-200">
                       {[18, 28, 45, 20, 60, 35, 50, 25, 40, 15, 30].map((height, i) => (
                         <span
                           key={i}
                           className={`w-1 rounded-full transition-all duration-300 ${
-                            isAudioPlaying ? 'bg-rose-500 animate-pulse' : 'bg-slate-700'
+                            isAudioPlaying ? 'bg-rose-600 animate-pulse' : 'bg-slate-300'
                           }`}
                           style={{
                             height: isAudioPlaying ? `${height}%` : '20%',
@@ -805,51 +805,51 @@ export default function AmbulanceDriverMDT() {
                 ---------------------------------------------------------------- */}
             <div className="col-span-12 lg:col-span-5 flex flex-col gap-4">
               {/* Destination Hospital Target Card */}
-              <div className="rounded-2xl border border-slate-800 bg-slate-900/90 p-5 shadow-2xl backdrop-blur-md">
-                <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+              <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                   <div className="flex items-center gap-2">
-                    <BedDouble className="h-4 w-4 text-cyan-400" />
-                    <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                    <BedDouble className="h-4 w-4 text-cyan-600" />
+                    <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
                       Designated Receiving Facility
                     </span>
                   </div>
-                  <span className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-0.5 text-[11px] font-bold text-emerald-400">
+                  <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-[11px] font-bold text-emerald-800">
                     {order.hospitalTarget.icuBeds} ICU Beds Free
                   </span>
                 </div>
 
                 <div className="mt-3">
-                  <h3 className="text-lg font-bold text-white">{order.hospitalTarget.name}</h3>
-                  <div className="mt-1 flex items-center gap-2 text-xs font-mono text-cyan-400">
+                  <h3 className="text-lg font-bold text-slate-900">{order.hospitalTarget.name}</h3>
+                  <div className="mt-1 flex items-center gap-2 text-xs font-mono text-cyan-700">
                     <span>{order.hospitalTarget.distance}</span>
-                    <span className="h-1 w-1 rounded-full bg-slate-600" />
+                    <span className="h-1 w-1 rounded-full bg-slate-300" />
                     <span>{order.hospitalTarget.travelTime}</span>
                   </div>
 
-                  <p className="mt-2 text-xs text-slate-300 font-medium">
+                  <p className="mt-2 text-xs text-slate-600 font-medium">
                     {order.hospitalTarget.traumaLevel}
                   </p>
 
                   <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
-                    <div className="rounded-lg bg-slate-950/60 p-2 border border-slate-800/80">
+                    <div className="rounded-lg bg-slate-50 p-2 border border-slate-200">
                       <div className="text-[10px] uppercase text-slate-500 font-bold">Assigned Bay</div>
-                      <div className="font-semibold text-slate-200">{order.hospitalTarget.assignedBay}</div>
+                      <div className="font-semibold text-slate-800">{order.hospitalTarget.assignedBay}</div>
                     </div>
-                    <div className="rounded-lg bg-slate-950/60 p-2 border border-slate-800/80">
+                    <div className="rounded-lg bg-slate-50 p-2 border border-slate-200">
                       <div className="text-[10px] uppercase text-slate-500 font-bold">Attending ER</div>
-                      <div className="font-semibold text-slate-200 truncate">{order.hospitalTarget.attendingDoctor}</div>
+                      <div className="font-semibold text-slate-800 truncate">{order.hospitalTarget.attendingDoctor}</div>
                     </div>
                   </div>
                 </div>
               </div>
 
               {/* Persistent Primary Action Stack */}
-              <div className="rounded-2xl border border-slate-800 bg-slate-900/90 p-4 shadow-2xl backdrop-blur-md flex flex-col gap-3">
+              <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm flex flex-col gap-3">
                 {/* 1. Primary Big Action CTA (h-16, touch friendly min 44px) */}
                 {runStatus === 'PENDING' ? (
                   <button
                     onClick={handleAcceptOrder}
-                    className="flex h-16 w-full items-center justify-center gap-3 rounded-xl bg-rose-600 px-6 text-lg font-bold text-white shadow-xl shadow-rose-900/40 ring-1 ring-rose-500/40 transition hover:bg-rose-500 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-rose-400"
+                    className="flex h-16 w-full items-center justify-center gap-3 rounded-xl bg-rose-600 px-6 text-lg font-bold text-white shadow-md shadow-rose-200 transition hover:bg-rose-500 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-rose-400"
                   >
                     <span>ACCEPT ORDER &amp; START ROUTE</span>
                     <span className="text-xl">→</span>
@@ -857,7 +857,7 @@ export default function AmbulanceDriverMDT() {
                 ) : (
                   <button
                     onClick={handleProgressRun}
-                    className="flex h-16 w-full items-center justify-center gap-3 rounded-xl bg-emerald-600 px-6 text-lg font-bold text-white shadow-xl shadow-emerald-900/40 ring-1 ring-emerald-500/40 transition hover:bg-emerald-500 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-emerald-400"
+                    className="flex h-16 w-full items-center justify-center gap-3 rounded-xl bg-emerald-600 px-6 text-lg font-bold text-white shadow-md shadow-emerald-200 transition hover:bg-emerald-500 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-emerald-400"
                   >
                     <CheckCircle2 className="h-6 w-6" />
                     <span>
@@ -872,9 +872,9 @@ export default function AmbulanceDriverMDT() {
                 {/* 2. Secondary Action: Direct Call Citizen / Dispatch */}
                 <button
                   onClick={() => setCallModalOpen(true)}
-                  className="flex h-12 w-full items-center justify-center gap-2 rounded-xl border border-slate-700 bg-slate-800/90 px-4 text-sm font-semibold text-slate-100 shadow hover:bg-slate-700 transition active:scale-[0.99] focus:outline-none focus:ring-2 focus:ring-slate-400"
+                  className="flex h-12 w-full items-center justify-center gap-2 rounded-xl border border-slate-300 bg-slate-50 px-4 text-sm font-semibold text-slate-800 shadow-xs hover:bg-slate-100 transition active:scale-[0.99] focus:outline-none focus:ring-2 focus:ring-slate-300"
                 >
-                  <Phone className="h-4 w-4 text-emerald-400" />
+                  <Phone className="h-4 w-4 text-emerald-600" />
                   <span>Direct Call Citizen / Dispatch ({order.contactPhone})</span>
                 </button>
 
@@ -882,7 +882,7 @@ export default function AmbulanceDriverMDT() {
                 {runStatus === 'PENDING' && (
                   <button
                     onClick={() => setShowDeclineModal(true)}
-                    className="flex h-10 w-full items-center justify-center text-xs font-semibold text-slate-400 hover:text-rose-400 transition"
+                    className="flex h-10 w-full items-center justify-center text-xs font-semibold text-slate-500 hover:text-rose-600 transition"
                   >
                     Decline / Reroute to Backup Unit (ALS-104)
                   </button>
@@ -896,17 +896,17 @@ export default function AmbulanceDriverMDT() {
             BOTTOM COLLAPSIBLE PANEL:
             Live Telemetry Corridor & Turn-by-Turn Preview
             -------------------------------------------------------------------- */}
-        <footer className="border-t border-slate-800 bg-slate-900/95 backdrop-blur-md">
+        <footer className="border-t border-slate-200 bg-white">
           {/* Header of panel with collapse toggle */}
           <div
             onClick={() => setIsBottomTrayExpanded(!isBottomTrayExpanded)}
-            className="flex h-9 cursor-pointer items-center justify-between px-4 text-xs font-bold text-slate-400 hover:bg-slate-800/50 transition"
+            className="flex h-9 cursor-pointer items-center justify-between px-4 text-xs font-bold text-slate-500 hover:bg-slate-50 transition"
           >
             <div className="flex items-center gap-2">
-              <span className="flex h-2 w-2 rounded-full bg-cyan-400 animate-ping" />
+              <span className="flex h-2 w-2 rounded-full bg-cyan-600 animate-ping" />
               <span className="tracking-wider uppercase text-[10px]">Active Route Telemetry &amp; CAD Corridor</span>
             </div>
-            <button className="flex items-center gap-1 text-[11px] text-slate-400 hover:text-slate-200">
+            <button className="flex items-center gap-1 text-[11px] text-slate-500 hover:text-slate-800">
               <span>{isBottomTrayExpanded ? 'Minimize Corridor' : 'Expand Corridor'}</span>
               {isBottomTrayExpanded ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronUp className="h-3.5 w-3.5" />}
             </button>
@@ -914,41 +914,41 @@ export default function AmbulanceDriverMDT() {
 
           {/* Expandable Body */}
           {isBottomTrayExpanded && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 p-3.5 pt-1 border-t border-slate-800/60 bg-slate-950/60 font-sans text-xs">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 p-3.5 pt-1 border-t border-slate-100 bg-slate-50 font-sans text-xs">
               {/* Route Clearance Corridor */}
-              <div className="flex items-center gap-3 rounded-xl border border-slate-800 bg-slate-900/80 p-3">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+              <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-3 shadow-xs">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200">
                   <Shield className="h-5 w-5" />
                 </div>
                 <div>
-                  <div className="text-[10px] uppercase font-bold text-slate-400">Green Wave Clearance</div>
-                  <div className="font-semibold text-slate-200 mt-0.5">
+                  <div className="text-[10px] uppercase font-bold text-slate-500">Green Wave Clearance</div>
+                  <div className="font-semibold text-slate-800 mt-0.5">
                     {corridorCleared ? 'Clear corridor via Main Bypass active (4 signals pre-empted)' : 'Corridor on standby (armed on accept)'}
                   </div>
                 </div>
               </div>
 
               {/* Next Maneuver */}
-              <div className="flex items-center gap-3 rounded-xl border border-slate-800 bg-slate-900/80 p-3">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+              <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-3 shadow-xs">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-cyan-50 text-cyan-700 border border-cyan-200">
                   <CornerUpRight className="h-5 w-5" />
                 </div>
                 <div>
-                  <div className="text-[10px] uppercase font-bold text-slate-400">Next Nav Maneuver</div>
-                  <div className="font-semibold text-slate-200 mt-0.5">
+                  <div className="text-[10px] uppercase font-bold text-slate-500">Next Nav Maneuver</div>
+                  <div className="font-semibold text-slate-800 mt-0.5">
                     Turn Right in 320m onto Bypass Link Road
                   </div>
                 </div>
               </div>
 
               {/* CAD Verified Handoff */}
-              <div className="flex items-center gap-3 rounded-xl border border-slate-800 bg-slate-900/80 p-3">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-rose-500/10 text-rose-400 border border-rose-500/20">
+              <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-3 shadow-xs">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-rose-50 text-rose-700 border border-rose-200">
                   <Activity className="h-5 w-5" />
                 </div>
                 <div>
-                  <div className="text-[10px] uppercase font-bold text-slate-400">CAD Handoff Status</div>
-                  <div className="font-semibold text-slate-200 mt-0.5">
+                  <div className="text-[10px] uppercase font-bold text-slate-500">CAD Handoff Status</div>
+                  <div className="font-semibold text-slate-800 mt-0.5">
                     Kovilpatti GH ER Bay 02 Locked &bull; Attending armed
                   </div>
                 </div>
@@ -962,25 +962,25 @@ export default function AmbulanceDriverMDT() {
           DECLINE ORDER CONFIRMATION MODAL
           ---------------------------------------------------------------------- */}
       {showDeclineModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-          <div className="w-full max-w-md rounded-2xl border border-slate-700 bg-slate-900 p-6 shadow-2xl">
-            <div className="flex items-center gap-3 text-rose-400">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
+          <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl">
+            <div className="flex items-center gap-3 text-rose-600">
               <AlertTriangle className="h-6 w-6" />
-              <h3 className="text-lg font-bold text-white">Decline Dispatch Order?</h3>
+              <h3 className="text-lg font-bold text-slate-900">Decline Dispatch Order?</h3>
             </div>
-            <p className="mt-3 text-xs text-slate-300 leading-relaxed">
+            <p className="mt-3 text-xs text-slate-600 leading-relaxed">
               Are you sure you want to decline this Priority-1 Code Red dispatch? The order will be immediately rerouted to backup unit <strong>ALS-104 (Sub-Station North)</strong>.
             </p>
             <div className="mt-6 flex justify-end gap-3">
               <button
                 onClick={() => setShowDeclineModal(false)}
-                className="rounded-xl border border-slate-700 px-4 py-2 text-xs font-semibold text-slate-300 hover:bg-slate-800 transition"
+                className="rounded-xl border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 transition"
               >
                 Cancel &amp; Keep Order
               </button>
               <button
                 onClick={handleDeclineOrder}
-                className="rounded-xl bg-rose-600 px-4 py-2 text-xs font-bold text-white hover:bg-rose-500 transition shadow-lg shadow-rose-900/40"
+                className="rounded-xl bg-rose-600 px-4 py-2 text-xs font-bold text-white hover:bg-rose-500 transition shadow-md shadow-rose-200"
               >
                 Confirm Decline &amp; Reroute
               </button>
@@ -993,29 +993,29 @@ export default function AmbulanceDriverMDT() {
           DIRECT CALL MODAL
           ---------------------------------------------------------------------- */}
       {callModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-          <div className="w-full max-w-sm rounded-2xl border border-slate-700 bg-slate-900 p-6 shadow-2xl">
-            <div className="flex items-center gap-3 text-emerald-400">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
+          <div className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl">
+            <div className="flex items-center gap-3 text-emerald-600">
               <Phone className="h-6 w-6 animate-bounce" />
-              <h3 className="text-lg font-bold text-white">Direct Line Call</h3>
+              <h3 className="text-lg font-bold text-slate-900">Direct Line Call</h3>
             </div>
-            <p className="mt-2 text-xs text-slate-300">
+            <p className="mt-2 text-xs text-slate-600">
               Calling designated incident reporter at:
             </p>
-            <div className="mt-3 rounded-xl border border-slate-800 bg-slate-950 p-3 text-center font-mono text-base font-bold text-emerald-400">
+            <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-3 text-center font-mono text-base font-bold text-emerald-700">
               {order.contactPhone}
             </div>
             <div className="mt-5 flex gap-2">
               <a
                 href={`tel:${order.contactPhone.replace(/[^0-9+]/g, '')}`}
-                className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-emerald-600 py-2.5 text-xs font-bold text-white hover:bg-emerald-500 transition"
+                className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-emerald-600 py-2.5 text-xs font-bold text-white hover:bg-emerald-500 transition shadow-sm"
               >
                 <Phone className="h-4 w-4" />
                 Launch Native Call
               </a>
               <button
                 onClick={() => setCallModalOpen(false)}
-                className="rounded-xl border border-slate-700 px-4 py-2.5 text-xs font-semibold text-slate-300 hover:bg-slate-800"
+                className="rounded-xl border border-slate-200 px-4 py-2.5 text-xs font-semibold text-slate-600 hover:bg-slate-100"
               >
                 Close
               </button>

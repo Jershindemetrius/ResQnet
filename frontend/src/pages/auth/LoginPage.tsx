@@ -70,23 +70,23 @@ export const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-950 px-4 py-12 select-none">
+    <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4 py-12 select-none">
       <div className="w-full max-w-md space-y-6">
         {/* Brand Header */}
         <div className="text-center space-y-2">
-          <Link to="/" className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-rose-600 to-rose-700 text-white shadow-xl shadow-rose-900/40 ring-1 ring-rose-500/40">
+          <Link to="/" className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-rose-600 to-rose-700 text-white shadow-xl shadow-rose-200 ring-1 ring-rose-300">
             <ShieldAlert className="h-7 w-7" />
           </Link>
-          <h1 className="text-2xl font-black tracking-tight text-white">ResQNet CAD Gateway</h1>
-          <p className="text-xs text-slate-400">
+          <h1 className="text-2xl font-black tracking-tight text-slate-900">ResQNet CAD Gateway</h1>
+          <p className="text-xs text-slate-500">
             Secure Role-Based Access Control • Defense &amp; EMS Portal
           </p>
         </div>
 
         {/* Login Card */}
-        <div className="rounded-2xl border border-slate-800 bg-slate-900/90 p-6 shadow-2xl backdrop-blur-md">
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xl">
           {error && (
-            <div className="mb-4 flex items-center gap-2 rounded-xl border border-rose-500/30 bg-rose-500/10 p-3 text-xs text-rose-400">
+            <div className="mb-4 flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs text-rose-700">
               <AlertCircle className="h-4 w-4 shrink-0" />
               <span>{error}</span>
             </div>
@@ -94,7 +94,7 @@ export const LoginPage: React.FC = () => {
 
           <form onSubmit={handleCustomLogin} className="space-y-4">
             <div>
-              <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
+              <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">
                 Role Identity
               </label>
               <div className="grid grid-cols-3 gap-2">
@@ -109,8 +109,8 @@ export const LoginPage: React.FC = () => {
                     onClick={() => setSelectedRole(r.id as UserRole)}
                     className={`rounded-xl border py-2 text-xs font-bold transition ${
                       selectedRole === r.id
-                        ? 'border-rose-500 bg-rose-600/20 text-rose-300'
-                        : 'border-slate-800 bg-slate-950 text-slate-400 hover:text-slate-200'
+                        ? 'border-rose-500 bg-rose-50 text-rose-700 shadow-xs'
+                        : 'border-slate-200 bg-slate-50 text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                     }`}
                   >
                     {r.label}
@@ -120,40 +120,40 @@ export const LoginPage: React.FC = () => {
             </div>
 
             <div>
-              <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
+              <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">
                 Official Email / Callsign ID
               </label>
               <div className="relative">
-                <Mail className="absolute left-3 top-2.5 h-4 w-4 text-slate-500" />
+                <Mail className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
                 <input
                   type="email"
                   value={email}
                   onChange={e => setEmail(e.target.value)}
                   placeholder="operator@resqnet.gov"
-                  className="w-full rounded-xl border border-slate-800 bg-slate-950 pl-9 pr-3 py-2 text-xs text-white placeholder-slate-600 focus:border-rose-500 focus:outline-none"
+                  className="w-full rounded-xl border border-slate-300 bg-slate-50 pl-9 pr-3 py-2 text-xs text-slate-900 placeholder-slate-400 focus:bg-white focus:border-rose-500 focus:outline-none"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
+              <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">
                 Security Passcode
               </label>
               <div className="relative">
-                <Lock className="absolute left-3 top-2.5 h-4 w-4 text-slate-500" />
+                <Lock className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
                 <input
                   type="password"
                   value={password}
                   onChange={e => setPassword(e.target.value)}
                   placeholder="••••••••••••"
-                  className="w-full rounded-xl border border-slate-800 bg-slate-950 pl-9 pr-3 py-2 text-xs text-white placeholder-slate-600 focus:border-rose-500 focus:outline-none"
+                  className="w-full rounded-xl border border-slate-300 bg-slate-50 pl-9 pr-3 py-2 text-xs text-slate-900 placeholder-slate-400 focus:bg-white focus:border-rose-500 focus:outline-none"
                 />
               </div>
             </div>
 
             <button
               type="submit"
-              className="w-full flex items-center justify-center gap-2 rounded-xl bg-rose-600 hover:bg-rose-500 py-2.5 text-xs font-bold text-white shadow-lg shadow-rose-900/40 transition active:scale-95"
+              className="w-full flex items-center justify-center gap-2 rounded-xl bg-rose-600 hover:bg-rose-500 py-2.5 text-xs font-bold text-white shadow-lg shadow-rose-200 transition active:scale-95"
             >
               <span>Authenticate Session</span>
               <ArrowRight className="h-4 w-4" />
@@ -161,8 +161,8 @@ export const LoginPage: React.FC = () => {
           </form>
 
           {/* Quick Demo Logins Section */}
-          <div className="mt-6 pt-5 border-t border-slate-800">
-            <span className="block text-center text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-3">
+          <div className="mt-6 pt-5 border-t border-slate-200">
+            <span className="block text-center text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-3">
               One-Click Instant Demo Credentials
             </span>
 
@@ -170,48 +170,48 @@ export const LoginPage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => handleQuickDemoLogin('DRIVER')}
-                className="flex items-center gap-2 rounded-xl border border-cyan-500/30 bg-cyan-500/10 hover:bg-cyan-500/20 p-2.5 text-left transition"
+                className="flex items-center gap-2 rounded-xl border border-cyan-200 bg-cyan-50/70 hover:bg-cyan-100 p-2.5 text-left transition"
               >
-                <Ambulance className="h-4 w-4 text-cyan-400 shrink-0" />
+                <Ambulance className="h-4 w-4 text-cyan-700 shrink-0" />
                 <div className="truncate">
-                  <div className="text-[11px] font-bold text-cyan-300">Driver MDT</div>
-                  <div className="text-[9px] text-slate-400">Unit ALS-101</div>
+                  <div className="text-[11px] font-bold text-cyan-900">Driver MDT</div>
+                  <div className="text-[9px] text-cyan-700">Unit ALS-101</div>
                 </div>
               </button>
 
               <button
                 type="button"
                 onClick={() => handleQuickDemoLogin('ADMIN')}
-                className="flex items-center gap-2 rounded-xl border border-amber-500/30 bg-amber-500/10 hover:bg-amber-500/20 p-2.5 text-left transition"
+                className="flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50/70 hover:bg-amber-100 p-2.5 text-left transition"
               >
-                <Crown className="h-4 w-4 text-amber-400 shrink-0" />
+                <Crown className="h-4 w-4 text-amber-700 shrink-0" />
                 <div className="truncate">
-                  <div className="text-[11px] font-bold text-amber-300">Super Admin</div>
-                  <div className="text-[9px] text-slate-400">Sector Control</div>
+                  <div className="text-[11px] font-bold text-amber-900">Super Admin</div>
+                  <div className="text-[9px] text-amber-700">Sector Control</div>
                 </div>
               </button>
 
               <button
                 type="button"
                 onClick={() => handleQuickDemoLogin('COORDINATOR')}
-                className="flex items-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 hover:bg-emerald-500/20 p-2.5 text-left transition"
+                className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50/70 hover:bg-emerald-100 p-2.5 text-left transition"
               >
-                <Radio className="h-4 w-4 text-emerald-400 shrink-0" />
+                <Radio className="h-4 w-4 text-emerald-700 shrink-0" />
                 <div className="truncate">
-                  <div className="text-[11px] font-bold text-emerald-300">Dispatcher</div>
-                  <div className="text-[9px] text-slate-400">CAD Central</div>
+                  <div className="text-[11px] font-bold text-emerald-900">Dispatcher</div>
+                  <div className="text-[9px] text-emerald-700">CAD Central</div>
                 </div>
               </button>
 
               <button
                 type="button"
                 onClick={() => handleQuickDemoLogin('CITIZEN')}
-                className="flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-800/80 hover:bg-slate-800 p-2.5 text-left transition"
+                className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 p-2.5 text-left transition"
               >
-                <UserCheck className="h-4 w-4 text-slate-300 shrink-0" />
+                <UserCheck className="h-4 w-4 text-slate-700 shrink-0" />
                 <div className="truncate">
-                  <div className="text-[11px] font-bold text-slate-200">Public Citizen</div>
-                  <div className="text-[9px] text-slate-400">Citizen SOS View</div>
+                  <div className="text-[11px] font-bold text-slate-900">Public Citizen</div>
+                  <div className="text-[9px] text-slate-500">Citizen SOS View</div>
                 </div>
               </button>
             </div>
@@ -219,7 +219,7 @@ export const LoginPage: React.FC = () => {
         </div>
 
         <div className="text-center text-xs text-slate-500">
-          <Link to="/" className="text-slate-400 hover:text-white underline transition">
+          <Link to="/" className="text-slate-600 hover:text-slate-900 underline transition">
             ← Return to Public Emergency Portal
           </Link>
         </div>

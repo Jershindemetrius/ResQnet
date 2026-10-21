@@ -84,25 +84,25 @@ export const AdminLayout: React.FC = () => {
   ];
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-slate-950 font-sans text-slate-100 select-none">
+    <div className="flex h-screen w-screen overflow-hidden bg-slate-50 font-sans text-slate-800 select-none">
       {/* --------------------------------------------------------------------
-          COLLAPSIBLE SELLER/OPS ADMIN SIDEBAR
+          COLLAPSIBLE SELLER/OPS ADMIN SIDEBAR - CLEAN LIGHT THEME
           -------------------------------------------------------------------- */}
       <aside
-        className={`flex flex-col border-r border-slate-800 bg-slate-900/95 transition-all duration-300 z-30 ${
+        className={`flex flex-col border-r border-slate-200 bg-white transition-all duration-300 z-30 shadow-xs ${
           isSidebarCollapsed ? 'w-16' : 'w-64'
         }`}
       >
         {/* Brand Header */}
-        <div className="flex h-16 items-center justify-between border-b border-slate-800 px-4">
+        <div className="flex h-16 items-center justify-between border-b border-slate-200 px-4">
           <Link to="/admin/overview" className="flex items-center gap-2.5 overflow-hidden">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500 to-amber-700 text-slate-950 font-black shadow-md shadow-amber-900/40">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500 to-amber-600 text-slate-950 font-black shadow-md shadow-amber-200">
               <Crown className="h-5 w-5" />
             </div>
             {!isSidebarCollapsed && (
               <div className="truncate">
-                <span className="text-sm font-black tracking-tight text-white block">ResQNet CAD</span>
-                <span className="text-[10px] uppercase tracking-wider text-amber-400 font-bold block">
+                <span className="text-sm font-black tracking-tight text-slate-900 block">ResQNet CAD</span>
+                <span className="text-[10px] uppercase tracking-wider text-amber-700 font-bold block">
                   Coordinator Ops
                 </span>
               </div>
@@ -111,7 +111,7 @@ export const AdminLayout: React.FC = () => {
 
           <button
             onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-            className="rounded-lg p-1 text-slate-400 hover:bg-slate-800 hover:text-white transition"
+            className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition"
             title={isSidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           >
             {isSidebarCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
@@ -139,8 +139,8 @@ export const AdminLayout: React.FC = () => {
                     to={item.path}
                     className={`flex items-center gap-3 rounded-xl px-3 py-2 text-xs font-semibold transition ${
                       isActive
-                        ? 'bg-amber-500/15 text-amber-300 border border-amber-500/30 font-bold'
-                        : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
+                        ? 'bg-amber-50 text-amber-900 border border-amber-200 font-bold shadow-xs'
+                        : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
                     }`}
                     title={isSidebarCollapsed ? item.label : undefined}
                   >
@@ -149,7 +149,7 @@ export const AdminLayout: React.FC = () => {
                       <span className="flex-1 truncate">{item.label}</span>
                     )}
                     {!isSidebarCollapsed && item.badge && (
-                      <span className="rounded-full bg-slate-800 border border-slate-700 px-2 py-0.5 text-[9px] font-mono font-bold text-slate-300">
+                      <span className="rounded-full bg-slate-100 border border-slate-200 px-2 py-0.5 text-[9px] font-mono font-bold text-slate-600">
                         {item.badge}
                       </span>
                     )}
@@ -161,15 +161,15 @@ export const AdminLayout: React.FC = () => {
         </div>
 
         {/* Sidebar Footer User Card */}
-        <div className="border-t border-slate-800 p-3">
-          <div className="flex items-center gap-3 rounded-xl bg-slate-950/60 p-2 border border-slate-800/80">
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-amber-500 to-amber-600 text-slate-950 font-bold text-xs">
+        <div className="border-t border-slate-200 p-3">
+          <div className="flex items-center gap-3 rounded-xl bg-slate-50 p-2 border border-slate-200">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-amber-500 to-amber-600 text-slate-950 font-bold text-xs shadow-xs">
               {user?.name?.[0] || 'A'}
             </div>
             {!isSidebarCollapsed && (
               <div className="flex-1 min-w-0">
-                <div className="text-xs font-bold text-slate-200 truncate">{user?.name || 'Administrator'}</div>
-                <div className="text-[10px] text-amber-400 font-mono font-semibold truncate">
+                <div className="text-xs font-bold text-slate-900 truncate">{user?.name || 'Administrator'}</div>
+                <div className="text-[10px] text-amber-700 font-mono font-semibold truncate">
                   ROLE: {user?.role || 'ADMIN'}
                 </div>
               </div>
@@ -177,7 +177,7 @@ export const AdminLayout: React.FC = () => {
             {!isSidebarCollapsed && (
               <button
                 onClick={handleLogout}
-                className="text-slate-400 hover:text-rose-400 transition"
+                className="text-slate-400 hover:text-rose-600 transition"
                 title="Sign out"
               >
                 <LogOut className="h-4 w-4" />
@@ -188,29 +188,24 @@ export const AdminLayout: React.FC = () => {
       </aside>
 
       {/* --------------------------------------------------------------------
-          ADMIN TOP BAR & HEADER
-          Requirements:
-          - Admin profile
-          - Active sector selector
-          - Notification center
-          - Secure logout
+          ADMIN TOP BAR & HEADER - CLEAN LIGHT THEME
           -------------------------------------------------------------------- */}
       <div className="flex flex-1 flex-col overflow-hidden">
-        <header className="flex h-16 shrink-0 items-center justify-between border-b border-slate-800 bg-slate-900/90 px-6 backdrop-blur-md z-20">
+        <header className="flex h-16 shrink-0 items-center justify-between border-b border-slate-200 bg-white/95 px-6 backdrop-blur-md z-20 shadow-xs">
           {/* Left: Active Sector Dropdown */}
           <div className="flex items-center gap-4">
             <div className="relative">
               <button
                 onClick={() => setIsSectorOpen(!isSectorOpen)}
-                className="flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-800/80 px-3 py-1.5 text-xs font-bold text-slate-200 hover:bg-slate-800"
+                className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-100 hover:border-slate-300"
               >
-                <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+                <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
                 <span>Sector: <strong>{selectedSector}</strong></span>
                 <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
               </button>
 
               {isSectorOpen && (
-                <div className="absolute top-11 left-0 z-50 w-56 rounded-xl border border-slate-700 bg-slate-900 p-1.5 shadow-2xl backdrop-blur-md">
+                <div className="absolute top-11 left-0 z-50 w-56 rounded-xl border border-slate-200 bg-white p-1.5 shadow-2xl backdrop-blur-md">
                   <div className="px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">
                     Switch CAD Sectors
                   </div>
@@ -226,17 +221,17 @@ export const AdminLayout: React.FC = () => {
                         setSelectedSector(sec);
                         setIsSectorOpen(false);
                       }}
-                      className="flex w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-xs text-slate-300 hover:bg-slate-800 hover:text-white"
+                      className="flex w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-xs text-slate-700 hover:bg-slate-100 hover:text-slate-900"
                     >
                       <span>{sec}</span>
-                      {selectedSector === sec && <CheckCircle2 className="h-3.5 w-3.5 text-amber-400" />}
+                      {selectedSector === sec && <CheckCircle2 className="h-3.5 w-3.5 text-amber-600" />}
                     </button>
                   ))}
                 </div>
               )}
             </div>
 
-            <span className="hidden md:inline font-mono text-xs text-slate-400">
+            <span className="hidden md:inline font-mono text-xs text-slate-500">
               CAD Node: <strong>KOV-S4-PRIMARY</strong> (Mesh SLA 99.98%)
             </span>
           </div>
@@ -246,7 +241,7 @@ export const AdminLayout: React.FC = () => {
             {/* Civil Defense Broadcast Button */}
             <button
               onClick={() => setBroadcastOpen(true)}
-              className="flex items-center gap-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 px-3 py-1.5 text-xs font-black text-slate-950 shadow-md shadow-amber-900/30 transition active:scale-95"
+              className="flex items-center gap-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 px-3 py-1.5 text-xs font-black text-slate-950 shadow-sm shadow-amber-200 transition active:scale-95"
             >
               <Megaphone className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">EMERGENCY BROADCAST</span>
@@ -254,7 +249,7 @@ export const AdminLayout: React.FC = () => {
 
             {/* Notification Bell */}
             <button
-              className="relative flex h-9 w-9 items-center justify-center rounded-xl border border-slate-800 bg-slate-800/60 text-slate-300 hover:bg-slate-800 transition"
+              className="relative flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 transition"
               title="CAD Notifications"
             >
               <Bell className="h-4 w-4" />
@@ -264,9 +259,9 @@ export const AdminLayout: React.FC = () => {
             </button>
 
             {/* Profile Pill */}
-            <div className="hidden sm:flex items-center gap-2 rounded-xl border border-slate-800 bg-slate-950/70 px-3 py-1.5">
-              <span className="text-xs font-bold text-slate-200">{user?.name || 'Administrator'}</span>
-              <span className="rounded bg-amber-500/20 px-1.5 py-0.5 text-[9px] font-mono font-bold text-amber-300">
+            <div className="hidden sm:flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5">
+              <span className="text-xs font-bold text-slate-800">{user?.name || 'Administrator'}</span>
+              <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[9px] font-mono font-bold text-amber-800 border border-amber-200">
                 {user?.role}
               </span>
             </div>
@@ -274,7 +269,7 @@ export const AdminLayout: React.FC = () => {
             {/* Logout CTA */}
             <button
               onClick={handleLogout}
-              className="flex items-center gap-1.5 rounded-xl border border-slate-800 bg-slate-800/80 px-3 py-1.5 text-xs font-bold text-slate-300 hover:bg-rose-950/40 hover:text-rose-400 hover:border-rose-900/50 transition"
+              className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 transition"
               title="Logout from admin session"
             >
               <LogOut className="h-3.5 w-3.5" />
@@ -284,26 +279,26 @@ export const AdminLayout: React.FC = () => {
         </header>
 
         {/* Main Admin Content Outlet */}
-        <main className="flex-1 overflow-y-auto p-6 bg-slate-950">
+        <main className="flex-1 overflow-y-auto p-6 bg-slate-50">
           <Outlet />
         </main>
       </div>
 
       {/* Emergency Broadcast Modal */}
       {broadcastOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4">
-          <div className="w-full max-w-lg rounded-2xl border border-amber-500/40 bg-slate-900 p-6 shadow-2xl">
-            <div className="flex items-center gap-3 text-amber-400">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
+          <div className="w-full max-w-lg rounded-2xl border border-amber-300 bg-white p-6 shadow-2xl">
+            <div className="flex items-center gap-3 text-amber-600">
               <Megaphone className="h-6 w-6 animate-pulse" />
-              <h3 className="text-lg font-black text-white">Issue Emergency Civil Defense Broadcast</h3>
+              <h3 className="text-lg font-black text-slate-900">Issue Emergency Civil Defense Broadcast</h3>
             </div>
-            <p className="mt-2 text-xs text-slate-300 leading-relaxed">
+            <p className="mt-2 text-xs text-slate-600 leading-relaxed">
               This alert will be instantly pushed to all citizen mobile terminals, active ambulance MDTs, and hospital emergency triage bays in <strong>{selectedSector}</strong>.
             </p>
 
             <form onSubmit={handleSendBroadcast} className="mt-4 space-y-4">
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">
                   Alert Message Content
                 </label>
                 <textarea
@@ -312,7 +307,7 @@ export const AdminLayout: React.FC = () => {
                   value={broadcastMessage}
                   onChange={e => setBroadcastMessage(e.target.value)}
                   placeholder="e.g. Severe Flash Flood Alert: Road bridge 4 submerged. Follow diversion corridor via Main Bypass."
-                  className="w-full rounded-xl border border-slate-700 bg-slate-950 p-3 text-xs text-white placeholder-slate-500 focus:border-amber-400 focus:outline-none"
+                  className="w-full rounded-xl border border-slate-300 bg-slate-50 p-3 text-xs text-slate-900 placeholder-slate-400 focus:bg-white focus:border-amber-500 focus:outline-none"
                 />
               </div>
 
@@ -320,14 +315,14 @@ export const AdminLayout: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setBroadcastOpen(false)}
-                  className="rounded-xl border border-slate-700 px-4 py-2 text-xs font-semibold text-slate-300 hover:bg-slate-800"
+                  className="rounded-xl border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={broadcastSent}
-                  className="rounded-xl bg-amber-500 hover:bg-amber-400 px-5 py-2 text-xs font-black text-slate-950 shadow-lg shadow-amber-900/40"
+                  className="rounded-xl bg-amber-500 hover:bg-amber-400 px-5 py-2 text-xs font-black text-slate-950 shadow-md shadow-amber-200"
                 >
                   {broadcastSent ? '✓ Broadcast Dispatched!' : 'Transmit Regional Alert'}
                 </button>
