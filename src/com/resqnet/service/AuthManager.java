@@ -23,14 +23,11 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 
 /** SQLite-backed account registration and password verification. */
 public class AuthManager {
-    private static final Logger LOGGER = Logger.getLogger(AuthManager.class.getName());
     private static final String HEADER = "id,name,email,salt,passwordHash";
     private static final String MIGRATION_KEY = "legacy-auth-csv-v1";
     private static final int SALT_BYTES = 16;

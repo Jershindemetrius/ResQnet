@@ -163,13 +163,13 @@ The frontend communicates with the Java backend API:
 
 ### Endpoints Used
 - `GET /api/dashboard` - Dashboard statistics
-- `GET /api/emergencies` - List all emergencies
+- `GET /api/emergencies?limit=100&offset=0` - List a page of emergencies
 - `POST /api/emergencies` - Create an emergency (`reporterName`, `contact`, `type`, `location`, `affectedPeopleCount`, `priority`, and `requiredResourceType`)
 - `PUT /api/dispatch/status` - Update emergency status (`emergencyId` and `status` in the JSON body)
-- `GET /api/resources` - List all resources
+- `GET /api/resources?limit=100&offset=0` - List a page of resources
 - `POST /api/resources` - Add a resource (`name`, `type`, `location`, `quantity`, and optional `provider`)
 - `PUT /api/resources/{id}/availability` - Update resource availability
-- `GET /api/volunteers` - List all volunteers
+- `GET /api/volunteers?limit=100&offset=0` - List a page of volunteers
 - `POST /api/volunteers` - Register new volunteer
 - `POST /api/volunteers` - Update volunteer availability (`id` and `status` in the JSON body)
 - `GET /api/dispatch/{id}/suggestions` - Preview the best currently available resource and volunteer without assigning them
@@ -181,7 +181,9 @@ transferring the entire CSV-backed dataset in a single request; use the director
 “Load next” button to fetch subsequent batches. Requests without these parameters retain
 the unpaged array response for existing clients.
 
-The Java backend must be rebuilt from the repository source to support the resource-availability and read-only matching-suggestions routes.
+The Java backend uses SQLite as its active store. Existing CSV files are imported once on first startup and kept unchanged as backups. See [BACKEND_SETUP.md](../BACKEND_SETUP.md) for database configuration and Eclipse/Maven setup.
+
+List endpoints accept optional `limit` (1–500) and `offset` query parameters to keep large database responses bounded. Directories provide a “Load next” button to fetch subsequent pages.
 
 ## Demo-only screens
 

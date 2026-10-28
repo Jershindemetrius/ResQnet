@@ -54,6 +54,9 @@ target/
 *.jar
 *.war
 *.ear
+data/*.db
+data/*.db-shm
+data/*.db-wal
 
 # macOS
 .DS_Store
