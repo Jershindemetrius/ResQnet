@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
 import { Crosshair, LifeBuoy, MapPin, ShieldCheck } from 'lucide-react';
 import { createEmergency } from '../api/resqnetApi.js';
 import './EmergencyReport.css';
@@ -89,9 +88,8 @@ export default function ReportEmergencyView() {
             Status: <strong>{createdEmergency.status.replaceAll('_', ' ')}</strong>.
           </p>
           <div className="report-success-actions">
-            <Link className="report-primary-button" to="/emergencies">View incident feed</Link>
             <button
-              className="report-secondary-button"
+              className="report-primary-button"
               onClick={() => {
                 setForm(initialForm);
                 setCoordinates(null);

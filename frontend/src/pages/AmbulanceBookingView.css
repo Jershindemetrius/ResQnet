@@ -132,6 +132,8 @@
 .ambulance-not-guaranteed { padding: 12px; border-radius: 10px; background: #fffbeb; color: #80530a !important; font-size: .88rem; }
 .ambulance-success-actions { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; margin-top: 18px; }
 .ambulance-success-actions button { padding: 0 14px; min-height: 44px; border: 1px solid #d8dee8; border-radius: 10px; background: #fff; color: #344054; font: inherit; font-weight: 750; cursor: pointer; }
+.ambulance-success-actions .ambulance-primary-button { background: #c62828; color: #fff; border-color: #c62828; padding: 0 20px; }
+.ambulance-success-actions .ambulance-primary-button:hover { background: #a61f1f; border-color: #a61f1f; }
 
 @media (max-width: 780px) {
   .ambulance-layout { grid-template-columns: 1fr; }

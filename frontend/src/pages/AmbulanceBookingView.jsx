@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Ambulance, CheckCircle2, Crosshair, MapPin, PhoneCall, RefreshCw } from 'lucide-react';
-import { Link } from 'react-router-dom';
 import { createEmergency, getAmbulanceInventory } from '../api/resqnetApi.js';
 import './AmbulanceBookingView.css';
 
@@ -88,8 +87,13 @@ export default function AmbulanceBookingView() {
           <p>Request <strong>#{report.id}</strong> · <strong>{report.status?.toLowerCase().replaceAll('_', ' ')}</strong></p>
           <p className="ambulance-not-guaranteed">This is not a confirmed ambulance reservation. A dispatcher must assign an available unit. For immediate life-threatening danger, call 112.</p>
           <div className="ambulance-success-actions">
-            <Link to="/emergencies" className="ambulance-primary-link">View incident center</Link>
-            <button type="button" onClick={() => { setReport(null); setForm(initialForm); setCoordinates(null); }}>Send another request</button>
+            <button
+              type="button"
+              className="ambulance-primary-button"
+              onClick={() => { setReport(null); setForm(initialForm); setCoordinates(null); }}
+            >
+              Send another request
+            </button>
           </div>
         </section>
       </div>

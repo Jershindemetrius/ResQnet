@@ -5,7 +5,6 @@ import {
   PhoneCall,
   Menu,
   X,
-  ShieldAlert,
   Ambulance,
   Users,
   Package,
@@ -23,7 +22,6 @@ export const PublicLayout: React.FC = () => {
   const publicNavLinks = [
     { path: '/', label: 'Citizen Overview', icon: Layers },
     { path: '/book-ambulance', label: 'Request Ambulance', icon: Ambulance, highlight: true },
-    { path: '/emergencies', label: 'Public Incident Feed', icon: ShieldAlert },
     { path: '/resources', label: 'Relief Resources', icon: Package },
     { path: '/volunteers', label: 'Community Volunteers', icon: Users },
     ...(isAdmin ? [{ path: '/admin', label: 'Admin operations', icon: Activity }] : [])
