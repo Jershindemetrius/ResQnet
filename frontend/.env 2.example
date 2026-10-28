@@ -5,3 +5,6 @@ VITE_API_BASE_URL=http://localhost:8080/api
 
 # For production deployment, update to your production API URL:
 # VITE_API_BASE_URL=https://your-production-domain.com/api
+
+#admin=admin@resqnet.org
+#password=Admin@1234

@@ -42,10 +42,15 @@ export default function DispatchCenterView() {
       const data = await getEmergencies({ limit: API_PAGE_SIZE, offset });
       const combined = append ? [...emergencies, ...data] : data;
       setEmergencies(combined);
-      setSelectedEmergency(previous => combined.find(item => item.id === previous?.id) ?? combined[0] ?? null);
+      setSelectedEmergency(previous => {
+        const nextSelected = combined.find(item => item.id === previous?.id) ?? combined[0] ?? null;
+        if (nextSelected && (!previous || previous.id !== nextSelected.id)) {
+          getMatchingSuggestions(nextSelected.id).then(setSuggestions).catch(() => {});
+        }
+        return nextSelected;
+      });
       setNextOffset(offset + data.length);
       setHasMore(data.length === API_PAGE_SIZE);
-      if (!append) setSuggestions(null);
     } catch (loadError) {
       setError(loadError.message);
     } finally {
@@ -77,6 +82,7 @@ export default function DispatchCenterView() {
       showToast(`Request #${emergencyId} updated to ${newStatus.replace('_', ' ')}.`);
     } catch (updateError) {
       setError(updateError.message);
+      showToast(updateError.message);
     } finally {
       setBusy(false);
     }
@@ -90,10 +96,13 @@ export default function DispatchCenterView() {
       if (!result.successful) {
         throw new Error('No compatible available resource or volunteer could be assigned.');
       }
-      await loadEmergencies();
+      setEmergencies(prev => prev.map(item => item.id === emergencyId ? { ...item, status: 'RESOURCE_ASSIGNED' } : item));
+      setSelectedEmergency(prev => (prev?.id === emergencyId ? { ...prev, status: 'RESOURCE_ASSIGNED' } : prev));
       showToast(`Recommended units assigned to #${emergencyId}.`);
+      await loadEmergencies();
     } catch (assignError) {
       setError(assignError.message);
+      showToast(assignError.message);
     } finally {
       setBusy(false);
     }
@@ -338,6 +347,11 @@ export default function DispatchCenterView() {
                     </button>
                   )}
                 </div>
+                {error && (
+                  <div role="alert" style={{ marginTop: '10px', color: '#b91c1c', fontSize: '0.85rem', fontWeight: 600 }}>
+                    {error}
+                  </div>
+                )}
                 </div>
               )}
 
