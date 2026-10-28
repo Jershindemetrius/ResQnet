@@ -33,6 +33,10 @@ public class FileStorageManager {
             "id,name,type,location,quantity,available,provider";
     private static final String VOLUNTEER_HEADER =
             "id,name,contact,location,skills,status,assignedEmergencyId";
+    private static final String LEGACY_RESOURCE_HEADER =
+            "id,name,type,location,quantity,isAvailable,provider";
+    private static final String LEGACY_VOLUNTEER_HEADER =
+            "id,name,contact,skills,location,status,assignedEmergencyId";
 
     private final Path dataDirectory;
 
@@ -181,12 +185,28 @@ public class FileStorageManager {
         } catch (IllegalArgumentException exception) {
             throw malformed(name, 1, exception.getMessage(), exception);
         }
+        if ("resources.csv".equals(name) && hasHeader(result, LEGACY_RESOURCE_HEADER)) {
+            result.get(0).set(5, "available");
+        } else if ("volunteers.csv".equals(name) && hasHeader(result, LEGACY_VOLUNTEER_HEADER)) {
+            for (List<String> row : result) {
+                if (row.size() != 7) continue;
+                String skills = row.get(3);
+                row.set(3, row.get(4));
+                row.set(4, skills.replace(';', '|'));
+            }
+            result.get(0).set(3, "location");
+            result.get(0).set(4, "skills");
+        }
         String expectedHeader = "emergencies.csv".equals(name) ? EMERGENCY_HEADER
                 : "resources.csv".equals(name) ? RESOURCE_HEADER : VOLUNTEER_HEADER;
         if (result.isEmpty() || !expectedHeader.equals(join(result.get(0), ","))) {
             throw malformed(name, 1, "missing or unsupported CSV header");
         }
         return result;
+    }
+
+    private static boolean hasHeader(List<List<String>> rows, String header) {
+        return !rows.isEmpty() && header.equals(join(rows.get(0), ","));
     }
 
     private void writeRows(String name, List<String> lines) throws IOException {

@@ -34,7 +34,7 @@ public class DashboardHandler implements HttpHandler {
             JsonSerializer.sendError(exchange, 405, "Method not allowed");
             return;
         }
-        Map<String, Object> counts = new LinkedHashMap<Strig, Object>();
+        Map<String, Object> counts = new LinkedHashMap<String, Object>();
         int active = 0;
         int critical = 0;
         int high = 0;
