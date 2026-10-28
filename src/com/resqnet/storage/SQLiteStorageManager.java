@@ -48,8 +48,19 @@ public final class SQLiteStorageManager {
         this.databasePath = databasePath.toAbsolutePath().normalize();
         Path parent = this.databasePath.getParent();
         if (parent != null) Files.createDirectories(parent);
+        ensureJdbcDriver();
         initializeSchema();
         migrateLegacyCsv(legacyDataDirectory);
+    }
+
+    private static void ensureJdbcDriver() throws IOException {
+        try {
+            Class.forName("org.sqlite.JDBC");
+        } catch (ClassNotFoundException exception) {
+            throw new IOException("SQLite JDBC driver is missing from the runtime classpath. "
+                    + "Import the project as an Existing Maven Project and run Maven > Update Project "
+                    + "in Eclipse.", exception);
+        }
     }
 
     public List<EmergencyRequest> loadEmergencies() throws IOException {

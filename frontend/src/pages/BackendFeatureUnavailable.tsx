@@ -10,8 +10,9 @@ const BackendFeatureUnavailable: React.FC = () => (
       <h1>This workspace is not connected</h1>
       <p>
         ResQNet currently stores emergency reports, resources, volunteers, and
-        accounts. It does not provide staff roles, driver assignments, vehicle
-        GPS or telemetry, hospital capacity, audit logs, or system configuration.
+        accounts, and enforces administrator roles on protected operations.
+        It does not provide driver assignments, vehicle GPS or telemetry,
+        hospital capacity, audit logs, or system configuration.
         Sample screens for those features have been disabled rather than showing
         invented operational data.
       </p>

@@ -36,8 +36,12 @@ async function readJson(response) {
 
 async function request(path, options) {
   let response;
+  const { allowUnauthorized = false, ...fetchOptions } = options ?? {};
   try {
-    response = await fetch(`${API_BASE_URL}${path}`, options);
+    response = await fetch(`${API_BASE_URL}${path}`, {
+      ...fetchOptions,
+      credentials: 'include',
+    });
   } catch {
     throw new Error(`Cannot reach the ResQNet backend at ${API_BASE_URL}. Start the Java server and try again.`);
   }
@@ -51,6 +55,7 @@ async function request(path, options) {
     }
     throw new Error('The ResQNet backend returned an invalid JSON response.');
   }
+  if (allowUnauthorized && response.status === 401) return null;
   if (!response.ok) {
     throw new Error(body?.error || `Backend request failed (${response.status})`);
   }
@@ -161,6 +166,23 @@ export async function getDashboard() {
   };
 }
 
+export async function getAdminDashboard() {
+  const data = await request('/admin/dashboard');
+  return {
+    ...data,
+    activeEmergencies: data.active,
+    criticalCount: data.critical,
+    highCount: data.high,
+    mediumCount: data.medium,
+    lowCount: data.low,
+  };
+}
+
+export async function getAdminEmergencies(pagination) {
+  const data = pageRows(await request(pagedPath('/admin/incidents', pagination)), pagination);
+  return data.map(normalizeEmergency);
+}
+
 export async function getEmergencies(pagination) {
   const data = pageRows(await request(pagedPath('/emergencies', pagination)), pagination);
   return data.map(normalizeEmergency);
@@ -184,6 +206,17 @@ export async function updateEmergencyStatus(id, status) {
 
 export async function getResources(pagination) {
   return pageRows(await request(pagedPath('/resources', pagination)), pagination);
+}
+
+export async function getAmbulanceInventory(pagination = { limit: 12, offset: 0 }) {
+  const data = await request(pagedPath('/ambulances', pagination));
+  if (!data || !Array.isArray(data.ambulances)
+      || !Number.isInteger(data.totalResources)
+      || !Number.isInteger(data.totalUnits)
+      || !Number.isInteger(data.availableUnits)) {
+    throw new Error('The ResQNet backend returned an invalid ambulance inventory response.');
+  }
+  return data;
 }
 
 export async function createResource(resourceData) {
@@ -251,4 +284,12 @@ export async function loginAccount({ email, password }) {
     method: 'POST',
     ...jsonBody({ email, password }),
   });
+}
+
+export async function getCurrentAccount() {
+  return request('/auth/session', { allowUnauthorized: true });
+}
+
+export async function logoutAccount() {
+  return request('/auth/logout', { method: 'POST' });
 }

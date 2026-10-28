@@ -38,6 +38,15 @@ public class DashboardHandler implements HttpHandler {
             JsonSerializer.sendError(exchange, 405, "Method not allowed");
             return;
         }
+        try {
+            JsonSerializer.send(exchange, 200, dashboardData(emergencies, resources, users));
+        } catch (IOException exception) {
+            throw exception;
+        }
+    }
+
+    static Map<String, Object> dashboardData(EmergencyManager emergencies, ResourceManager resources,
+            UserManager users) {
         Map<String, Object> counts = new LinkedHashMap<String, Object>();
         int active = 0;
         int critical = 0;
@@ -77,10 +86,6 @@ public class DashboardHandler implements HttpHandler {
         counts.put("availableResources", availableResources);
         counts.put("totalResources", resources.getAllResources().size());
         counts.put("resolvedToday", resolvedToday);
-        try {
-            JsonSerializer.send(exchange, 200, counts);
-        } catch (IOException exception) {
-            throw exception;
-        }
+        return counts;
     }
 }

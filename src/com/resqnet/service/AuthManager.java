@@ -18,11 +18,13 @@ import java.util.ArrayList;
 import java.util.Base64;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.time.Instant;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 
@@ -38,24 +40,34 @@ public class AuthManager {
     private final Path databasePath;
     private final Path legacyAccountsFile;
     private final Map<String, StoredAccount> accounts = new LinkedHashMap<String, StoredAccount>();
+    private final Set<String> adminEmails;
+    private final Map<String, Session> sessions = new LinkedHashMap<String, Session>();
 
     public AuthManager(Path databasePath, Path legacyAccountsFile) throws IOException {
+        this(databasePath, legacyAccountsFile, configuredAdminEmails());
+    }
+
+    public AuthManager(Path databasePath, Path legacyAccountsFile, Set<String> adminEmails) throws IOException {
         if (databasePath == null) throw new IllegalArgumentException("databasePath must not be null");
         if (legacyAccountsFile == null) {
             throw new IllegalArgumentException("legacyAccountsFile must not be null");
         }
+        if (adminEmails == null) throw new IllegalArgumentException("adminEmails must not be null");
         this.databasePath = databasePath.toAbsolutePath().normalize();
         this.legacyAccountsFile = legacyAccountsFile;
+        this.adminEmails = normalizeAdminEmails(adminEmails);
         Path parent = this.databasePath.getParent();
         if (parent != null) Files.createDirectories(parent);
         loadAccounts();
     }
 
     public synchronized AuthAccount register(String name, String email, char[] password)
-            throws IOException, GeneralSecurityException, DuplicateAccountException {
+            throws IOException, GeneralSecurityException, DuplicateAccountException,
+            AdminAccountRegistrationException {
         String normalizedName = validateName(name);
         String normalizedEmail = validateEmail(email);
         validatePassword(password);
+        if (adminEmails.contains(normalizedEmail)) throw new AdminAccountRegistrationException();
         if (accounts.containsKey(normalizedEmail)) throw new DuplicateAccountException();
 
         byte[] salt = new byte[SALT_BYTES];
@@ -64,7 +76,7 @@ public class AuthManager {
                 normalizedEmail, salt, hashPassword(password, salt));
         persist(account);
         accounts.put(normalizedEmail, account);
-        return account.toPublicAccount();
+        return toPublicAccount(account);
     }
 
     public synchronized AuthAccount authenticate(String email, char[] password)
@@ -75,7 +87,51 @@ public class AuthManager {
         if (account == null || !MessageDigest.isEqual(account.passwordHash, hashPassword(password, account.salt))) {
             return null;
         }
-        return account.toPublicAccount();
+        return toPublicAccount(account);
+    }
+
+    public synchronized String createSession(AuthAccount account) {
+        if (account == null) throw new IllegalArgumentException("account must not be null");
+        byte[] tokenBytes = new byte[32];
+        RANDOM.nextBytes(tokenBytes);
+        String token = Base64.getUrlEncoder().withoutPadding().encodeToString(tokenBytes);
+        sessions.put(token, new Session(account, Instant.now().plusSeconds(8 * 60 * 60)));
+        return token;
+    }
+
+    public synchronized AuthAccount getSession(String token) {
+        if (token == null || token.isEmpty()) return null;
+        Session session = sessions.get(token);
+        if (session == null) return null;
+        if (!session.expiresAt.isAfter(Instant.now())) {
+            sessions.remove(token);
+            return null;
+        }
+        return session.account;
+    }
+
+    public synchronized void revokeSession(String token) {
+        if (token != null) sessions.remove(token);
+    }
+
+    private AuthAccount toPublicAccount(StoredAccount account) {
+        return new AuthAccount(account.id, account.name, account.email, adminEmails.contains(account.email));
+    }
+
+    private static Set<String> configuredAdminEmails() {
+        String configured = System.getenv("RESQNET_ADMIN_EMAILS");
+        Set<String> result = new LinkedHashSet<String>();
+        if (configured == null || configured.trim().isEmpty()) return result;
+        for (String email : configured.split(",")) {
+            if (!email.trim().isEmpty()) result.add(validateEmail(email));
+        }
+        return result;
+    }
+
+    private static Set<String> normalizeAdminEmails(Set<String> emails) {
+        Set<String> result = new LinkedHashSet<String>();
+        for (String email : emails) result.add(validateEmail(email));
+        return result;
     }
 
     private void loadAccounts() throws IOException {
@@ -260,6 +316,20 @@ public class AuthManager {
         private static final long serialVersionUID = 1L;
     }
 
+    public static final class AdminAccountRegistrationException extends Exception {
+        private static final long serialVersionUID = 1L;
+    }
+
+    private static final class Session {
+        private final AuthAccount account;
+        private final Instant expiresAt;
+
+        private Session(AuthAccount account, Instant expiresAt) {
+            this.account = account;
+            this.expiresAt = expiresAt;
+        }
+    }
+
     private static final class StoredAccount {
         private final String id;
         private final String name;
@@ -280,8 +350,5 @@ public class AuthManager {
                     Base64.getUrlDecoder().decode(passwordHash));
         }
 
-        private AuthAccount toPublicAccount() {
-            return new AuthAccount(id, name, email);
-        }
     }
 }

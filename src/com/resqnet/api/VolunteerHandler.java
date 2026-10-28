@@ -1,6 +1,7 @@
 package com.resqnet.api;
 
 import com.resqnet.exception.ResourceNotFoundException;
+import com.resqnet.service.AuthManager;
 import com.resqnet.model.user.Volunteer;
 import com.resqnet.service.UserManager;
 import com.resqnet.storage.SQLiteStorageManager;
@@ -14,10 +15,12 @@ import java.util.UUID;
 public class VolunteerHandler implements HttpHandler {
     private final UserManager users;
     private final SQLiteStorageManager storage;
+    private final AuthManager auth;
 
-    public VolunteerHandler(UserManager users, SQLiteStorageManager storage) {
+    public VolunteerHandler(UserManager users, SQLiteStorageManager storage, AuthManager auth) {
         this.users = users;
         this.storage = storage;
+        this.auth = auth;
     }
 
     @Override
@@ -39,6 +42,7 @@ public class VolunteerHandler implements HttpHandler {
             Map<String, Object> body = JsonSerializer.parseObject(exchange.getRequestBody());
             String id = JsonSerializer.optionalString(body, "id", "");
             if (!id.isEmpty() && body.containsKey("status")) {
+                if (!AuthGuard.requireAdmin(exchange, auth)) return;
                 Volunteer existing = users.getVolunteer(id);
                 existing.setStatus(JsonSerializer.requiredEnum(body, "status", Volunteer.Status.class));
                 if (body.containsKey("assignedEmergencyId")) {
@@ -56,8 +60,8 @@ public class VolunteerHandler implements HttpHandler {
                     JsonSerializer.requiredString(body, "contact"),
                     JsonSerializer.requiredString(body, "location"),
                     JsonSerializer.stringList(body, "skillSet"),
-                    JsonSerializer.enumOrDefault(body, "status", Volunteer.Status.class, Volunteer.Status.AVAILABLE),
-                    JsonSerializer.optionalString(body, "assignedEmergencyId", null));
+                    Volunteer.Status.AVAILABLE,
+                    null);
             users.addUser(volunteer);
             storage.saveVolunteer(volunteer);
             JsonSerializer.send(exchange, 201, volunteer);

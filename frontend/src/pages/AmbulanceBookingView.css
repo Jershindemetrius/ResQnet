@@ -1,0 +1,145 @@
+.ambulance-page {
+  width: min(1080px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 36px 0 56px;
+  color: #172033;
+}
+.ambulance-heading { display: flex; align-items: center; gap: 15px; margin-bottom: 22px; }
+.ambulance-heading-icon, .ambulance-success-icon {
+  display: grid;
+  flex: 0 0 auto;
+  width: 54px;
+  height: 54px;
+  place-items: center;
+  border-radius: 16px;
+  background: #fff0ef;
+  color: #c62828;
+}
+.ambulance-eyebrow { margin: 0 0 5px; color: #c62828; font-size: .73rem; font-weight: 850; letter-spacing: .1em; }
+.ambulance-heading h1, .ambulance-success h1 { margin: 0; font-size: clamp(1.8rem, 3vw, 2.35rem); letter-spacing: -.04em; }
+.ambulance-heading p:last-child { margin: 5px 0 0; color: #667085; }
+.ambulance-emergency-notice {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 16px;
+  margin-bottom: 18px;
+  border: 1px solid #f4cf90;
+  border-radius: 12px;
+  background: #fffbeb;
+  color: #80530a;
+}
+.ambulance-emergency-notice svg { flex: 0 0 auto; }
+.ambulance-emergency-notice p { margin: 0; }
+.ambulance-emergency-notice a { color: #8d3109; font-weight: 800; }
+.ambulance-layout { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(300px, .85fr); gap: 18px; align-items: start; }
+.ambulance-form-card, .ambulance-inventory-card, .ambulance-success {
+  border: 1px solid #e5eaf1;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 7px 22px rgba(24, 39, 75, .05);
+}
+.ambulance-form-card { padding: 22px; }
+.ambulance-form-card h2, .ambulance-inventory-card h2 { margin: 0; font-size: 1.05rem; }
+.ambulance-form-card form { display: grid; gap: 14px; margin-top: 17px; }
+.ambulance-form-card label { display: grid; gap: 6px; color: #344054; font-size: .84rem; font-weight: 700; }
+.ambulance-form-card label small { color: #858fa0; font-size: .78rem; font-weight: 500; }
+.ambulance-form-card input, .ambulance-form-card textarea {
+  width: 100%;
+  min-height: 43px;
+  padding: 10px 12px;
+  border: 1px solid #d8dee8;
+  border-radius: 9px;
+  background: #fff;
+  color: #172033;
+  font: inherit;
+  font-weight: 450;
+}
+.ambulance-form-card textarea { resize: vertical; }
+.ambulance-form-card input:focus, .ambulance-form-card textarea:focus { outline: 3px solid rgba(37, 99, 235, .14); border-color: #7da3e5; }
+.ambulance-location-input { position: relative; display: flex; align-items: center; gap: 8px; }
+.ambulance-location-input svg { position: absolute; margin-left: 12px; color: #778195; pointer-events: none; }
+.ambulance-location-input input { padding-left: 38px; }
+.ambulance-gps-button {
+  display: inline-flex;
+  justify-self: start;
+  align-items: center;
+  gap: 7px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #2456a6;
+  font: inherit;
+  font-size: .82rem;
+  font-weight: 750;
+  cursor: pointer;
+}
+.ambulance-gps-confirmation { margin: -8px 0 0; color: #16794b; font-size: .78rem; }
+.ambulance-submit, .ambulance-primary-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  min-height: 47px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: 10px;
+  background: #c62828;
+  color: #fff;
+  font: inherit;
+  font-weight: 800;
+  text-decoration: none;
+  cursor: pointer;
+}
+.ambulance-submit:hover, .ambulance-primary-link:hover { background: #a61f1f; }
+.ambulance-submit:disabled { cursor: wait; opacity: .7; }
+.ambulance-error, .ambulance-inventory-error { padding: 11px 13px; border: 1px solid #fecaca; border-radius: 9px; background: #fff7f7; color: #991b1b; font-size: .85rem; }
+.ambulance-inventory-card { overflow: hidden; }
+.ambulance-inventory-heading { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 18px; border-bottom: 1px solid #edf0f5; }
+.ambulance-inventory-heading > div { display: flex; align-items: center; gap: 10px; }
+.ambulance-inventory-icon { display: grid; width: 38px; height: 38px; place-items: center; border-radius: 11px; background: #eef4ff; color: #2456a6; }
+.ambulance-inventory-heading p { margin: 3px 0 0; color: #778195; font-size: .78rem; }
+.ambulance-inventory-heading button { display: grid; width: 34px; height: 34px; place-items: center; border: 1px solid #e2e8f0; border-radius: 9px; background: #fff; color: #475467; cursor: pointer; }
+.ambulance-inventory-heading button:disabled { cursor: wait; opacity: .6; }
+.ambulance-refresh-spinning { animation: ambulance-spin 1s linear infinite; }
+@keyframes ambulance-spin { to { transform: rotate(360deg); } }
+.ambulance-inventory-totals { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 15px 18px; }
+.ambulance-inventory-totals div { display: grid; gap: 3px; padding: 12px; border-radius: 10px; background: #f8fafc; }
+.ambulance-inventory-totals strong { color: #182230; font-size: 1.3rem; }
+.ambulance-inventory-totals span { color: #667085; font-size: .77rem; }
+.ambulance-unit-list { padding: 0; margin: 0; list-style: none; }
+.ambulance-unit-list li { display: flex; align-items: center; gap: 10px; padding: 12px 18px; border-top: 1px solid #f0f2f6; }
+.ambulance-unit-dot { flex: 0 0 auto; width: 9px; height: 9px; border-radius: 50%; background: #98a2b3; }
+.ambulance-unit-dot.is-available { background: #12a76a; box-shadow: 0 0 0 3px #e6f7ee; }
+.ambulance-unit-details { display: grid; flex: 1; min-width: 0; gap: 2px; }
+.ambulance-unit-details strong { overflow: hidden; color: #344054; font-size: .83rem; text-overflow: ellipsis; white-space: nowrap; }
+.ambulance-unit-details small { overflow: hidden; color: #778195; font-size: .74rem; text-overflow: ellipsis; white-space: nowrap; }
+.ambulance-unit-status { color: #667085; font-size: .72rem; font-weight: 750; white-space: nowrap; }
+.ambulance-unit-status.is-available { color: #16794b; }
+.ambulance-inventory-empty { padding: 16px 18px; margin: 0; color: #667085; font-size: .84rem; }
+.ambulance-inventory-error { margin: 14px; }
+.ambulance-inventory-error p { margin: 0 0 8px; }
+.ambulance-inventory-error button { border: 0; background: transparent; color: #991b1b; font: inherit; font-weight: 800; cursor: pointer; }
+.ambulance-inventory-pagination { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 9px 18px; color: #778195; font-size: .72rem; }
+.ambulance-inventory-pagination div { display: flex; gap: 6px; }
+.ambulance-inventory-pagination button { padding: 5px 8px; border: 1px solid #d8dee8; border-radius: 7px; background: #fff; color: #344054; font: inherit; font-weight: 700; cursor: pointer; }
+.ambulance-inventory-pagination button:disabled { cursor: default; opacity: .45; }
+.ambulance-inventory-disclaimer { margin: 0; padding: 10px 18px; color: #778195; font-size: .73rem; }
+.ambulance-inventory-disclaimer { border-top: 1px solid #edf0f5; background: #fafbfc; line-height: 1.45; }
+.ambulance-success { max-width: 700px; margin: 48px auto; padding: 30px; text-align: center; }
+.ambulance-success-icon { margin: 0 auto 15px; background: #eaf8f0; color: #16794b; }
+.ambulance-success > p:not(.ambulance-eyebrow) { color: #667085; }
+.ambulance-not-guaranteed { padding: 12px; border-radius: 10px; background: #fffbeb; color: #80530a !important; font-size: .88rem; }
+.ambulance-success-actions { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; margin-top: 18px; }
+.ambulance-success-actions button { padding: 0 14px; min-height: 44px; border: 1px solid #d8dee8; border-radius: 10px; background: #fff; color: #344054; font: inherit; font-weight: 750; cursor: pointer; }
+
+@media (max-width: 780px) {
+  .ambulance-layout { grid-template-columns: 1fr; }
+}
+@media (max-width: 520px) {
+  .ambulance-page { width: min(100% - 24px, 1080px); padding-top: 24px; }
+  .ambulance-heading { align-items: flex-start; }
+  .ambulance-heading-icon { width: 45px; height: 45px; border-radius: 13px; }
+  .ambulance-form-card { padding: 17px; }
+  .ambulance-success { margin: 20px auto; padding: 22px; }
+}

@@ -6,6 +6,7 @@ import com.resqnet.model.resource.Resource;
 import com.resqnet.model.resource.Shelter;
 import com.resqnet.model.resource.Vehicle;
 import com.resqnet.exception.ResourceNotFoundException;
+import com.resqnet.service.AuthManager;
 import com.resqnet.service.ResourceManager;
 import com.resqnet.storage.SQLiteStorageManager;
 import com.sun.net.httpserver.HttpExchange;
@@ -18,10 +19,12 @@ import java.util.UUID;
 public class ResourceHandler implements HttpHandler {
     private final ResourceManager resources;
     private final SQLiteStorageManager storage;
+    private final AuthManager auth;
 
-    public ResourceHandler(ResourceManager resources, SQLiteStorageManager storage) {
+    public ResourceHandler(ResourceManager resources, SQLiteStorageManager storage, AuthManager auth) {
         this.resources = resources;
         this.storage = storage;
+        this.auth = auth;
     }
 
     @Override
@@ -30,6 +33,7 @@ public class ResourceHandler implements HttpHandler {
             String path = exchange.getRequestURI().getPath();
             if (path.matches("/api/resources/[^/]+/availability")
                     && "PUT".equalsIgnoreCase(exchange.getRequestMethod())) {
+                if (!AuthGuard.requireAdmin(exchange, auth)) return;
                 updateAvailability(exchange, path);
                 return;
             }
@@ -46,6 +50,7 @@ public class ResourceHandler implements HttpHandler {
                 JsonSerializer.sendError(exchange, 405, "Method not allowed");
                 return;
             }
+            if (!AuthGuard.requireAdmin(exchange, auth)) return;
             Map<String, Object> body = JsonSerializer.parseObject(exchange.getRequestBody());
             String id = JsonSerializer.optionalString(body, "id", UUID.randomUUID().toString());
             String name = JsonSerializer.requiredString(body, "name");

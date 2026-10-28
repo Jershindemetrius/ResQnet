@@ -25,6 +25,22 @@ public class AuthHandler implements HttpHandler {
     @Override
     public void handle(HttpExchange exchange) throws IOException {
         String path = exchange.getRequestURI().getPath();
+        if ("/api/auth/session".equals(path) && "GET".equalsIgnoreCase(exchange.getRequestMethod())) {
+            AuthAccount account = AuthGuard.currentAccount(exchange, auth);
+            exchange.getResponseHeaders().set("Cache-Control", "no-store");
+            if (account == null) {
+                JsonSerializer.sendError(exchange, 401, "Sign in is required");
+            } else {
+                JsonSerializer.send(exchange, 200, accountResponse(account));
+            }
+            return;
+        }
+        if ("/api/auth/logout".equals(path) && "POST".equalsIgnoreCase(exchange.getRequestMethod())) {
+            auth.revokeSession(AuthGuard.sessionToken(exchange));
+            AuthGuard.clearSessionCookie(exchange);
+            JsonSerializer.send(exchange, 200, new LinkedHashMap<String, Object>());
+            return;
+        }
         boolean signup = "/api/auth/signup".equals(path);
         boolean login = "/api/auth/login".equals(path);
         if (!signup && !login) {
@@ -53,13 +69,14 @@ public class AuthHandler implements HttpHandler {
                     JsonSerializer.sendError(exchange, 401, "Invalid email or password");
                     return;
                 }
+                AuthGuard.setSessionCookie(exchange, auth.createSession(account));
                 status = 200;
             }
-            Map<String, Object> response = new LinkedHashMap<String, Object>();
-            response.put("id", account.getId());
-            response.put("name", account.getName());
-            response.put("email", account.getEmail());
-            JsonSerializer.send(exchange, status, response);
+            exchange.getResponseHeaders().set("Cache-Control", "no-store");
+            JsonSerializer.send(exchange, status, accountResponse(account));
+        } catch (AuthManager.AdminAccountRegistrationException exception) {
+            JsonSerializer.sendError(exchange, 403,
+                    "This address is reserved for an administrator and cannot be self-registered");
         } catch (DuplicateAccountException exception) {
             JsonSerializer.sendError(exchange, 409, "An account with this email already exists");
         } catch (IllegalArgumentException exception) {
@@ -74,5 +91,14 @@ public class AuthHandler implements HttpHandler {
         } finally {
             if (password != null) java.util.Arrays.fill(password, '\0');
         }
+    }
+
+    private static Map<String, Object> accountResponse(AuthAccount account) {
+        Map<String, Object> response = new LinkedHashMap<String, Object>();
+        response.put("id", account.getId());
+        response.put("name", account.getName());
+        response.put("email", account.getEmail());
+        response.put("role", account.isAdmin() ? "ADMIN" : "USER");
+        return response;
     }
 }

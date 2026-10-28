@@ -1,6 +1,8 @@
 package com.resqnet;
 
 import com.resqnet.api.AuthHandler;
+import com.resqnet.api.AdminOperationsHandler;
+import com.resqnet.api.AmbulanceHandler;
 import com.resqnet.api.CorsFilter;
 import com.resqnet.api.DashboardHandler;
 import com.resqnet.api.DispatchHandler;
@@ -18,6 +20,7 @@ import com.resqnet.service.UserManager;
 import com.resqnet.storage.SQLiteStorageManager;
 import com.sun.net.httpserver.HttpServer;
 import java.io.IOException;
+import java.net.BindException;
 import java.net.InetSocketAddress;
 import java.nio.file.Paths;
 import java.nio.file.Path;
@@ -48,24 +51,39 @@ public final class Main {
         for (Volunteer volunteer : storage.loadVolunteers()) userManager.addOrUpdateUser(volunteer);
 
         MatchingEngine matchingEngine = new MatchingEngine(resourceManager, userManager);
-        HttpServer server = HttpServer.create(new InetSocketAddress(port), 0);
+        HttpServer server = createServer(port);
         int threadCount = Math.max(4, Math.min(32, Runtime.getRuntime().availableProcessors()));
         ExecutorService executor = Executors.newFixedThreadPool(threadCount);
         server.setExecutor(executor);
         server.createContext("/api/auth", new CorsFilter(new AuthHandler(authManager)));
+        server.createContext("/api/ambulances", new CorsFilter(new AmbulanceHandler(resourceManager)));
         server.createContext("/api/emergencies", new CorsFilter(new EmergencyHandler(emergencyManager, storage)));
-        server.createContext("/api/resources", new CorsFilter(new ResourceHandler(resourceManager, storage)));
-        server.createContext("/api/volunteers", new CorsFilter(new VolunteerHandler(userManager, storage)));
+        server.createContext("/api/resources",
+                new CorsFilter(new ResourceHandler(resourceManager, storage, authManager)));
+        server.createContext("/api/volunteers",
+                new CorsFilter(new VolunteerHandler(userManager, storage, authManager)));
         server.createContext("/api/dispatch", new CorsFilter(new DispatchHandler(emergencyManager,
-                resourceManager, userManager, matchingEngine, storage)));
+                resourceManager, userManager, matchingEngine, storage, authManager)));
         server.createContext("/api/dashboard",
                 new CorsFilter(new DashboardHandler(emergencyManager, resourceManager, userManager)));
+        server.createContext("/api/admin", new CorsFilter(new AdminOperationsHandler(authManager,
+                emergencyManager, resourceManager, userManager)));
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             server.stop(1);
             executor.shutdown();
         }, "resqnet-shutdown"));
         server.start();
         LOGGER.info("ResQNet API listening on port " + port);
+    }
+
+    static HttpServer createServer(int port) throws IOException {
+        try {
+            return HttpServer.create(new InetSocketAddress(port), 0);
+        } catch (BindException exception) {
+            throw new IOException("Port " + port + " is already in use. Stop the existing ResQNet "
+                    + "backend, or set RESQNET_PORT to an available port and update the frontend API URL.",
+                    exception);
+        }
     }
 
     private static Path configuredDatabasePath(Path dataDirectory) {

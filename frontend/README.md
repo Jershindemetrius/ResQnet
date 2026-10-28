@@ -184,18 +184,20 @@ The frontend communicates with the Java backend API:
 
 ### Endpoints Used
 - `GET /api/dashboard` - Dashboard statistics
-- `POST /api/auth/signup` and `POST /api/auth/login` - Create or verify an account
+- `POST /api/auth/signup` and `POST /api/auth/login` - Create or verify an account; login issues an HttpOnly session cookie
+- `GET /api/auth/session` and `POST /api/auth/logout` - Restore or revoke the current browser session
+- `GET /api/admin/dashboard` and `GET /api/admin/incidents` - Administrator-only operations data
 - `GET /api/emergencies?limit=100&offset=0` - List a page of emergencies
 - `POST /api/emergencies` - Create an emergency (`reporterName`, `contact`, `type`, `location`, `affectedPeopleCount`, `priority`, and `requiredResourceType`)
-- `PUT /api/dispatch/status` - Update emergency status (`emergencyId` and `status` in the JSON body)
+- `PUT /api/dispatch/status` - Update emergency status (`emergencyId` and `status` in the JSON body; administrator session required)
 - `GET /api/resources?limit=100&offset=0` - List a page of resources
-- `POST /api/resources` - Add a resource (`name`, `type`, `location`, `quantity`, and optional `provider`)
-- `PUT /api/resources/{id}/availability` - Update resource availability
+- `POST /api/resources` - Add a resource (`name`, `type`, `location`, `quantity`, and optional `provider`; administrator session required)
+- `PUT /api/resources/{id}/availability` - Update resource availability (administrator session required)
 - `GET /api/volunteers?limit=100&offset=0` - List a page of volunteers
 - `POST /api/volunteers` - Register new volunteer
-- `POST /api/volunteers` - Update volunteer availability (`id` and `status` in the JSON body)
-- `GET /api/dispatch/{id}/suggestions` - Preview the best currently available resource and volunteer without assigning them
-- `POST /api/dispatch/match` - Match and assign available units (`emergencyId` in the JSON body)
+- `POST /api/volunteers` - Update volunteer availability (`id` and `status` in the JSON body; administrator session required)
+- `GET /api/dispatch/{id}/suggestions` - Preview the best currently available resource and volunteer without assigning them (administrator session required)
+- `POST /api/dispatch/match` - Match and assign available units (`emergencyId` in the JSON body; administrator session required)
 
 List endpoints accept optional `limit` (1–500) and `offset` query parameters, for example
 `GET /api/resources?limit=100&offset=0`. The frontend loads records in batches to avoid
@@ -210,11 +212,15 @@ List endpoints accept optional `limit` (1–500) and `offset` query parameters t
 ## Backend capability boundaries
 
 Account sign-in and signup call the Java backend, which stores account
-credentials in SQLite. The backend currently does not issue browser session
-tokens or support staff roles, so the login UI does not claim to secure API
-routes. The driver telematics, vehicle GPS tracking, hospital capacity, audit,
-and system-configuration screens are not backed by APIs and are disabled;
-their old sample values are not presented as live operations.
+credentials in SQLite. Successful sign-in creates an eight-hour, server-side
+session represented by an HttpOnly, SameSite cookie. The admin page and
+operational write routes verify the administrator role on the backend; the
+React route guard is only a usability layer. Administrator email addresses
+must be provisioned using `RESQNET_ADMIN_EMAILS` as described in
+[BACKEND_SETUP.md](../BACKEND_SETUP.md). Public incident/resource feeds and
+citizen emergency/volunteer submissions remain public. Driver telematics,
+vehicle GPS tracking, hospital capacity, audit, and system-configuration
+screens are not backed by APIs and are disabled.
 
 ## 🌟 Best Practices Implemented
 

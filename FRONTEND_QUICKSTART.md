@@ -4,12 +4,14 @@
 
 A complete, production-ready React frontend for your ResQNet Emergency Management System with:
 
-✅ **5 Complete Views**:
+✅ **7 Backend-connected views**:
 1. 📊 Dashboard - Real-time overview
 2. 🚨 Report Emergency - Citizen reporting form
 3. 🎯 Dispatch Center - Emergency management hub (MAIN FEATURE)
 4. 📦 Resource Inventory - Resource management
 5. 👷 Volunteer Directory - Volunteer coordination
+6. 🚑 Ambulance Request - Live ambulance inventory and emergency dispatch request
+7. 🛠️ Admin Operations - Role-restricted incident and response-capacity overview
 
 ✅ **Key Features**:
 - Automatic Resource Matching Engine
@@ -18,6 +20,8 @@ A complete, production-ready React frontend for your ResQNet Emergency Managemen
 - Complete CRUD operations
 - Responsive Design
 - Error Handling
+- Ambulance requests enter the incident queue; a submission is not a guaranteed reservation.
+- The operations overview is informational. Role-based admin authorization is not implemented.
 
 ## Installation & Running
 
@@ -62,6 +66,8 @@ frontend/
 │   │   └── StatusTimeline.jsx      # Status progression visual
 │   ├── pages/
 │   │   ├── DashboardView.jsx       # Main dashboard
+│   │   ├── AdminDashboardView.jsx  # Role-restricted operations overview
+│   │   ├── AmbulanceBookingView.jsx # Ambulance inventory and dispatch requests
 │   │   ├── ReportEmergencyView.jsx # Report form
 │   │   ├── DispatchCenterView.jsx  # Emergency management ⭐
 │   │   ├── ResourceInventoryView.jsx # Resource CRUD
@@ -131,6 +137,7 @@ Your Java backend should implement these endpoints:
 
 ```
 GET    /api/dashboard                      → Dashboard stats
+GET    /api/ambulances                     → Ambulance inventory and availability (limit/offset supported)
 GET    /api/emergencies                    → List emergencies
 POST   /api/emergencies                    → Create emergency
 PUT    /api/emergencies/{id}/status        → Update status

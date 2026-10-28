@@ -6,6 +6,7 @@ import com.resqnet.model.emergency.MatchResult;
 import com.resqnet.model.enums.RequestStatus;
 import com.resqnet.model.resource.Resource;
 import com.resqnet.model.user.Volunteer;
+import com.resqnet.service.AuthManager;
 import com.resqnet.service.EmergencyManager;
 import com.resqnet.service.MatchingEngine;
 import com.resqnet.service.ResourceManager;
@@ -23,18 +24,21 @@ public class DispatchHandler implements HttpHandler {
     private final UserManager users;
     private final MatchingEngine matchingEngine;
     private final SQLiteStorageManager storage;
+    private final AuthManager auth;
 
     public DispatchHandler(EmergencyManager emergencies, ResourceManager resources, UserManager users,
-            MatchingEngine matchingEngine, SQLiteStorageManager storage) {
+            MatchingEngine matchingEngine, SQLiteStorageManager storage, AuthManager auth) {
         this.emergencies = emergencies;
         this.resources = resources;
         this.users = users;
         this.matchingEngine = matchingEngine;
         this.storage = storage;
+        this.auth = auth;
     }
 
     @Override
     public void handle(HttpExchange exchange) throws IOException {
+        if (!AuthGuard.requireAdmin(exchange, auth)) return;
         String path = exchange.getRequestURI().getPath();
         try {
             if (path.matches("/api/dispatch/[^/]+/suggestions")

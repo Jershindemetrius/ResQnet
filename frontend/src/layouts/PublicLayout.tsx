@@ -9,22 +9,34 @@ import {
   Ambulance,
   Users,
   Package,
-  Layers
+  Layers,
+  Activity
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 export const PublicLayout: React.FC = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
+  const [logoutError, setLogoutError] = React.useState('');
   const location = useLocation();
-  const { user, isAuthenticated, logout } = useAuth();
+  const { user, isAuthenticated, isAdmin, logout } = useAuth();
 
   const publicNavLinks = [
     { path: '/', label: 'Citizen Overview', icon: Layers },
-    { path: '/report', label: 'Report Emergency / SOS', icon: Ambulance, highlight: true },
+    { path: '/book-ambulance', label: 'Request Ambulance', icon: Ambulance, highlight: true },
     { path: '/emergencies', label: 'Public Incident Feed', icon: ShieldAlert },
     { path: '/resources', label: 'Relief Resources', icon: Package },
-    { path: '/volunteers', label: 'Community Volunteers', icon: Users }
+    { path: '/volunteers', label: 'Community Volunteers', icon: Users },
+    ...(isAdmin ? [{ path: '/admin', label: 'Admin operations', icon: Activity }] : [])
   ];
+
+  const handleLogout = async () => {
+    setLogoutError('');
+    try {
+      await logout();
+    } catch (requestError) {
+      setLogoutError(requestError instanceof Error ? requestError.message : 'Unable to end the session.');
+    }
+  };
 
   return (
     <div className="public-shell">
@@ -54,7 +66,9 @@ export const PublicLayout: React.FC = () => {
         {/* Center: Clean Citizen Nav items on desktop */}
         <nav className="public-nav">
           {publicNavLinks.map(link => {
-            const isActive = location.pathname === link.path;
+            const isActive = link.path === '/'
+              ? location.pathname === link.path
+              : location.pathname === link.path || location.pathname.startsWith(`${link.path}/`);
             const Icon = link.icon;
             return (
               <Link
@@ -75,7 +89,7 @@ export const PublicLayout: React.FC = () => {
           })}
         </nav>
 
-        {/* Right: Emergency Hotline 112 & Subtle Staff Login Link */}
+        {/* Right: Emergency Hotline 112 & account actions */}
         <div className="public-header-actions">
           {/* Emergency 112 CTA */}
           <a
@@ -93,12 +107,13 @@ export const PublicLayout: React.FC = () => {
             <div className="public-auth-actions">
               <span className="public-account-name">{user.name}</span>
               <button
-                onClick={logout}
+                onClick={handleLogout}
                 className="public-logout-button"
                 title="Log out from session"
               >
                 Logout
               </button>
+              {logoutError && <span role="alert">{logoutError}</span>}
             </div>
           ) : (
             <Link
@@ -126,7 +141,9 @@ export const PublicLayout: React.FC = () => {
         <div className="public-mobile-menu">
           <div className="public-mobile-links">
             {publicNavLinks.map(link => {
-              const isActive = location.pathname === link.path;
+              const isActive = link.path === '/'
+                ? location.pathname === link.path
+                : location.pathname === link.path || location.pathname.startsWith(`${link.path}/`);
               const Icon = link.icon;
               return (
                 <Link
@@ -154,10 +171,11 @@ export const PublicLayout: React.FC = () => {
         <div className="public-footer-inner">
           <p>© 2026 ResQNet Public Emergency Portal • Kovilpatti Sector-4</p>
           <div className="public-footer-links">
-            <Link to="/report">Immediate SOS</Link>
+            <Link to="/book-ambulance">Request ambulance</Link>
             <span>&bull;</span>
             <a href="tel:112">Dial 112</a>
             <span>&bull;</span>
+            {isAdmin && <><Link to="/admin">Admin operations</Link><span>&bull;</span></>}
             <Link to="/login">Account sign in</Link>
           </div>
         </div>

@@ -9,16 +9,18 @@ interface AccountResponse {
   id: string;
   name: string;
   email: string;
+  role: 'ADMIN' | 'USER';
 }
 
 function requireAccount(value: unknown): AccountResponse {
   if (typeof value !== 'object' || value === null
       || !('id' in value) || typeof value.id !== 'string'
       || !('name' in value) || typeof value.name !== 'string'
-      || !('email' in value) || typeof value.email !== 'string') {
+      || !('email' in value) || typeof value.email !== 'string'
+      || !('role' in value) || (value.role !== 'ADMIN' && value.role !== 'USER')) {
     throw new Error('The backend returned an invalid account response.');
   }
-  return { id: value.id, name: value.name, email: value.email };
+  return { id: value.id, name: value.name, email: value.email, role: value.role };
 }
 
 const safeRedirect = (candidate: string | null): string => {
@@ -44,10 +46,9 @@ const LoginPage: React.FC = () => {
     setError('');
     setBusy(true);
     try {
-      const account = requireAccount(mode === 'signup'
-        ? await registerAccount({ name, email, password })
-        : await loginAccount({ email, password }));
-      login({ id: account.id, name: account.name, email: account.email });
+      if (mode === 'signup') await registerAccount({ name, email, password });
+      const account = requireAccount(await loginAccount({ email, password }));
+      login(account);
       navigate(safeRedirect(query.get('redirect')), { replace: true });
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : 'Unable to authenticate with the backend.');
@@ -148,8 +149,8 @@ const LoginPage: React.FC = () => {
         </p>
 
         <p className="account-note">
-          Authentication is verified against the backend. Staff roles and vehicle telemetry
-          are not configured in this backend.
+          Accounts authenticate through the backend. Administrator roles are assigned only
+          from the server-side email allowlist; public signup cannot grant admin access.
         </p>
       </section>
     </main>
