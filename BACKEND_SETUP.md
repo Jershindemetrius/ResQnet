@@ -8,8 +8,11 @@ authentication accounts. The default database is `data/resqnet.db`.
 On its first start, the backend imports any existing `emergencies.csv`,
 `resources.csv`, `volunteers.csv`, and `auth_users.csv` files from `data/` into
 SQLite. The import is recorded in the database and is not repeated on later
-starts. The original CSV files are left untouched as a backup. After migration,
-SQLite is the active data store; changing a CSV file will not update the database.
+starts. The CSV files are read-only during migration, but they might not contain
+a complete backup of previously stored data. SQLite is the active data store
+after migration; changing a CSV file will not update the database. In this
+project, the historical emergency records were recovered directly into
+`data/resqnet.db`, while `emergencies.csv` may still contain only its header.
 
 Keep a backup of `data/resqnet.db` while the backend is stopped. To use another
 database file, set `RESQNET_DB_PATH` to its path before starting the backend.

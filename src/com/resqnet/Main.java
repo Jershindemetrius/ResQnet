@@ -26,7 +26,7 @@ import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/** ResQNet API entry point. Run from the project root with Java 11 or later. */
+/** ResQNet API entry point. Run from the project root with Java 17 or later. */
 public final class Main {
     private static final Logger LOGGER = Logger.getLogger(Main.class.getName());
     private static final int DEFAULT_PORT = 8080;

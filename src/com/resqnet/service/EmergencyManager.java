@@ -26,8 +26,10 @@ public class EmergencyManager {
 
     public synchronized void addOrUpdateEmergency(EmergencyRequest emergency) {
         if (emergency == null) throw new IllegalArgumentException("emergency must not be null");
+        EmergencyRequest previous = emergencies.get(emergency.getId());
+        if (previous != null) pending.remove(previous);
         emergencies.put(emergency.getId(), emergency);
-        rebuildQueue();
+        if (emergency.getStatus() == RequestStatus.PENDING) pending.add(emergency);
     }
 
     public synchronized EmergencyRequest getEmergency(String id) throws ResourceNotFoundException {
