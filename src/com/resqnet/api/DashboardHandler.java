@@ -4,7 +4,9 @@ import com.resqnet.model.emergency.EmergencyRequest;
 import com.resqnet.model.enums.PriorityLevel;
 import com.resqnet.model.enums.RequestStatus;
 import com.resqnet.model.user.Volunteer;
+import com.resqnet.model.resource.Resource;
 import com.resqnet.service.EmergencyManager;
+import com.resqnet.service.ResourceManager;
 import com.resqnet.service.UserManager;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
@@ -16,10 +18,12 @@ import java.util.Map;
 /** Provides live emergency and volunteer counts for the dashboard. */
 public class DashboardHandler implements HttpHandler {
     private final EmergencyManager emergencies;
+    private final ResourceManager resources;
     private final UserManager users;
 
-    public DashboardHandler(EmergencyManager emergencies, UserManager users) {
+    public DashboardHandler(EmergencyManager emergencies, ResourceManager resources, UserManager users) {
         this.emergencies = emergencies;
+        this.resources = resources;
         this.users = users;
     }
 
@@ -59,12 +63,17 @@ public class DashboardHandler implements HttpHandler {
         for (Volunteer volunteer : users.getVolunteers()) {
             if (volunteer.isAvailable()) availableVolunteers++;
         }
+        int availableResources = 0;
+        for (Resource resource : resources.getAllResources()) {
+            if (resource.isAvailable()) availableResources++;
+        }
         counts.put("active", active);
         counts.put("critical", critical);
         counts.put("high", high);
         counts.put("medium", medium);
         counts.put("low", low);
         counts.put("availableVolunteers", availableVolunteers);
+        counts.put("availableResources", availableResources);
         counts.put("resolvedToday", resolvedToday);
         try {
             JsonSerializer.send(exchange, 200, counts);

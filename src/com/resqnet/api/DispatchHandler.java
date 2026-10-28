@@ -37,15 +37,23 @@ public class DispatchHandler implements HttpHandler {
     public void handle(HttpExchange exchange) throws IOException {
         String path = exchange.getRequestURI().getPath();
         try {
-            if ("/api/dispatch/match".equals(path)
+            if (path.matches("/api/dispatch/[^/]+/suggestions")
+                    && "GET".equalsIgnoreCase(exchange.getRequestMethod())) {
+                String emergencyId = path.substring("/api/dispatch/".length(),
+                        path.length() - "/suggestions".length());
+                EmergencyRequest emergency = emergencies.getEmergency(emergencyId);
+                JsonSerializer.send(exchange, 200, matchingEngine.suggest(emergency));
+            } else if ("/api/dispatch/match".equals(path)
                     && "POST".equalsIgnoreCase(exchange.getRequestMethod())) {
                 match(exchange);
             } else if ("/api/dispatch/status".equals(path)
                     && "PUT".equalsIgnoreCase(exchange.getRequestMethod())) {
                 updateStatus(exchange);
-            } else if ("/api/dispatch/match".equals(path) || "/api/dispatch/status".equals(path)) {
+            } else if ("/api/dispatch/match".equals(path) || "/api/dispatch/status".equals(path)
+                    || path.matches("/api/dispatch/[^/]+/suggestions")) {
                 exchange.getResponseHeaders().set("Allow",
-                        "/api/dispatch/match".equals(path) ? "POST, OPTIONS" : "PUT, OPTIONS");
+                        "/api/dispatch/match".equals(path) ? "POST, OPTIONS"
+                                : "/api/dispatch/status".equals(path) ? "PUT, OPTIONS" : "GET, OPTIONS");
                 JsonSerializer.sendError(exchange, 405, "Method not allowed");
             } else {
                 JsonSerializer.sendError(exchange, 404, "Route not found");

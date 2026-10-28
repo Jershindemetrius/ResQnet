@@ -26,6 +26,26 @@ public class MatchingEngine {
 
     public synchronized MatchResult match(EmergencyRequest emergency) {
         if (emergency == null) throw new IllegalArgumentException("emergency must not be null");
+        MatchResult suggestion = suggest(emergency);
+        Resource bestResource = suggestion.getResource();
+        Volunteer bestVolunteer = suggestion.getVolunteer();
+
+        if (bestResource != null) {
+            bestResource.assign();
+            emergency.setAssignedResourceId(bestResource.getId());
+        }
+        if (bestVolunteer != null) {
+            bestVolunteer.assign(emergency.getId());
+            emergency.setAssignedVolunteerId(bestVolunteer.getId());
+        }
+        if (bestResource != null || bestVolunteer != null) {
+            emergency.setStatus(RequestStatus.RESOURCE_ASSIGNED);
+        }
+        return suggestion;
+    }
+
+    public synchronized MatchResult suggest(EmergencyRequest emergency) {
+        if (emergency == null) throw new IllegalArgumentException("emergency must not be null");
         Resource bestResource = null;
         double bestResourceScore = Double.NEGATIVE_INFINITY;
         List<Resource> candidates = resourceManager.getAvailableResources(emergency.getRequiredResourceType());
@@ -48,18 +68,6 @@ public class MatchingEngine {
                 bestVolunteer = candidate;
                 bestVolunteerScore = score;
             }
-        }
-
-        if (bestResource != null) {
-            bestResource.assign();
-            emergency.setAssignedResourceId(bestResource.getId());
-        }
-        if (bestVolunteer != null) {
-            bestVolunteer.assign(emergency.getId());
-            emergency.setAssignedVolunteerId(bestVolunteer.getId());
-        }
-        if (bestResource != null || bestVolunteer != null) {
-            emergency.setStatus(RequestStatus.RESOURCE_ASSIGNED);
         }
         return new MatchResult(bestResource, bestVolunteer,
                 bestResource == null ? 0.0 : bestResourceScore,

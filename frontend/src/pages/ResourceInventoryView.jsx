@@ -2,18 +2,6 @@ import { useState, useEffect } from 'react';
 import { getResources, createResource, updateResourceAvailability } from '../api/resqnetApi.js';
 import { Icon } from '@iconify/react';
 
-const fallbackResources = [
-  { id: 'RES-101', type: 'AMBULANCE', location: 'Kovilpatti Central Depot', quantity: 1, provider: 'Kovilpatti City Hospital', available: true, callsign: 'ALS-101' },
-  { id: 'RES-102', type: 'AMBULANCE', location: 'South Block Emergency Bay', quantity: 1, provider: 'Red Cross Emergency Wing', available: true, callsign: 'BLS-104' },
-  { id: 'RES-103', type: 'FIRE_TRUCK', location: 'North Sector Station 2', quantity: 1, provider: 'District Fire & Rescue', available: false, callsign: 'T-02' },
-  { id: 'RES-104', type: 'VEHICLE', location: 'Highway 7 Outpost', quantity: 2, provider: 'Highway Patrol Command', available: true, callsign: 'RIV-01' },
-  { id: 'RES-105', type: 'MEDICAL_KIT', location: 'Kovilpatti GH Cath Lab', quantity: 12, provider: 'State Health Mission', available: true, callsign: 'O2-50L' },
-  { id: 'RES-106', type: 'RESCUE_EQUIPMENT', location: 'River Bank Embankment Depot', quantity: 2, provider: 'State Disaster Response Force', available: false, callsign: 'BOAT-Z9' },
-  { id: 'RES-107', type: 'SHELTER', location: 'Community Center East', quantity: 120, provider: 'Civil Defense Directorate', available: true, callsign: 'SH-01' },
-  { id: 'RES-108', type: 'WATER', location: 'Central Supply Water Tanks', quantity: 5000, provider: 'Municipal Water Works', available: true, callsign: 'H2O-TANK' },
-  { id: 'RES-109', type: 'FOOD', location: 'Relief Warehouse South', quantity: 800, provider: 'Civil Supplies Corporation', available: true, callsign: 'RATION-P1' }
-];
-
 export default function ResourceInventoryView() {
   const [resources, setResources] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -22,8 +10,11 @@ export default function ResourceInventoryView() {
   const [filterAvailability, setFilterAvailability] = useState('ALL');
   const [searchQuery, setSearchQuery] = useState('');
   const [toastMessage, setToastMessage] = useState(null);
+  const [error, setError] = useState('');
+  const [saving, setSaving] = useState(false);
 
   const [formData, setFormData] = useState({
+    name: '',
     type: 'AMBULANCE',
     location: '',
     quantity: 1,
@@ -42,10 +33,11 @@ export default function ResourceInventoryView() {
   const loadResources = async () => {
     try {
       setLoading(true);
+      setError('');
       const data = await getResources();
       setResources(data);
-    } catch {
-      setResources(fallbackResources);
+    } catch (loadError) {
+      setError(loadError.message);
     } finally {
       setLoading(false);
     }
@@ -61,42 +53,32 @@ export default function ResourceInventoryView() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const newRes = {
-      ...formData,
-      id: `RES-${Date.now().toString().slice(-4)}`,
-      available: true
-    };
-
     try {
-      await createResource(formData);
-    } catch {
-      // Local fallback append
+      setSaving(true);
+      setError('');
+      const created = await createResource({ ...formData, quantity: Number(formData.quantity) });
+      setResources(prev => [created, ...prev]);
+      setShowAddForm(false);
+      showToast(`📦 Resource "${created.name}" added successfully.`);
+      setFormData({ name: '', type: 'AMBULANCE', location: '', quantity: 1, provider: '' });
+    } catch (submitError) {
+      setError(submitError.message);
+    } finally {
+      setSaving(false);
     }
-
-    setResources(prev => [newRes, ...prev]);
-    setShowAddForm(false);
-    showToast(`📦 New resource "${formData.type}" added successfully!`);
-
-    setFormData({
-      type: 'AMBULANCE',
-      location: '',
-      quantity: 1,
-      provider: ''
-    });
   };
 
   const toggleAvailability = async (id, currentStatus) => {
     try {
+      setError('');
       await updateResourceAvailability(id, !currentStatus);
-    } catch {
-      // Local simulation
+      setResources(prev =>
+        prev.map(r => (r.id === id ? { ...r, available: !currentStatus } : r))
+      );
+      showToast(`Resource #${id} marked ${!currentStatus ? 'available' : 'in use'}.`);
+    } catch (updateError) {
+      setError(updateError.message);
     }
-
-    setResources(prev =>
-      prev.map(r => (r.id === id ? { ...r, available: !currentStatus } : r))
-    );
-
-    showToast(`🔄 Resource #${id} status changed to ${!currentStatus ? 'AVAILABLE' : 'IN USE'}`);
   };
 
   const filteredResources = resources.filter(res => {
@@ -234,7 +216,7 @@ export default function ResourceInventoryView() {
             <select value={filterType} onChange={(e) => setFilterType(e.target.value)}>
               <option value="ALL">All Categories</option>
               <option value="AMBULANCE">🚑 Ambulance</option>
-              <option value="FIRE_TRUCK">🚒 Fire Truck</option>
+              <option value="MEDICINE">💊 Medicine</option>
               <option value="MEDICAL_KIT">🏥 Medical Kit</option>
               <option value="FOOD">🍲 Food Supplies</option>
               <option value="WATER">💧 Water Tankers</option>
@@ -271,10 +253,21 @@ export default function ResourceInventoryView() {
 
             <form onSubmit={handleSubmit} className="modal-form-custom">
               <div className="form-group-custom">
+                <label>Resource Name *</label>
+                <input
+                  type="text"
+                  name="name"
+                  placeholder="e.g. Central Ambulance 01"
+                  value={formData.name}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+              <div className="form-group-custom">
                 <label>Resource Category *</label>
                 <select name="type" value={formData.type} onChange={handleChange} required>
                   <option value="AMBULANCE">🚑 Advanced / Basic Ambulance</option>
-                  <option value="FIRE_TRUCK">🚒 Fire Tender / Heavy Extinguisher</option>
+                  <option value="MEDICINE">💊 Medicine Supply</option>
                   <option value="MEDICAL_KIT">🏥 Trauma &amp; Oxygen Supply Kit</option>
                   <option value="FOOD">🍲 Dry Ration Food Packs</option>
                   <option value="WATER">💧 Potable Drinking Water Supply</option>
@@ -325,15 +318,25 @@ export default function ResourceInventoryView() {
                 <button type="button" className="btn-cancel" onClick={() => setShowAddForm(false)}>
                   Cancel
                 </button>
-                <button type="submit" className="btn-submit">
+                <button type="submit" className="btn-submit" disabled={saving}>
                   <Icon icon="mdi:check" width="18" height="18" />
-                  <span>Register Resource</span>
+                  <span>{saving ? 'Saving...' : 'Register Resource'}</span>
                 </button>
               </div>
             </form>
           </div>
         </div>
       )}
+
+      {error && (
+        <div role="alert" className="empty-state-fullwidth">
+          <h3>Backend request failed</h3>
+          <p>{error}</p>
+          <button type="button" className="btn-header-refresh" onClick={loadResources}>Retry</button>
+        </div>
+      )}
+
+      {loading ? <p role="status">Loading resources...</p> : null}
 
       {/* Resources Cards Grid */}
       <div className="resources-cards-grid">

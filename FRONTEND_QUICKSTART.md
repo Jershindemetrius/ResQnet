@@ -20,12 +20,11 @@ A complete, production-ready React frontend for your ResQNet Emergency Managemen
 - Error Handling
 
 ## Installation & Running
-   
+
 ### Step 1: Install Dependencies
 ```bash
 cd frontend
-npm install
-```
+npm install                             
 
 This will install:
 - React 18.3.1

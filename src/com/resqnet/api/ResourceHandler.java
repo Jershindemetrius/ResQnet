@@ -5,6 +5,7 @@ import com.resqnet.model.resource.MedicalResource;
 import com.resqnet.model.resource.Resource;
 import com.resqnet.model.resource.Shelter;
 import com.resqnet.model.resource.Vehicle;
+import com.resqnet.exception.ResourceNotFoundException;
 import com.resqnet.service.ResourceManager;
 import com.resqnet.storage.FileStorageManager;
 import com.sun.net.httpserver.HttpExchange;
@@ -26,7 +27,13 @@ public class ResourceHandler implements HttpHandler {
     @Override
     public void handle(HttpExchange exchange) throws IOException {
         try {
-            if (!"/api/resources".equals(exchange.getRequestURI().getPath())) {
+            String path = exchange.getRequestURI().getPath();
+            if (path.matches("/api/resources/[^/]+/availability")
+                    && "PUT".equalsIgnoreCase(exchange.getRequestMethod())) {
+                updateAvailability(exchange, path);
+                return;
+            }
+            if (!"/api/resources".equals(path)) {
                 JsonSerializer.sendError(exchange, 404, "Route not found");
                 return;
             }
@@ -59,6 +66,8 @@ public class ResourceHandler implements HttpHandler {
             resources.addResource(resource);
             storage.saveResources(resources.getAllResources());
             JsonSerializer.send(exchange, 201, resource);
+        } catch (ResourceNotFoundException exception) {
+            JsonSerializer.sendError(exchange, 404, exception.getMessage());
         } catch (IllegalArgumentException exception) {
             JsonSerializer.sendError(exchange, 400, exception.getMessage());
         } catch (IOException exception) {
@@ -67,5 +76,20 @@ public class ResourceHandler implements HttpHandler {
             JsonSerializer.sendError(exchange, 500, "Unable to process resource request");
             throw exception;
         }
+    }
+
+    private void updateAvailability(HttpExchange exchange, String path)
+            throws IOException, ResourceNotFoundException {
+        String id = path.substring("/api/resources/".length(),
+                path.length() - "/availability".length());
+        Map<String, Object> body = JsonSerializer.parseObject(exchange.getRequestBody());
+        Object available = body.get("available");
+        if (!(available instanceof Boolean)) {
+            throw new IllegalArgumentException("available must be a boolean");
+        }
+        Resource resource = resources.getResource(id);
+        resource.setAvailable((Boolean) available);
+        storage.saveResources(resources.getAllResources());
+        JsonSerializer.send(exchange, 200, resource);
     }
 }

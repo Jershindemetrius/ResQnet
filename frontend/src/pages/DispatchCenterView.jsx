@@ -4,69 +4,6 @@ import PriorityBadge from '../components/PriorityBadge.jsx';
 import StatusTimeline from '../components/StatusTimeline.jsx';
 import { Icon } from '@iconify/react';
 
-const fallbackEmergencies = [
-  {
-    id: 'ER102',
-    reporterName: 'Citizen One',
-    contactNumber: '9876543212',
-    type: 'Accident (Trauma / High)',
-    location: 'Kovilpatti Central - Main Crossroad',
-    numberOfPeople: 2,
-    description: 'Vehicle collision, multiple injured persons requiring trauma triage.',
-    requiredResources: 'AMBULANCE, MEDICAL_KIT',
-    priority: 'HIGH',
-    status: 'PENDING'
-  },
-  {
-    id: 'ER103',
-    reporterName: 'Ravi Kumar',
-    contactNumber: '9876543215',
-    type: 'Commercial Fire Hazard',
-    location: 'North Sector - Building No 42',
-    numberOfPeople: 5,
-    description: 'Commercial complex fire on 2nd floor, smoke inhalation hazard.',
-    requiredResources: 'FIRE_TRUCK, RESCUE_EQUIPMENT',
-    priority: 'CRITICAL',
-    status: 'RESPONDING'
-  },
-  {
-    id: 'ER104',
-    reporterName: 'Dr. Lakshmi',
-    contactNumber: '9876543220',
-    type: 'Flash Flood Embankment Trap',
-    location: 'South Block - River Bank Area',
-    numberOfPeople: 10,
-    description: 'Water level surging past embankment, 3 families trapped.',
-    requiredResources: 'SHELTER_SPACE, FOOD, DRINKING_WATER',
-    priority: 'HIGH',
-    status: 'RESOURCE_ASSIGNED'
-  },
-  {
-    id: 'ER105',
-    reporterName: 'Highway Patrol',
-    contactNumber: '9876543230',
-    type: 'Highway Cargo Rollover',
-    location: 'Highway 7 - Kilometer 45',
-    numberOfPeople: 1,
-    description: 'Cargo truck rollover blocking southbound lane.',
-    requiredResources: 'AMBULANCE, HEAVY_TOW',
-    priority: 'MEDIUM',
-    status: 'ON_SITE'
-  },
-  {
-    id: 'ER106',
-    reporterName: 'Civil Supply Dept',
-    contactNumber: '9876543231',
-    type: 'Drinking Water Supply Outage',
-    location: 'Kovilpatti East Slum Cluster',
-    numberOfPeople: 20,
-    description: 'Clean drinking water shortage following main pipe breach.',
-    requiredResources: 'FOOD, DRINKING_WATER',
-    priority: 'LOW',
-    status: 'RESOLVED'
-  }
-];
-
 export default function DispatchCenterView() {
   const [emergencies, setEmergencies] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -75,6 +12,8 @@ export default function DispatchCenterView() {
   const [filterStatus, setFilterStatus] = useState('ALL');
   const [searchQuery, setSearchQuery] = useState('');
   const [toastMessage, setToastMessage] = useState(null);
+  const [error, setError] = useState('');
+  const [busy, setBusy] = useState(false);
 
   useEffect(() => {
     loadEmergencies();
@@ -88,66 +27,61 @@ export default function DispatchCenterView() {
   const loadEmergencies = async () => {
     try {
       setLoading(true);
+      setError('');
       const data = await getEmergencies();
       setEmergencies(data);
-      if (data.length > 0) setSelectedEmergency(data[0]);
-    } catch {
-      // Graceful fallback to demo dataset
-      setEmergencies(fallbackEmergencies);
-      setSelectedEmergency(fallbackEmergencies[0]);
-      loadFallbackSuggestions('ER102');
+      setSelectedEmergency(prev => data.find(item => item.id === prev?.id) ?? data[0] ?? null);
+      setSuggestions(null);
+    } catch (loadError) {
+      setError(loadError.message);
     } finally {
       setLoading(false);
     }
   };
 
-  const loadFallbackSuggestions = (emergencyId) => {
-    setSuggestions({
-      emergencyId,
-      suggestedResources: [
-        { id: 'RES-01', type: '🚑 Advanced Life Support Ambulance (ALS-101)', distance: 1.5, location: 'Kovilpatti Central Depot' },
-        { id: 'VOL-05', type: '⛑️ Volunteer First Aid Specialist (Arun Kumar)', distance: 1.2, location: 'Near Old Bus Stand' }
-      ]
-    });
-  };
-
   const handleSelectEmergency = async (emergency) => {
     setSelectedEmergency(emergency);
+    setSuggestions(null);
+    setError('');
     try {
       const matchData = await getMatchingSuggestions(emergency.id);
       setSuggestions(matchData);
-    } catch {
-      loadFallbackSuggestions(emergency.id);
+    } catch (loadError) {
+      setError(loadError.message);
     }
   };
 
   const handleStatusUpdate = async (emergencyId, newStatus) => {
     try {
-      await updateEmergencyStatus(emergencyId, newStatus);
-    } catch {
-      // Local simulation if backend is offline
+      setBusy(true);
+      setError('');
+      const updated = await updateEmergencyStatus(emergencyId, newStatus);
+      setEmergencies(prev => prev.map(item => item.id === emergencyId ? updated : item));
+      setSelectedEmergency(updated);
+      setSuggestions(null);
+      showToast(`Request #${emergencyId} updated to ${newStatus.replace('_', ' ')}.`);
+    } catch (updateError) {
+      setError(updateError.message);
+    } finally {
+      setBusy(false);
     }
-
-    setEmergencies(prev =>
-      prev.map(e => (e.id === emergencyId ? { ...e, status: newStatus } : e))
-    );
-
-    if (selectedEmergency?.id === emergencyId) {
-      setSelectedEmergency(prev => (prev ? { ...prev, status: newStatus } : null));
-    }
-
-    showToast(`✅ Request #${emergencyId} updated to ${newStatus.replace('_', ' ')}`);
   };
 
-  const handleAssignResources = async (emergencyId, resourceIds) => {
+  const handleAssignResources = async (emergencyId) => {
     try {
-      await assignResources(emergencyId, { resourceIds });
-    } catch {
-      // Local simulation if backend is offline
+      setBusy(true);
+      setError('');
+      const result = await assignResources(emergencyId);
+      if (!result.successful) {
+        throw new Error('No compatible available resource or volunteer could be assigned.');
+      }
+      await loadEmergencies();
+      showToast(`Recommended units assigned to #${emergencyId}.`);
+    } catch (assignError) {
+      setError(assignError.message);
+    } finally {
+      setBusy(false);
     }
-
-    handleStatusUpdate(emergencyId, 'RESOURCE_ASSIGNED');
-    showToast(`🚀 Units assigned to #${emergencyId}! Automated telemetry armed.`);
   };
 
   const filteredEmergencies = emergencies.filter(e => {
@@ -171,6 +105,13 @@ export default function DispatchCenterView() {
           <span>{toastMessage}</span>
         </div>
       )}
+      {error && (
+        <div role="alert" className="empty-state-card">
+          <strong>Backend request failed</strong>
+          <p>{error}</p>
+          <button type="button" className="btn-header-refresh" onClick={loadEmergencies}>Retry</button>
+        </div>
+      )}
 
       {/* Page Header */}
       <div className="page-header-premium">
@@ -186,9 +127,9 @@ export default function DispatchCenterView() {
           <p className="page-main-subtext">Coordinate live citizen distress calls, review triage requirements, and dispatch emergency fleet assets.</p>
         </div>
         <div className="header-action-block">
-          <button className="btn-header-refresh" onClick={loadEmergencies} title="Refresh Live Queue">
+          <button className="btn-header-refresh" onClick={loadEmergencies} disabled={loading} title="Refresh Live Queue">
             <Icon icon="mdi:refresh" width="18" height="18" />
-            <span>Refresh Queue</span>
+            <span>{loading ? 'Loading...' : 'Refresh Queue'}</span>
           </button>
         </div>
       </div>
@@ -235,7 +176,9 @@ export default function DispatchCenterView() {
           </div>
 
           <div className="emergency-cards-scroll">
-            {filteredEmergencies.length === 0 ? (
+            {loading ? (
+              <div role="status" className="empty-state-card">Loading emergency reports...</div>
+            ) : filteredEmergencies.length === 0 ? (
               <div className="empty-state-card">
                 <Icon icon="mdi:clipboard-text-search-outline" width="40" height="40" />
                 <p>No incidents match the selected filter criteria.</p>
@@ -344,16 +287,18 @@ export default function DispatchCenterView() {
                   {selectedEmergency.status === 'PENDING' && (
                     <button
                       className="btn-status-advance"
-                      onClick={() => handleStatusUpdate(selectedEmergency.id, 'RESOURCE_ASSIGNED')}
+                      onClick={() => handleAssignResources(selectedEmergency.id)}
+                      disabled={busy}
                     >
                       <Icon icon="mdi:check-circle" width="18" height="18" />
-                      <span>Mark as Resource Assigned</span>
+                      <span>{busy ? 'Assigning resources...' : 'Match & Assign Available Units'}</span>
                     </button>
                   )}
                   {selectedEmergency.status === 'RESOURCE_ASSIGNED' && (
                     <button
                       className="btn-status-advance responding"
                       onClick={() => handleStatusUpdate(selectedEmergency.id, 'RESPONDING')}
+                      disabled={busy}
                     >
                       <Icon icon="mdi:truck-fast" width="18" height="18" />
                       <span>Mark as Responding (Code 3 En Route)</span>
@@ -363,6 +308,7 @@ export default function DispatchCenterView() {
                     <button
                       className="btn-status-advance onsite"
                       onClick={() => handleStatusUpdate(selectedEmergency.id, 'ON_SITE')}
+                      disabled={busy}
                     >
                       <Icon icon="mdi:map-marker-check" width="18" height="18" />
                       <span>Mark as On-Site at Incident Coordinates</span>
@@ -372,6 +318,7 @@ export default function DispatchCenterView() {
                     <button
                       className="btn-status-advance resolved"
                       onClick={() => handleStatusUpdate(selectedEmergency.id, 'RESOLVED')}
+                      disabled={busy}
                     >
                       <Icon icon="mdi:checkbox-marked-circle" width="18" height="18" />
                       <span>Mark as Fully Resolved &amp; Closed</span>
@@ -397,25 +344,28 @@ export default function DispatchCenterView() {
                     {suggestions.suggestedResources?.map((res) => (
                       <div key={res.id} className="suggestion-item-custom">
                         <div className="res-icon-chip">
-                          <Icon icon="mdi:ambulance" width="20" height="20" />
+                          <Icon icon={res.kind === 'volunteer' ? 'mdi:account-hard-hat' : 'mdi:ambulance'} width="20" height="20" />
                         </div>
                         <div className="res-details">
                           <div className="res-name">{res.type}</div>
-                          <div className="res-loc">📍 {res.location} &bull; {res.distance} km from site</div>
+                          <div className="res-loc">📍 {res.location} &bull; match score {(res.score * 100).toFixed(0)}%</div>
                         </div>
                         <span className="res-avail-chip">AVAILABLE</span>
                       </div>
                     ))}
-                    <button
+                    {suggestions.suggestedResources?.length === 0 && (
+                      <p>No compatible resources or volunteers are currently available.</p>
+                    )}
+                    {selectedEmergency.status === 'PENDING' && (
+                      <button
                       className="btn-assign-all"
-                      onClick={() => {
-                        const ids = suggestions.suggestedResources?.map(r => r.id) || ['RES-01'];
-                        handleAssignResources(selectedEmergency.id, ids);
-                      }}
+                      onClick={() => handleAssignResources(selectedEmergency.id)}
+                      disabled={busy || !suggestions.successful}
                     >
                       <Icon icon="mdi:send-check" width="18" height="18" />
-                      <span>Assign All Recommended Units Immediately</span>
-                    </button>
+                      <span>{busy ? 'Assigning...' : 'Assign Recommended Units'}</span>
+                      </button>
+                    )}
                   </div>
                 </div>
               )}

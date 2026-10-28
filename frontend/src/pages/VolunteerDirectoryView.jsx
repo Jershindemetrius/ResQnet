@@ -2,17 +2,6 @@ import { useState, useEffect } from 'react';
 import { getVolunteers, createVolunteer, updateVolunteerAvailability } from '../api/resqnetApi.js';
 import { Icon } from '@iconify/react';
 
-const fallbackVolunteers = [
-  { id: 'VOL-101', name: 'Arun Kumar', contactNumber: '9876543211', skills: 'FIRST_AID', location: 'Kovilpatti Central', available: true, badge: 'Lead Operations', certifications: 'CPR, Trauma Triage Level 2' },
-  { id: 'VOL-102', name: 'Dr. Lakshmi Sundaram', contactNumber: '9876543220', skills: 'MEDICAL', location: 'South Block', available: true, badge: 'Trauma Surgeon', certifications: 'MBBS, ATLS certified' },
-  { id: 'VOL-103', name: 'Priya Sharma', contactNumber: '9876543216', skills: 'RESCUE', location: 'South Block', available: true, badge: 'Rescue Operations', certifications: 'Swift Water Rescue, Extrication' },
-  { id: 'VOL-104', name: 'Suresh Babu', contactNumber: '9876543219', skills: 'FIRST_AID', location: 'North Sector', available: true, badge: 'Paramedic First Aid', certifications: 'Red Cross First Responder' },
-  { id: 'VOL-105', name: 'Karthik Raja', contactNumber: '9876543217', skills: 'DRIVER', location: 'Kovilpatti East', available: false, badge: 'Heavy Ambulance Pilot', certifications: 'Code 3 Emergency Driving' },
-  { id: 'VOL-106', name: 'Anandhi M.', contactNumber: '9876543224', skills: 'COMMUNICATION', location: 'Sector 4 Hub', available: true, badge: 'Ham Radio & Drone Pilot', certifications: 'Disaster Telemetry' },
-  { id: 'VOL-107', name: 'Vignesh K.', contactNumber: '9876543225', skills: 'FIREFIGHTING', location: 'Industrial Corridor', available: true, badge: 'Fire & Hazmat Specialist', certifications: 'Hazmat Level 1' },
-  { id: 'VOL-108', name: 'Meena Devi', contactNumber: '9876543218', skills: 'GENERAL', location: 'Kovilpatti Town', available: true, badge: 'Community Coordinator', certifications: 'Civil Defense Volunteer' }
-];
-
 export default function VolunteerDirectoryView() {
   const [volunteers, setVolunteers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -21,6 +10,8 @@ export default function VolunteerDirectoryView() {
   const [filterAvailability, setFilterAvailability] = useState('ALL');
   const [searchQuery, setSearchQuery] = useState('');
   const [toastMessage, setToastMessage] = useState(null);
+  const [error, setError] = useState('');
+  const [saving, setSaving] = useState(false);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -41,10 +32,11 @@ export default function VolunteerDirectoryView() {
   const loadVolunteers = async () => {
     try {
       setLoading(true);
+      setError('');
       const data = await getVolunteers();
       setVolunteers(data);
-    } catch {
-      setVolunteers(fallbackVolunteers);
+    } catch (loadError) {
+      setError(loadError.message);
     } finally {
       setLoading(false);
     }
@@ -60,44 +52,35 @@ export default function VolunteerDirectoryView() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const newVol = {
-      ...formData,
-      id: `VOL-${Date.now().toString().slice(-4)}`,
-      available: true,
-      badge: 'Registered Volunteer',
-      certifications: 'Verified ID'
-    };
-
     try {
-      await createVolunteer(formData);
-    } catch {
-      // Local fallback append
+      setSaving(true);
+      setError('');
+      const created = await createVolunteer({
+        ...formData,
+        skillSet: [formData.skills.replace(/_/g, ' ')]
+      });
+      setVolunteers(prev => [created, ...prev]);
+      setShowAddForm(false);
+      showToast(`Volunteer "${created.name}" registered successfully.`);
+      setFormData({ name: '', contactNumber: '', skills: 'FIRST_AID', location: '' });
+    } catch (submitError) {
+      setError(submitError.message);
+    } finally {
+      setSaving(false);
     }
-
-    setVolunteers(prev => [newVol, ...prev]);
-    setShowAddForm(false);
-    showToast(`👷 Volunteer "${formData.name}" registered successfully!`);
-
-    setFormData({
-      name: '',
-      contactNumber: '',
-      skills: 'FIRST_AID',
-      location: ''
-    });
   };
 
   const toggleAvailability = async (id, currentStatus) => {
     try {
+      setError('');
       await updateVolunteerAvailability(id, !currentStatus);
-    } catch {
-      // Local simulation
+      setVolunteers(prev =>
+        prev.map(v => (v.id === id ? { ...v, available: !currentStatus } : v))
+      );
+      showToast(`Volunteer #${id} marked ${!currentStatus ? 'available' : 'on duty'}.`);
+    } catch (updateError) {
+      setError(updateError.message);
     }
-
-    setVolunteers(prev =>
-      prev.map(v => (v.id === id ? { ...v, available: !currentStatus } : v))
-    );
-
-    showToast(`🔄 Volunteer #${id} duty status: ${!currentStatus ? 'ON STANDBY (READY)' : 'ON DUTY (DEPLOYED)'}`);
   };
 
   const filteredVolunteers = volunteers.filter(volunteer => {
@@ -323,15 +306,25 @@ export default function VolunteerDirectoryView() {
                 <button type="button" className="btn-cancel" onClick={() => setShowAddForm(false)}>
                   Cancel
                 </button>
-                <button type="submit" className="btn-submit">
+                <button type="submit" className="btn-submit" disabled={saving}>
                   <Icon icon="mdi:check" width="18" height="18" />
-                  <span>Complete Registration</span>
+                  <span>{saving ? 'Saving...' : 'Complete Registration'}</span>
                 </button>
               </div>
             </form>
           </div>
         </div>
       )}
+
+      {error && (
+        <div role="alert" className="empty-state-fullwidth">
+          <h3>Backend request failed</h3>
+          <p>{error}</p>
+          <button type="button" className="btn-header-refresh" onClick={loadVolunteers}>Retry</button>
+        </div>
+      )}
+
+      {loading ? <p role="status">Loading volunteers...</p> : null}
 
       {/* Volunteers Cards Grid */}
       <div className="volunteers-cards-grid">

@@ -1,13 +1,20 @@
 import { useState, useEffect } from 'react';
-import { getDashboard } from '../api/resqnetApi.js';
+import {
+  assignResources,
+  getDashboard,
+  getEmergencies,
+  getMatchingSuggestions,
+  getResources
+} from '../api/resqnetApi.js';
 import { Icon } from '@iconify/react';
-import DispatchMap from '../components/DispatchMap.jsx';
 
 export default function DashboardView() {
   const [dashboard, setDashboard] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedEmergency, setSelectedEmergency] = useState(null);
-  const [dispatchStatus, setDispatchStatus] = useState('PENDING'); // PENDING | DISPATCHING | DISPATCHED
+  const [suggestions, setSuggestions] = useState(null);
+  const [dispatching, setDispatching] = useState(false);
+  const [error, setError] = useState('');
   const [toastMessage, setToastMessage] = useState(null);
   const [currentTime, setCurrentTime] = useState(new Date().toLocaleTimeString());
 
@@ -26,29 +33,25 @@ export default function DashboardView() {
   const loadDashboard = async () => {
     try {
       setLoading(true);
-      const data = await getDashboard();
+      setError('');
+      const [counts, emergencies, resources] = await Promise.all([
+        getDashboard(),
+        getEmergencies(),
+        getResources()
+      ]);
+      const data = {
+        ...counts,
+        availableResources: resources.filter(resource => resource.available).length,
+        recentEmergencies: emergencies.slice(0, 8)
+      };
       setDashboard(data);
-    } catch {
-      // Robust realistic initial dataset
-      setDashboard({
-        activeEmergencies: 12,
-        criticalCount: 3,
-        highCount: 4,
-        mediumCount: 3,
-        lowCount: 2,
-        availableVolunteers: 18,
-        availableResources: 8,
-        resolvedToday: 27,
-        avgResponseTime: '4.2m',
-        fleetUtilization: '74%',
-        recentEmergencies: [
-          { id: 'ER102', type: 'Accident (Trauma / High)', location: 'Kovilpatti Central - Main Crossroad', status: 'PENDING', priority: 'HIGH', time: '4m ago', people: 2 },
-          { id: 'ER103', type: 'Commercial Fire (Trapped Citizens)', location: 'North Sector Block 4', status: 'RESPONDING', priority: 'CRITICAL', time: '11m ago', people: 5 },
-          { id: 'ER104', type: 'Flash Flood Embankment Trap', location: 'South Block - River Bank', status: 'RESOURCE_ASSIGNED', priority: 'HIGH', time: '28m ago', people: 10 },
-          { id: 'ER105', type: 'Highway Cargo Rollover', location: 'Highway 7 - Km 45', status: 'RESPONDING', priority: 'MEDIUM', time: '42m ago', people: 1 },
-          { id: 'ER106', type: 'Drinking Water Supply Outage', location: 'East Slum Cluster', status: 'RESOLVED', priority: 'LOW', time: '1h 15m ago', people: 20 }
-        ]
-      });
+      const selected = emergencies.find(item => item.id === selectedEmergency?.id) ?? emergencies[0] ?? null;
+      setSelectedEmergency(selected);
+      setSuggestions(selected && selected.status !== 'RESOLVED'
+        ? await getMatchingSuggestions(selected.id)
+        : null);
+    } catch (loadError) {
+      setError(loadError.message);
     } finally {
       setLoading(false);
     }
@@ -59,30 +62,34 @@ export default function DashboardView() {
     setTimeout(() => setToastMessage(null), 3800);
   };
 
-  const handleApproveDispatch = () => {
-    setDispatchStatus('DISPATCHING');
-    showToast('🚨 Transmitting CAD Order to Ambulance ALS-101 & Volunteer V-105...');
-
-    setTimeout(() => {
-      setDispatchStatus('DISPATCHED');
-      showToast('✅ Order #ER102 Dispatched! Route cleared: Green light wave active.');
-
-      // Update emergency queue item
-      setDashboard(prev => {
-        if (!prev) return prev;
-        return {
-          ...prev,
-          recentEmergencies: prev.recentEmergencies.map(e =>
-            e.id === (selectedEmergency?.id || 'ER102') ? { ...e, status: 'RESPONDING' } : e
-          )
-        };
-      });
-    }, 1200);
+  const handleApproveDispatch = async () => {
+    if (!selectedEmergency || selectedEmergency.status !== 'PENDING') return;
+    try {
+      setDispatching(true);
+      setError('');
+      const result = await assignResources(selectedEmergency.id);
+      if (!result.successful) {
+        throw new Error('No compatible available resource or volunteer could be assigned.');
+      }
+      await loadDashboard();
+      showToast(`Available units assigned to request #${selectedEmergency.id}.`);
+    } catch (dispatchError) {
+      setError(dispatchError.message);
+    } finally {
+      setDispatching(false);
+    }
   };
 
-  const handleSelectFromMapOrTable = (item) => {
+  const handleSelectFromMapOrTable = async (item) => {
     setSelectedEmergency(item);
-    showToast(`📍 Selected Incident #${item.id} (${item.type})`);
+    setSuggestions(null);
+    setError('');
+    if (item.status === 'RESOLVED') return;
+    try {
+      setSuggestions(await getMatchingSuggestions(item.id));
+    } catch (suggestionError) {
+      setError(suggestionError.message);
+    }
   };
 
   if (loading) {
@@ -90,19 +97,14 @@ export default function DashboardView() {
       <div className="dashboard-container">
         <div className="loading-state-card">
           <Icon icon="mdi:loading" className="spin brand-spin-icon" width="40" height="40" />
-          <div className="loading-state-title">Synchronizing Regional Telemetry...</div>
-          <p className="loading-state-sub">Connecting to Kovilpatti Sector Dispatch Mesh</p>
+          <div className="loading-state-title">Loading ResQNet data...</div>
+          <p className="loading-state-sub">Retrieving emergency, volunteer, and resource records.</p>
         </div>
       </div>
     );
   }
 
-  const activeTarget = selectedEmergency || dashboard?.recentEmergencies?.[0] || {
-    id: 'ER102',
-    type: 'Accident',
-    location: 'Kovilpatti Central',
-    priority: 'HIGH'
-  };
+  const activeTarget = selectedEmergency || dashboard?.recentEmergencies?.[0] || null;
 
   return (
     <div className="dashboard-container">
@@ -113,6 +115,13 @@ export default function DashboardView() {
           <span>{toastMessage}</span>
         </div>
       )}
+      {error && (
+        <div role="alert" className="empty-state-card">
+          <strong>Backend request failed</strong>
+          <p>{error}</p>
+          <button type="button" className="btn-header-refresh" onClick={loadDashboard}>Retry</button>
+        </div>
+      )}
 
       {/* Header with Live Stats & Telemetry Clock */}
       <header className="dashboard-header-premium">
@@ -120,14 +129,13 @@ export default function DashboardView() {
           <div className="telemetry-badge-row">
             <span className="live-cad-chip">
               <span className="cad-beacon-ping"></span>
-              LIVE CAD SYNCHRONIZED
+              BACKEND CONNECTED
             </span>
             <span className="node-id-chip">NODE: TN-KOVILPATTI-01</span>
-            <span className="threat-defcon-chip">DEFCON 5: NORMAL OPS</span>
           </div>
           <h1 className="dashboard-main-title">Emergency Coordinator Command Console</h1>
           <p className="dashboard-main-subtitle">
-            Real-time incident response routing, automated algorithmic resource matching &amp; telemetry monitoring
+            Emergency, volunteer, and resource totals from the ResQNet backend.
           </p>
         </div>
 
@@ -136,7 +144,7 @@ export default function DashboardView() {
             <Icon icon="mdi:clock-digital" width="22" height="22" className="clock-icon" />
             <span className="clock-time">{currentTime}</span>
           </div>
-          <div className="clock-status-caption">SECTOR DISPATCH CLOCK &bull; 24MS PING</div>
+          <div className="clock-status-caption">LOCAL TIME</div>
         </div>
       </header>
 
@@ -151,24 +159,21 @@ export default function DashboardView() {
             </div>
           </div>
           <div className="stat-card-main-val">
-            <span className="stat-val-number">{dashboard?.activeEmergencies || 12}</span>
-            <span className="stat-trend-tag bad">
-              <Icon icon="mdi:arrow-up-bold" width="12" height="12" />
-              +2 this hr
-            </span>
+            <span className="stat-val-number">{dashboard?.activeEmergencies ?? 0}</span>
+            <span className="stat-trend-tag neutral">Current total</span>
           </div>
           <div className="stat-breakdown-pills">
             <span className="stat-pill-item critical">
               <span className="pill-dot"></span>
-              {dashboard?.criticalCount || 3} Critical
+              {dashboard?.criticalCount ?? 0} Critical
             </span>
             <span className="stat-pill-item high">
               <span className="pill-dot"></span>
-              {dashboard?.highCount || 4} High
+              {dashboard?.highCount ?? 0} High
             </span>
             <span className="stat-pill-item medium">
               <span className="pill-dot"></span>
-              {dashboard?.mediumCount || 3} Medium
+              {dashboard?.mediumCount ?? 0} Medium
             </span>
           </div>
         </div>
@@ -182,15 +187,13 @@ export default function DashboardView() {
             </div>
           </div>
           <div className="stat-card-main-val">
-            <span className="stat-val-number">{dashboard?.availableVolunteers || 18}</span>
+            <span className="stat-val-number">{dashboard?.availableVolunteers ?? 0}</span>
             <span className="stat-trend-tag good">
               <Icon icon="mdi:check-all" width="12" height="12" />
               Standby Ready
             </span>
           </div>
-          <div className="stat-card-subinfo">
-            <span>🩹 8 First Aid &bull; 🏥 4 Medical &bull; 🔥 6 Rescue</span>
-          </div>
+          <div className="stat-card-subinfo"><span>Marked available in the volunteer roster</span></div>
         </div>
 
         {/* Available Fleet Vehicles */}
@@ -202,15 +205,13 @@ export default function DashboardView() {
             </div>
           </div>
           <div className="stat-card-main-val">
-            <span className="stat-val-number">{dashboard?.availableResources || 8}</span>
+            <span className="stat-val-number">{dashboard?.availableResources ?? 0}</span>
             <span className="stat-trend-tag good">
               <Icon icon="mdi:radio-tower" width="12" height="12" />
-              {dashboard?.fleetUtilization || '74%'} In Zone
+              Available
             </span>
           </div>
-          <div className="stat-card-subinfo">
-            <span>🚑 3 ALS Vans &bull; 🚒 2 Tenders &bull; 🚤 1 Boat</span>
-          </div>
+          <div className="stat-card-subinfo"><span>Resources marked available in inventory</span></div>
         </div>
 
         {/* Resolved Today */}
@@ -222,57 +223,58 @@ export default function DashboardView() {
             </div>
           </div>
           <div className="stat-card-main-val">
-            <span className="stat-val-number">{dashboard?.resolvedToday || 27}</span>
+            <span className="stat-val-number">{dashboard?.resolvedToday ?? 0}</span>
             <span className="stat-trend-tag neutral">
               <Icon icon="mdi:timer-outline" width="12" height="12" />
-              Avg {dashboard?.avgResponseTime || '4.2m'}
+              Today
             </span>
           </div>
-          <div className="stat-card-subinfo">
-            <span>🎯 96.4% SLA Compliance &bull; Kovilpatti</span>
-          </div>
+          <div className="stat-card-subinfo"><span>Based on recorded resolution timestamps</span></div>
         </div>
       </div>
 
-      {/* Main Content Grid: Interactive Tactical Map + Auto Matching Engine */}
+      {/* Backend-backed incident selection and resource matching */}
       <div className="dashboard-grid-layout">
-        {/* Left: Tactical Map */}
         <div className="dashboard-card-panel map-panel-wrap">
           <div className="panel-custom-header">
             <div className="panel-header-title">
               <Icon icon="mdi:map-marker-radius" width="18" height="18" className="header-icon-accent" />
-              <span>INTERACTIVE DISPATCH RADAR &bull; KOVILPATTI SECTOR</span>
+              <span>EMERGENCY LOCATIONS</span>
             </div>
             <div className="panel-header-tools">
-              <span className="panel-badge-live">LIVE TELEMETRY STREAM</span>
+              <span className="panel-badge-live">BACKEND RECORDS</span>
             </div>
           </div>
-          <div className="panel-body-nomargin">
-            <DispatchMap
-              selectedEmergency={selectedEmergency}
-              onSelectEmergency={handleSelectFromMapOrTable}
-            />
+          <div className="matching-panel-content">
+            <p>Location descriptions from reports. GPS coordinates and live vehicle positions are not available in the backend.</p>
+            {dashboard?.recentEmergencies?.length ? dashboard.recentEmergencies.map(emergency => (
+              <button
+                type="button"
+                key={emergency.id}
+                className="matched-candidate-card"
+                onClick={() => handleSelectFromMapOrTable(emergency)}
+              >
+                <span className="candidate-title">#{emergency.id} · {emergency.location}</span>
+                <span className="candidate-meta">{emergency.type} · {emergency.status.replace('_', ' ')}</span>
+              </button>
+            )) : <p>No emergency reports are available.</p>}
           </div>
         </div>
 
-        {/* Right: Auto Matching Engine */}
         <div className="dashboard-card-panel matching-panel-wrap">
           <div className="panel-custom-header">
             <div className="panel-header-title">
               <Icon icon="mdi:auto-fix" width="18" height="18" className="header-icon-accent" />
-              <span>AUTO MATCHING ENGINE (#{activeTarget.id})</span>
-            </div>
-            <div className="matching-score-pill">
-              <span className="score-number">98%</span>
-              <span className="score-label">MATCH</span>
+              <span>AVAILABLE MATCHES{activeTarget ? ` (#${activeTarget.id})` : ''}</span>
             </div>
           </div>
 
           <div className="matching-panel-content">
-            <div className="incident-target-banner">
+            {activeTarget ? (<>
+              <div className="incident-target-banner">
               <div className="target-tag-row">
-                <span className={`target-priority-badge ${(activeTarget.priority || 'HIGH').toLowerCase()}`}>
-                  {activeTarget.priority || 'HIGH'} PRIORITY
+                <span className={`target-priority-badge ${activeTarget.priority.toLowerCase()}`}>
+                  {activeTarget.priority} PRIORITY
                 </span>
                 <span className="target-id-chip">REQ #{activeTarget.id}</span>
               </div>
@@ -282,114 +284,31 @@ export default function DashboardView() {
                 {activeTarget.location}
               </p>
             </div>
-
-            <div className="matching-spec-box">
-              <div className="spec-label">
-                <Icon icon="mdi:clipboard-check-outline" width="15" height="15" />
-                <span>TRIAGE REQUIREMENTS:</span>
-              </div>
-              <ul className="spec-checklist">
-                <li>
-                  <Icon icon="mdi:check-circle" className="check-green" width="16" height="16" />
-                  <span>ALS Ambulance (Oxygen + Stretcher + 12-Lead ECG)</span>
-                </li>
-                <li>
-                  <Icon icon="mdi:check-circle" className="check-green" width="16" height="16" />
-                  <span>Certified First Aid Medical Volunteer</span>
-                </li>
-              </ul>
-            </div>
-
-            <div className="matching-recommendations-list">
+              <div className="matching-recommendations-list">
               <div className="spec-label">
                 <Icon icon="mdi:navigation-variant" width="15" height="15" />
-                <span>TOP ALGORITHMIC MATCHES:</span>
+                <span>NEAREST AVAILABLE COMPATIBLE RESOURCE & VOLUNTEER</span>
               </div>
-
-              <div className="matched-candidate-card primary-candidate">
-                <div className="candidate-avatar">
-                  <Icon icon="mdi:ambulance" width="22" height="22" />
-                </div>
-                <div className="candidate-details">
-                  <div className="candidate-title">Ambulance ALS-101 (Unit Alpha)</div>
-                  <div className="candidate-meta">
-                    <span>1.5 km away</span> &bull; <span>ETA: 3 mins</span> &bull; <span className="tag-available">Available</span>
+              {suggestions?.suggestedResources?.length ? suggestions.suggestedResources.map(match => (
+                <div className="matched-candidate-card" key={match.id}>
+                  <div className="candidate-avatar">
+                    <Icon icon={match.kind === 'volunteer' ? 'mdi:account-hard-hat' : 'mdi:package-variant'} width="22" height="22" />
+                  </div>
+                  <div className="candidate-details">
+                    <div className="candidate-title">{match.type}</div>
+                    <div className="candidate-meta">{match.kind} · {match.location} · score {(match.score * 100).toFixed(0)}%</div>
                   </div>
                 </div>
-                <div className="candidate-score">99%</div>
+              )) : <p>{suggestions ? 'No compatible available units were found.' : 'Select an emergency to check current availability.'}</p>}
               </div>
-
-              <div className="matched-candidate-card secondary-candidate">
-                <div className="candidate-avatar volunteer-avatar">
-                  <Icon icon="mdi:account-hard-hat" width="22" height="22" />
-                </div>
-                <div className="candidate-details">
-                  <div className="candidate-title">Volunteer V-105 (Arun Kumar)</div>
-                  <div className="candidate-meta">
-                    <span>1.2 km away</span> &bull; <span>Certified Trauma Responder</span>
-                  </div>
-                </div>
-                <div className="candidate-score">96%</div>
-              </div>
-            </div>
-
-            {/* Approve Button */}
             <button
-              className={`btn-approve-dispatch ${dispatchStatus === 'DISPATCHED' ? 'dispatched-state' : ''}`}
+              className="btn-approve-dispatch"
               onClick={handleApproveDispatch}
-              disabled={dispatchStatus === 'DISPATCHING'}
+              disabled={!activeTarget || activeTarget.status !== 'PENDING' || dispatching || !suggestions?.successful}
             >
-              {dispatchStatus === 'DISPATCHING' ? (
-                <>
-                  <Icon icon="mdi:loading" className="spin" width="20" height="20" />
-                  <span>BROADCASTING CAD DISPATCH...</span>
-                </>
-              ) : dispatchStatus === 'DISPATCHED' ? (
-                <>
-                  <Icon icon="mdi:check-decagram" width="20" height="20" />
-                  <span>DISPATCHED &bull; GREEN WAVE ACTIVE</span>
-                </>
-              ) : (
-                <>
-                  <Icon icon="mdi:send-check" width="20" height="20" />
-                  <span>APPROVE &amp; DISPATCH ALL UNITS</span>
-                </>
-              )}
+              {dispatching ? 'Assigning...' : activeTarget?.status === 'PENDING' ? 'Match and assign available units' : 'Only pending reports can be matched'}
             </button>
-
-            {/* Status Timeline */}
-            <div className="timeline-card-box">
-              <div className="timeline-title-strip">CAD RESPONSE PROGRESSION</div>
-              <div className="status-progress-flow">
-                <div className={`progress-node ${dispatchStatus !== 'DISPATCHED' ? 'active-node' : 'completed-node'}`}>
-                  <div className="node-icon">
-                    <Icon icon="mdi:clock-outline" width="16" height="16" />
-                  </div>
-                  <div className="node-caption">PENDING</div>
-                </div>
-                <div className="node-connector"></div>
-                <div className={`progress-node ${dispatchStatus === 'DISPATCHED' ? 'active-node' : ''}`}>
-                  <div className="node-icon">
-                    <Icon icon="mdi:check" width="16" height="16" />
-                  </div>
-                  <div className="node-caption">ASSIGNED</div>
-                </div>
-                <div className="node-connector"></div>
-                <div className={`progress-node ${dispatchStatus === 'DISPATCHED' ? 'pulsing-node' : ''}`}>
-                  <div className="node-icon">
-                    <Icon icon="mdi:truck-fast" width="16" height="16" />
-                  </div>
-                  <div className="node-caption">RESPONDING</div>
-                </div>
-                <div className="node-connector"></div>
-                <div className="progress-node">
-                  <div className="node-icon">
-                    <Icon icon="mdi:check-circle" width="16" height="16" />
-                  </div>
-                  <div className="node-caption">RESOLVED</div>
-                </div>
-              </div>
-            </div>
+            </>) : <p>Select a pending report from the queue to view match suggestions.</p>}
           </div>
         </div>
       </div>
@@ -403,7 +322,7 @@ export default function DashboardView() {
           </div>
           <div className="panel-header-right">
             <span className="queue-count-tag">
-              {dashboard?.recentEmergencies?.length || 5} INCIDENTS ACTIVE
+              Showing {dashboard?.recentEmergencies?.length ?? 0} reports
             </span>
           </div>
         </div>
@@ -424,7 +343,7 @@ export default function DashboardView() {
             </thead>
             <tbody>
               {dashboard?.recentEmergencies?.map((emergency) => {
-                const isSelected = (selectedEmergency?.id || 'ER102') === emergency.id;
+                const isSelected = selectedEmergency?.id === emergency.id;
                 const isCritical = emergency.priority === 'CRITICAL';
 
                 return (
@@ -454,25 +373,25 @@ export default function DashboardView() {
                         {emergency.status.replace('_', ' ')}
                       </span>
                     </td>
-                    <td className="cell-time">{emergency.time || '8m ago'}</td>
+                    <td className="cell-time">—</td>
                     <td className="cell-people">
                       <span className="people-badge">
                         <Icon icon="mdi:account" width="13" height="13" />
-                        {emergency.people || 2}
+                        {emergency.numberOfPeople}
                       </span>
                     </td>
                     <td className="cell-actions" onClick={(e) => e.stopPropagation()}>
                       <button
                         className="btn-action-primary"
                         onClick={() => handleSelectFromMapOrTable(emergency)}
-                        title="Focus on Incident Radar"
+                        title="Select this report and load current match suggestions"
                       >
                         <Icon icon="mdi:crosshairs-gps" width="16" height="16" />
-                        <span>Radar</span>
+                        <span>Select</span>
                       </button>
                       <button
                         className="btn-action-secondary"
-                        onClick={() => showToast(`Opening Incident Dossier #${emergency.id}`)}
+                        onClick={() => handleSelectFromMapOrTable(emergency)}
                         title="View Incident Dossier"
                       >
                         <Icon icon="mdi:file-document-outline" width="16" height="16" />

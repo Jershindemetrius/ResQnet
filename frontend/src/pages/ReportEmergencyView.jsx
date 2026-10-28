@@ -37,15 +37,16 @@ export default function ReportEmergencyView() {
   const [generalForm, setGeneralForm] = useState({
     reporterName: '',
     contactNumber: '',
-    emergencyType: 'MEDICAL_EMERGENCY',
+    emergencyType: 'MEDICAL',
     location: '',
     numberOfPeople: 1,
     description: '',
     priority: 'HIGH',
-    requiredResources: ''
+    requiredResourceType: 'AMBULANCE'
   });
   const [generalLoading, setGeneralLoading] = useState(false);
   const [generalSuccess, setGeneralSuccess] = useState(false);
+  const [generalError, setGeneralError] = useState('');
 
   // Listen to orders store for driver assignment updates
   useEffect(() => {
@@ -148,14 +149,22 @@ export default function ReportEmergencyView() {
   const handleGeneralSubmit = async (e) => {
     e.preventDefault();
     setGeneralLoading(true);
+    setGeneralError('');
     try {
-      await createEmergency(generalForm);
+      await createEmergency({
+        reporterName: generalForm.reporterName,
+        contact: generalForm.contactNumber,
+        type: generalForm.emergencyType,
+        location: generalForm.location,
+        affectedPeopleCount: Number(generalForm.numberOfPeople),
+        description: generalForm.description,
+        priority: generalForm.priority,
+        requiredResourceType: generalForm.requiredResourceType
+      });
       setGeneralSuccess(true);
-      setTimeout(() => navigate('/dispatch'), 2000);
-    } catch {
-      // Mock success for standalone mode
-      setGeneralSuccess(true);
-      setTimeout(() => navigate('/dispatch'), 2000);
+      setTimeout(() => navigate('/emergencies'), 1500);
+    } catch (error) {
+      setGeneralError(error.message);
     } finally {
       setGeneralLoading(false);
     }
@@ -178,7 +187,7 @@ export default function ReportEmergencyView() {
           onClick={() => setActiveMode('AMBULANCE_BOOKING')}
         >
           <Icon icon="mdi:ambulance" width="22" height="22" />
-          Book Emergency Ambulance (1-Tap GPS Dispatch)
+          Ambulance Booking Demo (Saved in This Browser)
         </button>
 
         <button
@@ -326,7 +335,7 @@ export default function ReportEmergencyView() {
                   Request Emergency Ambulance
                 </h1>
                 <p className="booking-hero-subtitle">
-                  Instant GPS dispatch connecting you with nearby on-duty ambulances in Kovilpatti.
+                  Demo booking only: this screen stores orders in this browser and does not send a dispatch to the backend.
                 </p>
               </div>
 
@@ -563,13 +572,13 @@ export default function ReportEmergencyView() {
       {activeMode === 'GENERAL_REPORT' && (
         <section className="booking-card">
           <h1>🚨 Report an Emergency Incident</h1>
-          <p className="subtitle">Fill out the details for fire, flood, road obstacle, or community rescue.</p>
+          <p className="subtitle">Submit an emergency report to the ResQNet backend.</p>
 
           {generalSuccess ? (
             <div className="success-message" style={{ background: '#ecfdf5', padding: '20px', borderRadius: '12px', border: '1px solid #a7f3d0' }}>
               <h3 style={{ color: '#065f46', margin: '0 0 6px' }}>✅ Incident Reported Successfully</h3>
               <p style={{ margin: 0, fontSize: '13px', color: '#047857' }}>
-                Redirecting to Dispatch Center...
+                Opening the emergency queue...
               </p>
             </div>
           ) : (
@@ -605,11 +614,11 @@ export default function ReportEmergencyView() {
                     value={generalForm.emergencyType}
                     onChange={(e) => setGeneralForm({ ...generalForm, emergencyType: e.target.value })}
                   >
-                    <option value="MEDICAL_EMERGENCY">🏥 Medical Emergency</option>
+                    <option value="MEDICAL">🏥 Medical Emergency</option>
                     <option value="FIRE">🔥 Fire Incident</option>
                     <option value="FLOOD">🌊 Flood / Inundation</option>
                     <option value="ACCIDENT">🚗 Highway Collision</option>
-                    <option value="OTHER">❓ Other</option>
+                    <option value="EARTHQUAKE">🌎 Earthquake</option>
                   </select>
                 </div>
                 <div>
@@ -639,6 +648,38 @@ export default function ReportEmergencyView() {
                 />
               </div>
 
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
+                <div>
+                  <label className="section-label">People Affected *</label>
+                  <input
+                    type="number"
+                    min="1"
+                    step="1"
+                    required
+                    className="modal-input"
+                    value={generalForm.numberOfPeople}
+                    onChange={(e) => setGeneralForm({ ...generalForm, numberOfPeople: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <label className="section-label">Primary Resource Required *</label>
+                  <select
+                    className="modal-input"
+                    value={generalForm.requiredResourceType}
+                    onChange={(e) => setGeneralForm({ ...generalForm, requiredResourceType: e.target.value })}
+                  >
+                    <option value="AMBULANCE">Ambulance</option>
+                    <option value="MEDICAL_KIT">Medical kit</option>
+                    <option value="MEDICINE">Medicine</option>
+                    <option value="FOOD">Food</option>
+                    <option value="WATER">Water</option>
+                    <option value="VEHICLE">Vehicle</option>
+                    <option value="RESCUE_EQUIPMENT">Rescue equipment</option>
+                    <option value="SHELTER">Shelter</option>
+                  </select>
+                </div>
+              </div>
+
               <div style={{ marginBottom: '24px' }}>
                 <label className="section-label">Incident Description *</label>
                 <textarea
@@ -650,6 +691,12 @@ export default function ReportEmergencyView() {
                   placeholder="Describe the emergency..."
                 />
               </div>
+
+              {generalError && (
+                <p role="alert" style={{ color: '#b91c1c', marginBottom: '16px' }}>
+                  Report was not submitted: {generalError}
+                </p>
+              )}
 
               <div style={{ display: 'flex', gap: '12px' }}>
                 <button

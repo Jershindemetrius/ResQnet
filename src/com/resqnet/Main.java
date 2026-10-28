@@ -55,7 +55,8 @@ public final class Main {
         server.createContext("/api/volunteers", new CorsFilter(new VolunteerHandler(userManager, storage)));
         server.createContext("/api/dispatch", new CorsFilter(new DispatchHandler(emergencyManager,
                 resourceManager, userManager, matchingEngine, storage)));
-        server.createContext("/api/dashboard", new CorsFilter(new DashboardHandler(emergencyManager, userManager)));
+        server.createContext("/api/dashboard",
+                new CorsFilter(new DashboardHandler(emergencyManager, resourceManager, userManager)));
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             server.stop(1);
             executor.shutdown();
