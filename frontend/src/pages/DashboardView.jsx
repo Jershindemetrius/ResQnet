@@ -104,7 +104,6 @@ export default function DashboardView() {
         <div className="loading-state-card">
           <Icon icon="mdi:loading" className="spin brand-spin-icon" width="40" height="40" />
           <div className="loading-state-title">Loading ResQNet data...</div>
-          <p className="loading-state-sub">Retrieving emergency, volunteer, and resource records.</p>
         </div>
       </div>
     );
@@ -114,7 +113,6 @@ export default function DashboardView() {
     return (
       <div className="dashboard-container">
         <div role="alert" className="empty-state-card">
-          <strong>Unable to load live dashboard data</strong>
           <p>{error}</p>
           <button type="button" className="btn-header-refresh" onClick={loadDashboard}>Retry</button>
         </div>
@@ -135,7 +133,6 @@ export default function DashboardView() {
       )}
       {error && (
         <div role="alert" className="empty-state-card">
-          <strong>Backend request failed</strong>
           <p>{error}</p>
           <button type="button" className="btn-header-refresh" onClick={loadDashboard}>Retry</button>
         </div>
@@ -144,17 +141,7 @@ export default function DashboardView() {
       {/* Header with Live Stats & Telemetry Clock */}
       <header className="dashboard-header-premium">
         <div className="header-left-meta">
-          <div className="telemetry-badge-row">
-            <span className="live-cad-chip">
-              <span className="cad-beacon-ping"></span>
-              {dashboard ? 'BACKEND CONNECTED' : 'BACKEND UNAVAILABLE'}
-            </span>
-            <span className="node-id-chip">LIVE DATABASE TOTALS</span>
-          </div>
           <h1 className="dashboard-main-title">Community emergency dashboard</h1>
-          <p className="dashboard-main-subtitle">
-            Emergency, volunteer, and resource totals from the ResQNet backend.
-          </p>
         </div>
 
         <div className="header-right-clock">
@@ -178,7 +165,6 @@ export default function DashboardView() {
           </div>
           <div className="stat-card-main-val">
             <span className="stat-val-number">{dashboard?.activeEmergencies ?? 0}</span>
-            <span className="stat-trend-tag neutral">Current total</span>
           </div>
           <div className="stat-breakdown-pills">
             <span className="stat-pill-item critical">
@@ -206,12 +192,7 @@ export default function DashboardView() {
           </div>
           <div className="stat-card-main-val">
             <span className="stat-val-number">{dashboard?.availableVolunteers ?? 0}</span>
-            <span className="stat-trend-tag good">
-              <Icon icon="mdi:check-all" width="12" height="12" />
-              Standby Ready
-            </span>
           </div>
-          <div className="stat-card-subinfo"><span>Marked available in the volunteer roster</span></div>
         </div>
 
         {/* Available Fleet Vehicles */}
@@ -224,12 +205,7 @@ export default function DashboardView() {
           </div>
           <div className="stat-card-main-val">
             <span className="stat-val-number">{dashboard?.availableResources ?? 0}</span>
-            <span className="stat-trend-tag good">
-              <Icon icon="mdi:radio-tower" width="12" height="12" />
-              Available
-            </span>
           </div>
-          <div className="stat-card-subinfo"><span>Resources marked available in inventory</span></div>
         </div>
 
         {/* Resolved Today */}
@@ -247,7 +223,6 @@ export default function DashboardView() {
               Today
             </span>
           </div>
-          <div className="stat-card-subinfo"><span>Based on recorded resolution timestamps</span></div>
         </div>
       </div>
 
@@ -258,9 +233,6 @@ export default function DashboardView() {
             <div className="panel-header-title">
               <Icon icon="mdi:map-marker-radius" width="18" height="18" className="header-icon-accent" />
               <span>INCIDENT MAP</span>
-            </div>
-            <div className="panel-header-tools">
-              <span className="panel-badge-live">BACKEND RECORDS</span>
             </div>
           </div>
           <div className="matching-panel-content">
@@ -298,7 +270,7 @@ export default function DashboardView() {
               <div className="matching-recommendations-list">
               <div className="spec-label">
                 <Icon icon="mdi:navigation-variant" width="15" height="15" />
-                <span>NEAREST AVAILABLE COMPATIBLE RESOURCE & VOLUNTEER</span>
+                <span>RECOMMENDED UNITS</span>
               </div>
               {suggestions?.suggestedResources?.length ? suggestions.suggestedResources.map(match => (
                 <div className="matched-candidate-card" key={match.id}>
@@ -320,7 +292,7 @@ export default function DashboardView() {
             >
               {dispatching ? 'Assigning...' : activeTarget?.status === 'PENDING' ? 'Match and assign available units' : 'Only pending reports can be matched'}
             </button>
-            </>) : <p>Select a pending report from the queue to view match suggestions.</p>}
+            </>) : <p>Select a report to view matches.</p>}
           </div>
         </div>
       </div>
@@ -333,9 +305,6 @@ export default function DashboardView() {
             <span>INCIDENT DISPATCH QUEUE (Priority Ranked)</span>
           </div>
           <div className="panel-header-right">
-            <span className="queue-count-tag">
-              Showing {dashboard?.recentEmergencies?.length ?? 0} recent reports
-            </span>
           </div>
         </div>
 
@@ -396,7 +365,7 @@ export default function DashboardView() {
                       <button
                         className="btn-action-primary"
                         onClick={() => handleSelectFromMapOrTable(emergency)}
-                        title="Select this report and load current match suggestions"
+                        title="Select this report"
                       >
                         <Icon icon="mdi:crosshairs-gps" width="16" height="16" />
                         <span>Select</span>

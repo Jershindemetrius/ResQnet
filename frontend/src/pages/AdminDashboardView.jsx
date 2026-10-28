@@ -83,9 +83,7 @@ export default function AdminDashboardView() {
     <div className="admin-page">
       <header className="admin-page-header">
         <div>
-          <p className="admin-eyebrow"><Activity size={15} aria-hidden="true" /> RESQNET OPERATIONS</p>
           <h1>Admin operations</h1>
-          <p>Restricted overview of incidents and response capacity.</p>
         </div>
         <div className="admin-header-actions">
           {lastUpdated && (
@@ -98,11 +96,6 @@ export default function AdminDashboardView() {
         </div>
       </header>
 
-      <aside className="admin-access-note" role="note">
-        <strong>Administrator access verified by the backend</strong>
-        <span>Operational actions and this dashboard require an administrator session. Public incident and resource summaries remain available on their public pages.</span>
-      </aside>
-
       {error && (
         <div className="admin-error" role="alert">
           <div><strong>{overview ? 'Could not refresh operations data' : 'Could not load operations data'}</strong><p>{error}</p></div>
@@ -111,7 +104,7 @@ export default function AdminDashboardView() {
       )}
 
       {loading && !overview ? (
-        <div className="admin-empty" role="status">Loading live backend data…</div>
+        <div className="admin-empty" role="status">Loading dashboard…</div>
       ) : overview ? (
         <>
           <section className="admin-stats-grid" aria-label="Live operations totals">
@@ -142,7 +135,6 @@ export default function AdminDashboardView() {
             <div className="admin-card-heading">
               <div>
                 <h2 id="admin-priority-heading"><Activity size={19} aria-hidden="true" /> Active incident priorities</h2>
-                <p>Backend totals by priority across all active incidents.</p>
               </div>
               <span className="admin-active-total">{activeCount} active</span>
             </div>
@@ -173,7 +165,6 @@ export default function AdminDashboardView() {
             <div className="admin-card-heading">
               <div>
                 <h2><ClipboardList size={19} aria-hidden="true" /> Priority-ranked reports</h2>
-                <p>Top reports returned by the priority-ordered incident API; this is not a dispatch queue.</p>
               </div>
               <Link to="/emergencies" className="admin-text-link">Open incident center <ArrowRight size={16} /></Link>
             </div>
@@ -200,9 +191,9 @@ export default function AdminDashboardView() {
           </section>
 
           <nav className="admin-shortcuts" aria-label="Operations pages">
-            <Link to="/emergencies"><ShieldAlert size={20} aria-hidden="true" /><span><strong>Incident center</strong><small>Explore incident reports and dispatch tools</small></span><ArrowRight size={17} aria-hidden="true" /></Link>
-            <Link to="/resources"><Ambulance size={20} aria-hidden="true" /><span><strong>Resource inventory</strong><small>Browse backend-managed relief resources</small></span><ArrowRight size={17} aria-hidden="true" /></Link>
-            <Link to="/volunteers"><Users size={20} aria-hidden="true" /><span><strong>Volunteer directory</strong><small>Browse registered response volunteers</small></span><ArrowRight size={17} aria-hidden="true" /></Link>
+            <Link to="/emergencies"><ShieldAlert size={20} aria-hidden="true" /><span><strong>Incident center</strong></span><ArrowRight size={17} aria-hidden="true" /></Link>
+            <Link to="/resources"><Ambulance size={20} aria-hidden="true" /><span><strong>Resource inventory</strong></span><ArrowRight size={17} aria-hidden="true" /></Link>
+            <Link to="/volunteers"><Users size={20} aria-hidden="true" /><span><strong>Volunteer directory</strong></span><ArrowRight size={17} aria-hidden="true" /></Link>
           </nav>
         </>
       ) : !loading && !error ? (

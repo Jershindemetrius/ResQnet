@@ -122,7 +122,6 @@ export default function DispatchCenterView() {
       )}
       {error && (
         <div role="alert" className="empty-state-card">
-          <strong>Backend request failed</strong>
           <p>{error}</p>
           <button type="button" className="btn-header-refresh" onClick={loadEmergencies}>Retry</button>
         </div>
@@ -131,18 +130,10 @@ export default function DispatchCenterView() {
       {/* Page Header */}
       <div className="page-header-premium">
         <div>
-          <div className="page-category-strip">
-            <span className="live-cad-chip">
-              <span className="cad-beacon-ping"></span>
-              INCIDENT ROUTING DESK
-            </span>
-            <span className="node-id-chip">TACTICAL TRIAGE</span>
-          </div>
           <h1 className="page-main-heading">Dispatch &amp; Incident Center</h1>
-          <p className="page-main-subtext">Coordinate live citizen distress calls, review triage requirements, and dispatch emergency fleet assets.</p>
         </div>
         <div className="header-action-block">
-          <button className="btn-header-refresh" onClick={loadEmergencies} disabled={loading} title="Refresh Live Queue">
+          <button className="btn-header-refresh" onClick={loadEmergencies} disabled={loading} title="Refresh incidents">
             <Icon icon="mdi:refresh" width="18" height="18" />
             <span>{loading ? 'Loading...' : 'Refresh Queue'}</span>
           </button>
@@ -155,7 +146,7 @@ export default function DispatchCenterView() {
           <Icon icon="mdi:magnify" width="18" height="18" className="search-icon" />
           <input
             type="text"
-            placeholder="Search by ID (e.g. ER102), type, or location..."
+            placeholder="Search incidents..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
@@ -196,7 +187,7 @@ export default function DispatchCenterView() {
             ) : filteredEmergencies.length === 0 ? (
               <div className="empty-state-card">
                 <Icon icon="mdi:clipboard-text-search-outline" width="40" height="40" />
-                <p>No incidents match the selected filter criteria.</p>
+                <p>No incidents found.</p>
               </div>
             ) : (
               filteredEmergencies.map((emergency) => {
@@ -243,7 +234,6 @@ export default function DispatchCenterView() {
           </div>
           {hasMore && (
             <div className="list-load-more">
-              <p>Showing {emergencies.length} loaded incidents.</p>
               <button type="button" className="btn-header-refresh" onClick={() => loadEmergencies({ append: true })} disabled={loadingMore}>
                 {loadingMore ? 'Loading...' : `Load next ${API_PAGE_SIZE}`}
               </button>
@@ -289,7 +279,7 @@ export default function DispatchCenterView() {
               <div className="description-callout">
                 <div className="desc-title">
                   <Icon icon="mdi:text-box-search-outline" width="16" height="16" />
-                  <span>INCIDENT DESCRIPTION &amp; FIELD NOTES</span>
+                  <span>DESCRIPTION</span>
                 </div>
                 <p className="desc-body">{selectedEmergency.description}</p>
                 <div className="resources-required-tag">
@@ -299,13 +289,13 @@ export default function DispatchCenterView() {
 
               {/* Response Status Progression Stepper */}
               <div className="dossier-section-box">
-                <div className="section-title-strip">RESPONSE LIFECYCLE PROGRESSION</div>
+                <div className="section-title-strip">STATUS</div>
                 <StatusTimeline status={selectedEmergency.status} />
               </div>
 
               {/* Next Action Trigger Buttons */}
-              <div className="dossier-section-box">
-                <div className="section-title-strip">MANUAL STATUS ESCALATION</div>
+              {selectedEmergency.status !== 'RESOLVED' && (
+                <div className="dossier-section-box">
                 <div className="status-progression-buttons">
                   {selectedEmergency.status === 'PENDING' && (
                     <button
@@ -314,7 +304,7 @@ export default function DispatchCenterView() {
                       disabled={busy}
                     >
                       <Icon icon="mdi:check-circle" width="18" height="18" />
-                      <span>{busy ? 'Assigning resources...' : 'Match & Assign Available Units'}</span>
+                      <span>{busy ? 'Assigning…' : 'Match & assign'}</span>
                     </button>
                   )}
                   {selectedEmergency.status === 'RESOURCE_ASSIGNED' && (
@@ -324,7 +314,7 @@ export default function DispatchCenterView() {
                       disabled={busy}
                     >
                       <Icon icon="mdi:truck-fast" width="18" height="18" />
-                      <span>Mark as Responding (Code 3 En Route)</span>
+                      <span>Mark responding</span>
                     </button>
                   )}
                   {selectedEmergency.status === 'RESPONDING' && (
@@ -334,7 +324,7 @@ export default function DispatchCenterView() {
                       disabled={busy}
                     >
                       <Icon icon="mdi:map-marker-check" width="18" height="18" />
-                      <span>Mark as On-Site at Incident Coordinates</span>
+                      <span>Mark on site</span>
                     </button>
                   )}
                   {selectedEmergency.status === 'ON_SITE' && (
@@ -344,24 +334,19 @@ export default function DispatchCenterView() {
                       disabled={busy}
                     >
                       <Icon icon="mdi:checkbox-marked-circle" width="18" height="18" />
-                      <span>Mark as Fully Resolved &amp; Closed</span>
+                      <span>Resolve incident</span>
                     </button>
                   )}
-                  {selectedEmergency.status === 'RESOLVED' && (
-                    <div className="resolved-banner">
-                      <Icon icon="mdi:check-decagram" width="22" height="22" />
-                      <span>This incident has been resolved and logged in the regional audit register.</span>
-                    </div>
-                  )}
                 </div>
-              </div>
+                </div>
+              )}
 
               {/* Resource Matching Recommendations */}
               {suggestions && selectedEmergency.status !== 'RESOLVED' && (
                 <div className="dossier-section-box recommendations-box">
                   <div className="section-title-strip">
                     <Icon icon="mdi:auto-fix" width="16" height="16" />
-                    <span>ALGORITHMIC RESOURCE RECOMMENDATIONS</span>
+                    <span>RECOMMENDED UNITS</span>
                   </div>
                   <div className="suggestions-list-custom">
                     {suggestions.suggestedResources?.map((res) => (
@@ -377,7 +362,7 @@ export default function DispatchCenterView() {
                       </div>
                     ))}
                     {suggestions.suggestedResources?.length === 0 && (
-                      <p>No compatible resources or volunteers are currently available.</p>
+                      <p>No compatible matches available.</p>
                     )}
                     {selectedEmergency.status === 'PENDING' && (
                       <button
@@ -386,7 +371,7 @@ export default function DispatchCenterView() {
                       disabled={busy || !suggestions.successful}
                     >
                       <Icon icon="mdi:send-check" width="18" height="18" />
-                      <span>{busy ? 'Assigning...' : 'Assign Recommended Units'}</span>
+                      <span>{busy ? 'Assigning…' : 'Assign matches'}</span>
                       </button>
                     )}
                   </div>
@@ -397,7 +382,6 @@ export default function DispatchCenterView() {
             <div className="empty-selection-dossier">
               <Icon icon="mdi:cursor-default-click" width="48" height="48" />
               <h3>No Emergency Selected</h3>
-              <p>Select an emergency request from the queue to review triage intelligence, coordinate response teams, and update CAD telemetry status.</p>
             </div>
           )}
         </div>

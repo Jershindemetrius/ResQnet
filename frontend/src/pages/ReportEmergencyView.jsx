@@ -85,8 +85,8 @@ export default function ReportEmergencyView() {
           <p className="report-eyebrow">REPORT SAVED</p>
           <h1>Emergency report received</h1>
           <p>
-            Report <strong>#{createdEmergency.id}</strong> was saved by the ResQNet backend.
-            Dispatch status: <strong>{createdEmergency.status.replaceAll('_', ' ')}</strong>.
+            Report <strong>#{createdEmergency.id}</strong> received.
+            Status: <strong>{createdEmergency.status.replaceAll('_', ' ')}</strong>.
           </p>
           <div className="report-success-actions">
             <Link className="report-primary-button" to="/emergencies">View incident feed</Link>
@@ -112,9 +112,7 @@ export default function ReportEmergencyView() {
       <header className="report-page-heading">
         <span className="report-heading-icon"><LifeBuoy size={22} aria-hidden="true" /></span>
         <div>
-          <p className="report-eyebrow">RESQNET EMERGENCY RESPONSE</p>
           <h1>Report an emergency</h1>
-          <p>Submit a report directly to the live ResQNet backend.</p>
         </div>
       </header>
 
@@ -196,7 +194,6 @@ export default function ReportEmergencyView() {
         </div>
 
         <div className="report-form-footer">
-          <p>Your report is sent to the backend and stored with the emergency records.</p>
           <button className="report-primary-button" disabled={submitting} type="submit">
             {submitting ? 'Submitting report…' : 'Submit emergency report'}
           </button>

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Routes, Route, Navigate, Link, useLocation } from 'react-router-dom';
 
 // Layout Wrappers
@@ -19,8 +19,20 @@ import { useAuth } from '../context/AuthContext';
 const AdminOnlyRoute: React.FC = () => {
   const { user, isAdmin, loading, authError, refreshSession } = useAuth();
   const location = useLocation();
+  const [checkingAccess, setCheckingAccess] = useState(true);
 
-  if (loading) return <p role="status">Verifying administrator session…</p>;
+  useEffect(() => {
+    let active = true;
+    setCheckingAccess(true);
+    refreshSession().finally(() => {
+      if (active) setCheckingAccess(false);
+    });
+    return () => {
+      active = false;
+    };
+  }, [refreshSession]);
+
+  if (checkingAccess || loading) return <p role="status">Verifying administrator session…</p>;
   if (authError) {
     return (
       <main className="admin-route-message" role="alert">

@@ -85,7 +85,7 @@ export default function AmbulanceBookingView() {
           <span className="ambulance-success-icon"><CheckCircle2 size={30} aria-hidden="true" /></span>
           <p className="ambulance-eyebrow">REQUEST RECEIVED</p>
           <h1>Request sent to ResQNet</h1>
-          <p>Your emergency request <strong>#{report.id}</strong> was saved with status <strong>{report.status?.toLowerCase().replaceAll('_', ' ')}</strong>.</p>
+          <p>Request <strong>#{report.id}</strong> · <strong>{report.status?.toLowerCase().replaceAll('_', ' ')}</strong></p>
           <p className="ambulance-not-guaranteed">This is not a confirmed ambulance reservation. A dispatcher must assign an available unit. For immediate life-threatening danger, call 112.</p>
           <div className="ambulance-success-actions">
             <Link to="/emergencies" className="ambulance-primary-link">View incident center</Link>
@@ -101,9 +101,7 @@ export default function AmbulanceBookingView() {
       <header className="ambulance-heading">
         <div className="ambulance-heading-icon"><Ambulance size={25} aria-hidden="true" /></div>
         <div>
-          <p className="ambulance-eyebrow">RESQNET EMERGENCY RESPONSE</p>
           <h1>Request an ambulance</h1>
-          <p>Send your location and callback details to the live emergency dispatch queue.</p>
         </div>
       </header>
 
@@ -149,7 +147,7 @@ export default function AmbulanceBookingView() {
 
         <aside className="ambulance-inventory-card">
           <div className="ambulance-inventory-heading">
-            <div><span className="ambulance-inventory-icon"><Ambulance size={18} /></span><div><h2>Registered ambulance inventory</h2><p>Live backend resource records</p></div></div>
+            <div><span className="ambulance-inventory-icon"><Ambulance size={18} /></span><div><h2>Ambulance inventory</h2></div></div>
             <button type="button" onClick={refreshInventory} disabled={loadingInventory} aria-label="Refresh ambulance inventory">
               <RefreshCw size={17} className={loadingInventory ? 'ambulance-refresh-spinning' : ''} />
             </button>
@@ -159,7 +157,7 @@ export default function AmbulanceBookingView() {
               <p>{inventoryError}</p><button type="button" onClick={refreshInventory}>Retry</button>
             </div>
           ) : loadingInventory && !inventory ? (
-            <p className="ambulance-inventory-empty">Loading backend inventory…</p>
+            <p className="ambulance-inventory-empty">Loading inventory…</p>
           ) : inventory ? (
             <>
               <div className="ambulance-inventory-totals">
@@ -190,7 +188,6 @@ export default function AmbulanceBookingView() {
               )}
             </>
           ) : null}
-          <p className="ambulance-inventory-disclaimer">Availability can change. A request still needs dispatcher assignment and is not a reservation.</p>
         </aside>
       </div>
     </div>

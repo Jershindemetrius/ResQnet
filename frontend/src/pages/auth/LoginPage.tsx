@@ -67,14 +67,8 @@ const LoginPage: React.FC = () => {
 
         <div className="account-brand">
           <span className="account-brand-icon"><LifeBuoy size={27} aria-hidden="true" /></span>
-          <span className="account-brand-caption">RESQNET · COMMUNITY RESPONSE</span>
         </div>
         <h1 id="account-title">{mode === 'login' ? 'Welcome back' : 'Create your account'}</h1>
-        <p className="account-description">
-          {mode === 'login'
-            ? 'Sign in with the account verified by the ResQNet backend.'
-            : 'Your account is securely stored by the ResQNet backend.'}
-        </p>
 
         {error && <div className="account-error" role="alert">{error}</div>}
 
@@ -130,7 +124,7 @@ const LoginPage: React.FC = () => {
           </label>
 
           <button className="account-submit" disabled={busy} type="submit">
-            {busy ? 'Contacting backend…' : mode === 'login' ? 'Sign in' : 'Create account'}
+            {busy ? (mode === 'login' ? 'Signing in…' : 'Creating account…') : mode === 'login' ? 'Sign in' : 'Create account'}
           </button>
         </form>
 
@@ -148,10 +142,6 @@ const LoginPage: React.FC = () => {
           </button>
         </p>
 
-        <p className="account-note">
-          Accounts authenticate through the backend. Administrator roles are assigned only
-          from the server-side email allowlist; public signup cannot grant admin access.
-        </p>
       </section>
     </main>
   );

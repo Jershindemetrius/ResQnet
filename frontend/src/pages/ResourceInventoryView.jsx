@@ -157,15 +157,7 @@ export default function ResourceInventoryView() {
       {/* Page Header */}
       <div className="page-header-premium">
         <div>
-          <div className="page-category-strip">
-            <span className="live-cad-chip">
-              <span className="cad-beacon-ping"></span>
-              RESOURCE INVENTORY
-            </span>
-            <span className="node-id-chip">EQUIPMENT DIRECTORY</span>
-          </div>
           <h1 className="page-main-heading">Regional Resource Inventory</h1>
-          <p className="page-main-subtext">Monitor and dispatch medical equipment, emergency fleet vehicles, field triage units, and municipal supplies.</p>
         </div>
         <div className="header-action-block">
           <button
@@ -185,7 +177,7 @@ export default function ResourceInventoryView() {
             <Icon icon="mdi:cube-outline" width="24" height="24" />
           </div>
           <div className="kpi-info">
-            <div className="kpi-label">TOTAL REGISTERED ASSETS</div>
+            <div className="kpi-label">RESOURCES</div>
             <div className="kpi-val">{totalCount}</div>
           </div>
         </div>
@@ -195,7 +187,7 @@ export default function ResourceInventoryView() {
             <Icon icon="mdi:check-circle-outline" width="24" height="24" />
           </div>
           <div className="kpi-info">
-            <div className="kpi-label">READY FOR DISPATCH</div>
+            <div className="kpi-label">AVAILABLE</div>
             <div className="kpi-val">{availableCount}</div>
           </div>
         </div>
@@ -205,7 +197,7 @@ export default function ResourceInventoryView() {
             <Icon icon="mdi:truck-fast" width="24" height="24" />
           </div>
           <div className="kpi-info">
-            <div className="kpi-label">ACTIVELY DEPLOYED / IN USE</div>
+            <div className="kpi-label">IN USE</div>
             <div className="kpi-val">{inUseCount}</div>
           </div>
         </div>
@@ -215,7 +207,7 @@ export default function ResourceInventoryView() {
             <Icon icon="mdi:shield-airplane" width="24" height="24" />
           </div>
           <div className="kpi-info">
-            <div className="kpi-label">AVAILABLE INVENTORY</div>
+            <div className="kpi-label">AVAILABILITY</div>
             <div className="kpi-val">{totalCount > 0 ? `${Math.round((availableCount / totalCount) * 100)}%` : '100%'}</div>
           </div>
         </div>
@@ -227,7 +219,7 @@ export default function ResourceInventoryView() {
           <Icon icon="mdi:magnify" width="18" height="18" className="search-icon" />
           <input
             type="text"
-            placeholder="Search by name, location, provider, or type..."
+            placeholder="Search resources..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
@@ -358,7 +350,7 @@ export default function ResourceInventoryView() {
 
       {error && (
         <div role="alert" className="empty-state-fullwidth">
-          <h3>Backend request failed</h3>
+          <h3>Could not load resources</h3>
           <p>{error}</p>
           <button type="button" className="btn-header-refresh" onClick={loadResources}>Retry</button>
         </div>
@@ -372,7 +364,6 @@ export default function ResourceInventoryView() {
           <div className="empty-state-fullwidth">
             <Icon icon="mdi:archive-search-outline" width="48" height="48" />
             <h3>No resources found</h3>
-            <p>Try adjusting your search query or category filters.</p>
           </div>
         ) : (
           filteredResources.map((res) => {

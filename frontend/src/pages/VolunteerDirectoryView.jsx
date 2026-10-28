@@ -159,15 +159,7 @@ export default function VolunteerDirectoryView() {
       {/* Page Header */}
       <div className="page-header-premium">
         <div>
-          <div className="page-category-strip">
-            <span className="live-cad-chip">
-              <span className="cad-beacon-ping"></span>
-              COMMUNITY VOLUNTEER DIRECTORY
-            </span>
-            <span className="node-id-chip">RESPONDER ROSTER</span>
-          </div>
           <h1 className="page-main-heading">Volunteer Directory</h1>
-          <p className="page-main-subtext">Coordinate community volunteers by their listed skills, location, and availability.</p>
         </div>
         <div className="header-action-block">
           <button
@@ -187,7 +179,7 @@ export default function VolunteerDirectoryView() {
             <Icon icon="mdi:account-multiple" width="24" height="24" />
           </div>
           <div className="kpi-info">
-            <div className="kpi-label">TOTAL REGISTERED VOLUNTEERS</div>
+            <div className="kpi-label">VOLUNTEERS</div>
             <div className="kpi-val">{totalVolunteers}</div>
           </div>
         </div>
@@ -197,7 +189,7 @@ export default function VolunteerDirectoryView() {
             <Icon icon="mdi:shield-check" width="24" height="24" />
           </div>
           <div className="kpi-info">
-            <div className="kpi-label">STANDBY / READY FOR DISPATCH</div>
+            <div className="kpi-label">AVAILABLE</div>
             <div className="kpi-val">{availableVolunteers}</div>
           </div>
         </div>
@@ -207,7 +199,7 @@ export default function VolunteerDirectoryView() {
             <Icon icon="mdi:account-clock" width="24" height="24" />
           </div>
           <div className="kpi-info">
-            <div className="kpi-label">ACTIVELY DEPLOYED ON RUNS</div>
+            <div className="kpi-label">ON DUTY</div>
             <div className="kpi-val">{onDutyVolunteers}</div>
           </div>
         </div>
@@ -217,7 +209,7 @@ export default function VolunteerDirectoryView() {
             <Icon icon="mdi:certificate" width="24" height="24" />
           </div>
           <div className="kpi-info">
-            <div className="kpi-label">WITH SKILLS LISTED (LOADED)</div>
+            <div className="kpi-label">WITH SKILLS</div>
             <div className="kpi-val">{volunteersWithSkills}</div>
           </div>
         </div>
@@ -229,7 +221,7 @@ export default function VolunteerDirectoryView() {
           <Icon icon="mdi:magnify" width="18" height="18" className="search-icon" />
           <input
             type="text"
-            placeholder="Search by volunteer name, location, contact, or skill..."
+            placeholder="Search volunteers..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
@@ -347,7 +339,7 @@ export default function VolunteerDirectoryView() {
 
       {error && (
         <div role="alert" className="empty-state-fullwidth">
-          <h3>Backend request failed</h3>
+          <h3>Could not load volunteers</h3>
           <p>{error}</p>
           <button type="button" className="btn-header-refresh" onClick={loadVolunteers}>Retry</button>
         </div>
@@ -361,7 +353,6 @@ export default function VolunteerDirectoryView() {
           <div className="empty-state-fullwidth">
             <Icon icon="mdi:account-search-outline" width="48" height="48" />
             <h3>No volunteers match your criteria</h3>
-            <p>Try modifying your skill category or availability filters.</p>
           </div>
         ) : (
           filteredVolunteers.map((vol) => {
@@ -400,14 +391,6 @@ export default function VolunteerDirectoryView() {
                       </div>
                     )}
                   </div>
-                  {hasMore && (
-                    <div className="list-load-more">
-                      <p>Showing {volunteers.length} of {totalVolunteers} volunteers.</p>
-                      <button type="button" className="btn-header-refresh" onClick={() => loadVolunteers({ append: true })} disabled={loadingMore}>
-                        {loadingMore ? 'Loading...' : `Load next ${API_PAGE_SIZE}`}
-                      </button>
-                    </div>
-                  )}
                 </div>
 
                 <div className="card-footer-strip">
@@ -429,6 +412,14 @@ export default function VolunteerDirectoryView() {
           })
         )}
       </div>
+      {hasMore && (
+        <div className="list-load-more">
+          <p>Showing {volunteers.length} of {totalVolunteers} volunteers.</p>
+          <button type="button" className="btn-header-refresh" onClick={() => loadVolunteers({ append: true })} disabled={loadingMore}>
+            {loadingMore ? 'Loading...' : `Load next ${API_PAGE_SIZE}`}
+          </button>
+        </div>
+      )}
     </div>
   );
 }
