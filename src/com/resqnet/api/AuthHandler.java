@@ -67,6 +67,8 @@ public class AuthHandler implements HttpHandler {
         } catch (GeneralSecurityException exception) {
             LOGGER.log(Level.SEVERE, "Unable to verify account password", exception);
             JsonSerializer.sendError(exchange, 500, "Unable to process authentication request");
+        } catch (JsonSerializer.ResponseWriteException exception) {
+            JsonSerializer.logResponseWriteFailure(exception);
         } catch (IOException exception) {
             JsonSerializer.sendServerError(exchange, "Unable to persist account data", exception);
         } finally {

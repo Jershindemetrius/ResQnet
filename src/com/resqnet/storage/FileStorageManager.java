@@ -45,14 +45,20 @@ public class FileStorageManager {
     }
 
     public FileStorageManager(Path dataDirectory) throws IOException {
+        this(dataDirectory, true);
+    }
+
+    public FileStorageManager(Path dataDirectory, boolean initializeMissingFiles) throws IOException {
         if (dataDirectory == null) throw new IllegalArgumentException("dataDirectory must not be null");
         this.dataDirectory = dataDirectory;
-        initializeFile("emergencies.csv", EMERGENCY_HEADER,
-                "E-1001,Sample Reporter,0000000000,MEDICAL,0 0,1,Sample medical emergency,MEDIUM,AMBULANCE,PENDING,,,");
-        initializeFile("resources.csv", RESOURCE_HEADER,
-                "R-1001,Sample Ambulance,AMBULANCE,0 0,1,true,ResQNet");
-        initializeFile("volunteers.csv", VOLUNTEER_HEADER,
-                "V-1001,Sample Volunteer,0000000000,0 0,First Aid|Driving,AVAILABLE,");
+        if (initializeMissingFiles) {
+            initializeFile("emergencies.csv", EMERGENCY_HEADER,
+                    "E-1001,Sample Reporter,0000000000,MEDICAL,0 0,1,Sample medical emergency,MEDIUM,AMBULANCE,PENDING,,,");
+            initializeFile("resources.csv", RESOURCE_HEADER,
+                    "R-1001,Sample Ambulance,AMBULANCE,0 0,1,true,ResQNet");
+            initializeFile("volunteers.csv", VOLUNTEER_HEADER,
+                    "V-1001,Sample Volunteer,0000000000,0 0,First Aid|Driving,AVAILABLE,");
+        }
     }
 
     private void initializeFile(String name, String header, String sample) throws IOException {
@@ -61,12 +67,6 @@ public class FileStorageManager {
         if (!Files.exists(file)) {
             Files.write(file, Arrays.asList(header, sample), StandardCharsets.UTF_8,
                     StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE);
-        } else {
-            List<String> existing = Files.readAllLines(file, StandardCharsets.UTF_8);
-            if (existing.isEmpty() || (existing.size() == 1 && !existing.get(0).equals(header))) {
-                Files.write(file, Arrays.asList(header, sample), StandardCharsets.UTF_8,
-                        StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE);
-            }
         }
     }
 

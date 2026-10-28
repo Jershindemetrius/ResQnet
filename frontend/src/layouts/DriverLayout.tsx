@@ -212,9 +212,9 @@ export const DriverLayout: React.FC = () => {
         {/* Right: Network Ping, Live Clock, Fullscreen & Secure Logout */}
         <div className="flex items-center gap-2.5">
           {/* 5G Network ping status */}
-          <div className="hidden lg:flex items-center gap-1.5 rounded-lg border border-slate-800 bg-slate-950/80 px-2.5 py-1 font-mono text-[11px] text-slate-300">
-            <Wifi className="h-3 w-3 text-emerald-400" />
-            <span>5G Mesh: 16ms &bull; GPS</span>
+          <div className="hidden lg:flex items-center gap-1.5 rounded-lg border border-amber-800 bg-amber-950/40 px-2.5 py-1 font-mono text-[11px] text-amber-200">
+            <Wifi className="h-3 w-3 text-amber-400" />
+            <span>LOCAL DEMO</span>
           </div>
 
           {/* Military CAD Synchronized Clock */}
@@ -243,6 +243,10 @@ export const DriverLayout: React.FC = () => {
           </button>
         </div>
       </header>
+
+      <div role="note" className="shrink-0 border-b border-amber-700 bg-amber-950/70 px-4 py-2 text-center text-xs text-amber-100">
+        Driver console is a browser-based demo. Orders, vehicle status, GPS, and telemetry are not connected to the backend or live services.
+      </div>
 
       {/* Mobile Sub-Navigation Bar for Driver */}
       <div className="md:hidden flex items-center justify-around border-b border-slate-800 bg-slate-900/90 py-1.5 px-2">

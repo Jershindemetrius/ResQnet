@@ -1,10 +1,20 @@
 import { useState, useEffect } from 'react';
-import { getResources, createResource, updateResourceAvailability } from '../api/resqnetApi.js';
+import {
+  API_PAGE_SIZE,
+  createResource,
+  getDashboard,
+  getResources,
+  updateResourceAvailability
+} from '../api/resqnetApi.js';
 import { Icon } from '@iconify/react';
 
 export default function ResourceInventoryView() {
   const [resources, setResources] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
+  const [nextOffset, setNextOffset] = useState(0);
+  const [summary, setSummary] = useState(null);
   const [showAddForm, setShowAddForm] = useState(false);
   const [filterType, setFilterType] = useState('ALL');
   const [filterAvailability, setFilterAvailability] = useState('ALL');
@@ -12,6 +22,7 @@ export default function ResourceInventoryView() {
   const [toastMessage, setToastMessage] = useState(null);
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
+  const [updatingId, setUpdatingId] = useState(null);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -30,16 +41,25 @@ export default function ResourceInventoryView() {
     setTimeout(() => setToastMessage(null), 3500);
   };
 
-  const loadResources = async () => {
+  const loadResources = async ({ append = false } = {}) => {
     try {
-      setLoading(true);
+      if (append) setLoadingMore(true);
+      else setLoading(true);
       setError('');
-      const data = await getResources();
-      setResources(data);
+      const offset = append ? nextOffset : 0;
+      const [data, counts] = await Promise.all([
+        getResources({ limit: API_PAGE_SIZE, offset }),
+        getDashboard()
+      ]);
+      setResources(previous => append ? [...previous, ...data] : data);
+      setSummary(counts);
+      setNextOffset(offset + data.length);
+      setHasMore(data.length === API_PAGE_SIZE);
     } catch (loadError) {
       setError(loadError.message);
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
   };
 
@@ -57,7 +77,7 @@ export default function ResourceInventoryView() {
       setSaving(true);
       setError('');
       const created = await createResource({ ...formData, quantity: Number(formData.quantity) });
-      setResources(prev => [created, ...prev]);
+      await loadResources();
       setShowAddForm(false);
       showToast(`📦 Resource "${created.name}" added successfully.`);
       setFormData({ name: '', type: 'AMBULANCE', location: '', quantity: 1, provider: '' });
@@ -70,14 +90,21 @@ export default function ResourceInventoryView() {
 
   const toggleAvailability = async (id, currentStatus) => {
     try {
+      setUpdatingId(id);
       setError('');
-      await updateResourceAvailability(id, !currentStatus);
+      const updated = await updateResourceAvailability(id, !currentStatus);
       setResources(prev =>
-        prev.map(r => (r.id === id ? { ...r, available: !currentStatus } : r))
+        prev.map(r => (r.id === id ? updated : r))
       );
-      showToast(`Resource #${id} marked ${!currentStatus ? 'available' : 'in use'}.`);
+      setSummary(prev => prev ? {
+        ...prev,
+        availableResources: prev.availableResources + (updated.available ? 1 : -1)
+      } : prev);
+      showToast(`Resource #${id} is ${updated.available ? 'available' : 'unavailable'}.`);
     } catch (updateError) {
       setError(updateError.message);
+    } finally {
+      setUpdatingId(null);
     }
   };
 
@@ -90,6 +117,7 @@ export default function ResourceInventoryView() {
     const query = searchQuery.toLowerCase();
     const searchMatch =
       !query ||
+      (res.name && res.name.toLowerCase().includes(query)) ||
       (res.location && res.location.toLowerCase().includes(query)) ||
       (res.provider && res.provider.toLowerCase().includes(query)) ||
       (res.type && res.type.toLowerCase().includes(query)) ||
@@ -98,8 +126,8 @@ export default function ResourceInventoryView() {
     return typeMatch && availMatch && searchMatch;
   });
 
-  const totalCount = resources.length;
-  const availableCount = resources.filter(r => r.available).length;
+  const totalCount = summary?.totalResources ?? resources.length;
+  const availableCount = summary?.availableResources ?? resources.filter(r => r.available).length;
   const inUseCount = totalCount - availableCount;
 
   const getResourceIcon = (type) => {
@@ -132,7 +160,7 @@ export default function ResourceInventoryView() {
           <div className="page-category-strip">
             <span className="live-cad-chip">
               <span className="cad-beacon-ping"></span>
-              FLEET &amp; INVENTORY TELEMATICS
+              RESOURCE INVENTORY
             </span>
             <span className="node-id-chip">EQUIPMENT DIRECTORY</span>
           </div>
@@ -187,7 +215,7 @@ export default function ResourceInventoryView() {
             <Icon icon="mdi:shield-airplane" width="24" height="24" />
           </div>
           <div className="kpi-info">
-            <div className="kpi-label">FLEET READINESS RATE</div>
+            <div className="kpi-label">AVAILABLE INVENTORY</div>
             <div className="kpi-val">{totalCount > 0 ? `${Math.round((availableCount / totalCount) * 100)}%` : '100%'}</div>
           </div>
         </div>
@@ -199,7 +227,7 @@ export default function ResourceInventoryView() {
           <Icon icon="mdi:magnify" width="18" height="18" className="search-icon" />
           <input
             type="text"
-            placeholder="Search by callsign, location, provider, or type..."
+            placeholder="Search by name, location, provider, or type..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
@@ -340,7 +368,7 @@ export default function ResourceInventoryView() {
 
       {/* Resources Cards Grid */}
       <div className="resources-cards-grid">
-        {filteredResources.length === 0 ? (
+        {loading ? null : filteredResources.length === 0 && !error ? (
           <div className="empty-state-fullwidth">
             <Icon icon="mdi:archive-search-outline" width="48" height="48" />
             <h3>No resources found</h3>
@@ -365,7 +393,7 @@ export default function ResourceInventoryView() {
                 <div className="res-main-info">
                   <div className="res-name-title">
                     {res.callsign ? `${res.callsign} &bull; ` : ''}
-                    {res.type}
+                    {res.name}
                   </div>
                   <div className="res-location-row">
                     <Icon icon="mdi:map-marker" width="14" height="14" />
@@ -385,6 +413,7 @@ export default function ResourceInventoryView() {
                   <button
                     className={`btn-toggle-status ${isAvail ? 'btn-mark-deploy' : 'btn-mark-avail'}`}
                     onClick={() => toggleAvailability(res.id, isAvail)}
+                    disabled={updatingId === res.id}
                     title={isAvail ? 'Mark as Deployed' : 'Return to Available Fleet'}
                   >
                     <Icon icon={isAvail ? 'mdi:truck-fast' : 'mdi:check-circle'} width="16" height="16" />
@@ -396,6 +425,14 @@ export default function ResourceInventoryView() {
           })
         )}
       </div>
+      {hasMore && (
+        <div className="list-load-more">
+          <p>Showing {resources.length} of {totalCount} resources.</p>
+          <button type="button" className="btn-header-refresh" onClick={() => loadResources({ append: true })} disabled={loadingMore}>
+            {loadingMore ? 'Loading...' : `Load next ${API_PAGE_SIZE}`}
+          </button>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,5 +1,11 @@
 import { useState, useEffect } from 'react';
-import { getEmergencies, updateEmergencyStatus, assignResources, getMatchingSuggestions } from '../api/resqnetApi.js';
+import {
+  API_PAGE_SIZE,
+  assignResources,
+  getEmergencies,
+  getMatchingSuggestions,
+  updateEmergencyStatus
+} from '../api/resqnetApi.js';
 import PriorityBadge from '../components/PriorityBadge.jsx';
 import StatusTimeline from '../components/StatusTimeline.jsx';
 import { Icon } from '@iconify/react';
@@ -7,6 +13,9 @@ import { Icon } from '@iconify/react';
 export default function DispatchCenterView() {
   const [emergencies, setEmergencies] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
+  const [nextOffset, setNextOffset] = useState(0);
   const [selectedEmergency, setSelectedEmergency] = useState(null);
   const [suggestions, setSuggestions] = useState(null);
   const [filterStatus, setFilterStatus] = useState('ALL');
@@ -24,18 +33,24 @@ export default function DispatchCenterView() {
     setTimeout(() => setToastMessage(null), 3500);
   };
 
-  const loadEmergencies = async () => {
+  const loadEmergencies = async ({ append = false } = {}) => {
     try {
-      setLoading(true);
+      if (append) setLoadingMore(true);
+      else setLoading(true);
       setError('');
-      const data = await getEmergencies();
-      setEmergencies(data);
-      setSelectedEmergency(prev => data.find(item => item.id === prev?.id) ?? data[0] ?? null);
-      setSuggestions(null);
+      const offset = append ? nextOffset : 0;
+      const data = await getEmergencies({ limit: API_PAGE_SIZE, offset });
+      const combined = append ? [...emergencies, ...data] : data;
+      setEmergencies(combined);
+      setSelectedEmergency(previous => combined.find(item => item.id === previous?.id) ?? combined[0] ?? null);
+      setNextOffset(offset + data.length);
+      setHasMore(data.length === API_PAGE_SIZE);
+      if (!append) setSuggestions(null);
     } catch (loadError) {
       setError(loadError.message);
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
   };
 
@@ -226,6 +241,14 @@ export default function DispatchCenterView() {
               })
             )}
           </div>
+          {hasMore && (
+            <div className="list-load-more">
+              <p>Showing {emergencies.length} loaded incidents.</p>
+              <button type="button" className="btn-header-refresh" onClick={() => loadEmergencies({ append: true })} disabled={loadingMore}>
+                {loadingMore ? 'Loading...' : `Load next ${API_PAGE_SIZE}`}
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Right Column: Emergency Details & Actions Dossier */}

@@ -79,12 +79,15 @@ export const LoginPage: React.FC = () => {
           </Link>
           <h1 className="text-2xl font-black tracking-tight text-white">ResQNet CAD Gateway</h1>
           <p className="text-xs text-slate-400">
-            Secure Role-Based Access Control • Defense &amp; EMS Portal
+            Demo role-based navigation • Not server-authenticated
           </p>
         </div>
 
         {/* Login Card */}
         <div className="rounded-2xl border border-slate-800 bg-slate-900/90 p-6 shadow-2xl backdrop-blur-md">
+          <p role="note" className="mb-4 rounded-lg border border-amber-700 bg-amber-950/50 p-3 text-xs leading-relaxed text-amber-100">
+            Demo sign-in only. The email and password are not checked by the Java backend; the selected role is stored in this browser and does not secure API access.
+          </p>
           {error && (
             <div className="mb-4 flex items-center gap-2 rounded-xl border border-rose-500/30 bg-rose-500/10 p-3 text-xs text-rose-400">
               <AlertCircle className="h-4 w-4 shrink-0" />
@@ -155,7 +158,7 @@ export const LoginPage: React.FC = () => {
               type="submit"
               className="w-full flex items-center justify-center gap-2 rounded-xl bg-rose-600 hover:bg-rose-500 py-2.5 text-xs font-bold text-white shadow-lg shadow-rose-900/40 transition active:scale-95"
             >
-              <span>Authenticate Session</span>
+              <span>Enter Demo Session</span>
               <ArrowRight className="h-4 w-4" />
             </button>
           </form>

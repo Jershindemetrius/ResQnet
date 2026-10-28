@@ -9,13 +9,16 @@ import com.sun.net.httpserver.HttpExchange;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URLDecoder;
 import java.lang.reflect.Array;
 import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Locale;
+import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -105,9 +108,61 @@ public final class JsonSerializer {
     public static void send(HttpExchange exchange, int statusCode, Object value) throws IOException {
         byte[] body = toJson(value).getBytes(StandardCharsets.UTF_8);
         exchange.getResponseHeaders().set("Content-Type", "application/json; charset=utf-8");
-        exchange.sendResponseHeaders(statusCode, body.length);
-        try (java.io.OutputStream response = exchange.getResponseBody()) {
-            response.write(body);
+        try {
+            exchange.sendResponseHeaders(statusCode, body.length);
+            try (java.io.OutputStream response = exchange.getResponseBody()) {
+                response.write(body);
+            }
+        } catch (IOException exception) {
+            throw new ResponseWriteException(exception);
+        }
+    }
+
+    public static <T> List<T> page(HttpExchange exchange, List<T> values) {
+        String query = exchange.getRequestURI().getRawQuery();
+        if (query == null || query.isEmpty()) return values;
+
+        Map<String, String> parameters = new HashMap<String, String>();
+        for (String pair : query.split("&")) {
+            int separator = pair.indexOf('=');
+            String key = URLDecoder.decode(separator < 0 ? pair : pair.substring(0, separator),
+                    StandardCharsets.UTF_8);
+            String value = URLDecoder.decode(separator < 0 ? "" : pair.substring(separator + 1),
+                    StandardCharsets.UTF_8);
+            parameters.put(key, value);
+        }
+        if (!parameters.containsKey("limit") && !parameters.containsKey("offset")) return values;
+        if (!parameters.containsKey("limit")) {
+            throw new IllegalArgumentException("limit is required when using offset");
+        }
+
+        int limit = parsePageValue(parameters.get("limit"), "limit");
+        int offset = parameters.containsKey("offset")
+                ? parsePageValue(parameters.get("offset"), "offset") : 0;
+        if (limit < 1 || limit > 500) throw new IllegalArgumentException("limit must be from 1 to 500");
+        if (offset < 0) throw new IllegalArgumentException("offset must not be negative");
+        if (offset >= values.size()) return Collections.emptyList();
+        int end = (int) Math.min((long) values.size(), (long) offset + limit);
+        return new ArrayList<T>(values.subList(offset, end));
+    }
+
+    private static int parsePageValue(String value, String name) {
+        try {
+            return Integer.parseInt(value);
+        } catch (NumberFormatException exception) {
+            throw new IllegalArgumentException(name + " must be an integer", exception);
+        }
+    }
+
+    public static void logResponseWriteFailure(ResponseWriteException exception) {
+        LOGGER.log(Level.FINE, "Unable to write response; the client may have disconnected", exception);
+    }
+
+    public static final class ResponseWriteException extends IOException {
+        private static final long serialVersionUID = 1L;
+
+        private ResponseWriteException(IOException cause) {
+            super("Unable to write HTTP response", cause);
         }
     }
 

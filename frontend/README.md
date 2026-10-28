@@ -152,7 +152,7 @@ RESOLVED
 - **Intuitive Navigation**: Clear routing with active state indicators
 - **Color-Coded Priority**: Visual priority system for quick assessment
 - **Status Timeline**: Visual representation of emergency progression
-- **Real-time Updates**: Immediate feedback on all actions
+- **Backend-backed Updates**: Changes are shown only after the backend accepts them
 - **Empty States**: Helpful messages when no data is available
 - **Error Handling**: User-friendly error messages with retry options
 - **Loading States**: Clear indicators during data fetching
@@ -164,16 +164,28 @@ The frontend communicates with the Java backend API:
 ### Endpoints Used
 - `GET /api/dashboard` - Dashboard statistics
 - `GET /api/emergencies` - List all emergencies
-- `POST /api/emergencies` - Create new emergency
-- `PUT /api/emergencies/{id}/status` - Update emergency status
+- `POST /api/emergencies` - Create an emergency (`reporterName`, `contact`, `type`, `location`, `affectedPeopleCount`, `priority`, and `requiredResourceType`)
+- `PUT /api/dispatch/status` - Update emergency status (`emergencyId` and `status` in the JSON body)
 - `GET /api/resources` - List all resources
-- `POST /api/resources` - Add new resource
+- `POST /api/resources` - Add a resource (`name`, `type`, `location`, `quantity`, and optional `provider`)
 - `PUT /api/resources/{id}/availability` - Update resource availability
 - `GET /api/volunteers` - List all volunteers
 - `POST /api/volunteers` - Register new volunteer
-- `PUT /api/volunteers/{id}/availability` - Update volunteer availability
-- `GET /api/dispatch/{id}/suggestions` - Get matching suggestions
-- `POST /api/dispatch/{id}/assign` - Assign resources to emergency
+- `POST /api/volunteers` - Update volunteer availability (`id` and `status` in the JSON body)
+- `GET /api/dispatch/{id}/suggestions` - Preview the best currently available resource and volunteer without assigning them
+- `POST /api/dispatch/match` - Match and assign available units (`emergencyId` in the JSON body)
+
+List endpoints accept optional `limit` (1–500) and `offset` query parameters, for example
+`GET /api/resources?limit=100&offset=0`. The frontend loads records in batches to avoid
+transferring the entire CSV-backed dataset in a single request; use the directory's
+“Load next” button to fetch subsequent batches. Requests without these parameters retain
+the unpaged array response for existing clients.
+
+The Java backend must be rebuilt from the repository source to support the resource-availability and read-only matching-suggestions routes.
+
+## Demo-only screens
+
+The public ambulance booking flow, staff role selection, driver MDT, and most admin sections are demonstrations. Ambulance orders, role sessions, driver telemetry, and admin data are stored or simulated in the browser; they are not sent to the Java backend. The login page does not authenticate against the backend, and frontend route guards are not server-side authorization. Do not use these demo screens for real emergency dispatch or security.
 
 ## 🌟 Best Practices Implemented
 

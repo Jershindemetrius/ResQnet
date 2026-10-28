@@ -10,7 +10,7 @@ import com.resqnet.service.EmergencyManager;
 import com.resqnet.service.MatchingEngine;
 import com.resqnet.service.ResourceManager;
 import com.resqnet.service.UserManager;
-import com.resqnet.storage.FileStorageManager;
+import com.resqnet.storage.SQLiteStorageManager;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import java.io.IOException;
@@ -22,10 +22,10 @@ public class DispatchHandler implements HttpHandler {
     private final ResourceManager resources;
     private final UserManager users;
     private final MatchingEngine matchingEngine;
-    private final FileStorageManager storage;
+    private final SQLiteStorageManager storage;
 
     public DispatchHandler(EmergencyManager emergencies, ResourceManager resources, UserManager users,
-            MatchingEngine matchingEngine, FileStorageManager storage) {
+            MatchingEngine matchingEngine, SQLiteStorageManager storage) {
         this.emergencies = emergencies;
         this.resources = resources;
         this.users = users;
@@ -62,6 +62,8 @@ public class DispatchHandler implements HttpHandler {
             JsonSerializer.sendError(exchange, 404, exception.getMessage());
         } catch (IllegalArgumentException exception) {
             JsonSerializer.sendError(exchange, 400, exception.getMessage());
+        } catch (JsonSerializer.ResponseWriteException exception) {
+            JsonSerializer.logResponseWriteFailure(exception);
         } catch (IOException exception) {
             JsonSerializer.sendServerError(exchange, "Unable to persist dispatch data", exception);
         } catch (RuntimeException exception) {
@@ -95,9 +97,7 @@ public class DispatchHandler implements HttpHandler {
             return;
         }
         emergencies.refreshQueue();
-        storage.saveResources(resources.getAllResources());
-        storage.saveVolunteers(users.getVolunteers());
-        storage.saveEmergencies(emergencies.getAllEmergencies());
+        storage.saveDispatch(emergency, result.getResource(), result.getVolunteer());
         JsonSerializer.send(exchange, 200, result);
     }
 
@@ -127,11 +127,7 @@ public class DispatchHandler implements HttpHandler {
         if (assignedVolunteer != null) assignedVolunteer.release();
         emergency.setStatus(next);
         emergencies.refreshQueue();
-        if (next == RequestStatus.RESOLVED) {
-            storage.saveResources(resources.getAllResources());
-            storage.saveVolunteers(users.getVolunteers());
-        }
-        storage.saveEmergencies(emergencies.getAllEmergencies());
+        storage.saveDispatch(emergency, assignedResource, assignedVolunteer);
         JsonSerializer.send(exchange, 200, emergency);
     }
 }

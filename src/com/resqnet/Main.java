@@ -15,11 +15,12 @@ import com.resqnet.service.EmergencyManager;
 import com.resqnet.service.MatchingEngine;
 import com.resqnet.service.ResourceManager;
 import com.resqnet.service.UserManager;
-import com.resqnet.storage.FileStorageManager;
+import com.resqnet.storage.SQLiteStorageManager;
 import com.sun.net.httpserver.HttpServer;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.file.Paths;
+import java.nio.file.Path;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
@@ -34,8 +35,10 @@ public final class Main {
 
     public static void main(String[] args) throws IOException {
         int port = configuredPort();
-        FileStorageManager storage = new FileStorageManager();
-        AuthManager authManager = new AuthManager(Paths.get("data", "auth_users.csv"));
+        Path dataDirectory = Paths.get("data");
+        Path databasePath = configuredDatabasePath(dataDirectory);
+        SQLiteStorageManager storage = new SQLiteStorageManager(databasePath, dataDirectory);
+        AuthManager authManager = new AuthManager(databasePath, dataDirectory.resolve("auth_users.csv"));
         EmergencyManager emergencyManager = new EmergencyManager();
         ResourceManager resourceManager = new ResourceManager();
         UserManager userManager = new UserManager();
@@ -63,6 +66,12 @@ public final class Main {
         }, "resqnet-shutdown"));
         server.start();
         LOGGER.info("ResQNet API listening on port " + port);
+    }
+
+    private static Path configuredDatabasePath(Path dataDirectory) {
+        String configured = System.getenv("RESQNET_DB_PATH");
+        if (configured == null || configured.trim().isEmpty()) return dataDirectory.resolve("resqnet.db");
+        return Paths.get(configured.trim());
     }
 
     private static int configuredPort() {

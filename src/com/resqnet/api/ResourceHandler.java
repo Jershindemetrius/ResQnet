@@ -7,7 +7,7 @@ import com.resqnet.model.resource.Shelter;
 import com.resqnet.model.resource.Vehicle;
 import com.resqnet.exception.ResourceNotFoundException;
 import com.resqnet.service.ResourceManager;
-import com.resqnet.storage.FileStorageManager;
+import com.resqnet.storage.SQLiteStorageManager;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import java.io.IOException;
@@ -17,9 +17,9 @@ import java.util.UUID;
 /** Lists and registers dispatchable resources. */
 public class ResourceHandler implements HttpHandler {
     private final ResourceManager resources;
-    private final FileStorageManager storage;
+    private final SQLiteStorageManager storage;
 
-    public ResourceHandler(ResourceManager resources, FileStorageManager storage) {
+    public ResourceHandler(ResourceManager resources, SQLiteStorageManager storage) {
         this.resources = resources;
         this.storage = storage;
     }
@@ -38,7 +38,7 @@ public class ResourceHandler implements HttpHandler {
                 return;
             }
             if ("GET".equalsIgnoreCase(exchange.getRequestMethod())) {
-                JsonSerializer.send(exchange, 200, resources.getAllResources());
+                JsonSerializer.send(exchange, 200, JsonSerializer.page(exchange, resources.getAllResources()));
                 return;
             }
             if (!"POST".equalsIgnoreCase(exchange.getRequestMethod())) {
@@ -64,12 +64,14 @@ public class ResourceHandler implements HttpHandler {
                 resource = new MedicalResource(id, name, type, location, quantity, true, provider);
             }
             resources.addResource(resource);
-            storage.saveResources(resources.getAllResources());
+            storage.saveResource(resource);
             JsonSerializer.send(exchange, 201, resource);
         } catch (ResourceNotFoundException exception) {
             JsonSerializer.sendError(exchange, 404, exception.getMessage());
         } catch (IllegalArgumentException exception) {
             JsonSerializer.sendError(exchange, 400, exception.getMessage());
+        } catch (JsonSerializer.ResponseWriteException exception) {
+            JsonSerializer.logResponseWriteFailure(exception);
         } catch (IOException exception) {
             JsonSerializer.sendServerError(exchange, "Unable to persist resource data", exception);
         } catch (RuntimeException exception) {
@@ -89,7 +91,7 @@ public class ResourceHandler implements HttpHandler {
         }
         Resource resource = resources.getResource(id);
         resource.setAvailable((Boolean) available);
-        storage.saveResources(resources.getAllResources());
+        storage.saveResource(resource);
         JsonSerializer.send(exchange, 200, resource);
     }
 }

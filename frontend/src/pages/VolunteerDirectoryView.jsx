@@ -1,10 +1,20 @@
 import { useState, useEffect } from 'react';
-import { getVolunteers, createVolunteer, updateVolunteerAvailability } from '../api/resqnetApi.js';
+import {
+  API_PAGE_SIZE,
+  createVolunteer,
+  getDashboard,
+  getVolunteers,
+  updateVolunteerAvailability
+} from '../api/resqnetApi.js';
 import { Icon } from '@iconify/react';
 
 export default function VolunteerDirectoryView() {
   const [volunteers, setVolunteers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
+  const [nextOffset, setNextOffset] = useState(0);
+  const [summary, setSummary] = useState(null);
   const [showAddForm, setShowAddForm] = useState(false);
   const [filterSkill, setFilterSkill] = useState('ALL');
   const [filterAvailability, setFilterAvailability] = useState('ALL');
@@ -12,6 +22,7 @@ export default function VolunteerDirectoryView() {
   const [toastMessage, setToastMessage] = useState(null);
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
+  const [updatingId, setUpdatingId] = useState(null);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -29,16 +40,25 @@ export default function VolunteerDirectoryView() {
     setTimeout(() => setToastMessage(null), 3500);
   };
 
-  const loadVolunteers = async () => {
+  const loadVolunteers = async ({ append = false } = {}) => {
     try {
-      setLoading(true);
+      if (append) setLoadingMore(true);
+      else setLoading(true);
       setError('');
-      const data = await getVolunteers();
-      setVolunteers(data);
+      const offset = append ? nextOffset : 0;
+      const [data, counts] = await Promise.all([
+        getVolunteers({ limit: API_PAGE_SIZE, offset }),
+        getDashboard()
+      ]);
+      setVolunteers(previous => append ? [...previous, ...data] : data);
+      setSummary(counts);
+      setNextOffset(offset + data.length);
+      setHasMore(data.length === API_PAGE_SIZE);
     } catch (loadError) {
       setError(loadError.message);
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
   };
 
@@ -59,7 +79,7 @@ export default function VolunteerDirectoryView() {
         ...formData,
         skillSet: [formData.skills.replace(/_/g, ' ')]
       });
-      setVolunteers(prev => [created, ...prev]);
+      await loadVolunteers();
       setShowAddForm(false);
       showToast(`Volunteer "${created.name}" registered successfully.`);
       setFormData({ name: '', contactNumber: '', skills: 'FIRST_AID', location: '' });
@@ -72,14 +92,21 @@ export default function VolunteerDirectoryView() {
 
   const toggleAvailability = async (id, currentStatus) => {
     try {
+      setUpdatingId(id);
       setError('');
-      await updateVolunteerAvailability(id, !currentStatus);
+      const updated = await updateVolunteerAvailability(id, !currentStatus);
       setVolunteers(prev =>
-        prev.map(v => (v.id === id ? { ...v, available: !currentStatus } : v))
+        prev.map(v => (v.id === id ? updated : v))
       );
-      showToast(`Volunteer #${id} marked ${!currentStatus ? 'available' : 'on duty'}.`);
+      setSummary(prev => prev ? {
+        ...prev,
+        availableVolunteers: prev.availableVolunteers + (updated.available ? 1 : -1)
+      } : prev);
+      showToast(`Volunteer #${id} marked ${updated.available ? 'available' : 'on duty'}.`);
     } catch (updateError) {
       setError(updateError.message);
+    } finally {
+      setUpdatingId(null);
     }
   };
 
@@ -92,17 +119,19 @@ export default function VolunteerDirectoryView() {
     const query = searchQuery.toLowerCase();
     const searchMatch =
       !query ||
-      volunteer.name.toLowerCase().includes(query) ||
-      volunteer.location.toLowerCase().includes(query) ||
+      (volunteer.name && volunteer.name.toLowerCase().includes(query)) ||
+      (volunteer.location && volunteer.location.toLowerCase().includes(query)) ||
       (volunteer.contactNumber && volunteer.contactNumber.includes(query)) ||
+      volunteer.skillSet.some((skill) => skill.toLowerCase().includes(query)) ||
       (volunteer.certifications && volunteer.certifications.toLowerCase().includes(query));
 
     return skillMatch && availMatch && searchMatch;
   });
 
-  const totalVolunteers = volunteers.length;
-  const availableVolunteers = volunteers.filter(v => v.available).length;
+  const totalVolunteers = summary?.totalVolunteers ?? volunteers.length;
+  const availableVolunteers = summary?.availableVolunteers ?? volunteers.filter(v => v.available).length;
   const onDutyVolunteers = totalVolunteers - availableVolunteers;
+  const volunteersWithSkills = volunteers.filter(v => v.skillSet.length > 0).length;
 
   const getSkillIcon = (skill) => {
     switch (skill) {
@@ -133,12 +162,12 @@ export default function VolunteerDirectoryView() {
           <div className="page-category-strip">
             <span className="live-cad-chip">
               <span className="cad-beacon-ping"></span>
-              CIVIL DEFENSE &amp; FIRST RESPONDERS
+              COMMUNITY VOLUNTEER DIRECTORY
             </span>
             <span className="node-id-chip">RESPONDER ROSTER</span>
           </div>
-          <h1 className="page-main-heading">Certified Volunteer Directory</h1>
-          <p className="page-main-subtext">Coordinate citizen first-responders, paramedical volunteers, fire rescue squads, and emergency drivers.</p>
+          <h1 className="page-main-heading">Volunteer Directory</h1>
+          <p className="page-main-subtext">Coordinate community volunteers by their listed skills, location, and availability.</p>
         </div>
         <div className="header-action-block">
           <button
@@ -188,8 +217,8 @@ export default function VolunteerDirectoryView() {
             <Icon icon="mdi:certificate" width="24" height="24" />
           </div>
           <div className="kpi-info">
-            <div className="kpi-label">CERTIFIED TRAUMA RESPONDERS</div>
-            <div className="kpi-val">100% Verified</div>
+            <div className="kpi-label">WITH SKILLS LISTED (LOADED)</div>
+            <div className="kpi-val">{volunteersWithSkills}</div>
           </div>
         </div>
       </div>
@@ -200,7 +229,7 @@ export default function VolunteerDirectoryView() {
           <Icon icon="mdi:magnify" width="18" height="18" className="search-icon" />
           <input
             type="text"
-            placeholder="Search by volunteer name, location, contact, or certification..."
+            placeholder="Search by volunteer name, location, contact, or skill..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
@@ -279,7 +308,7 @@ export default function VolunteerDirectoryView() {
                 <div className="form-group-custom">
                   <label>Primary Skill Specialization *</label>
                   <select name="skills" value={formData.skills} onChange={handleChange} required>
-                    <option value="FIRST_AID">🩹 Certified First Aid</option>
+                    <option value="FIRST_AID">🩹 First Aid</option>
                     <option value="MEDICAL">🏥 Medical Doctor / Nurse</option>
                     <option value="FIREFIGHTING">🔥 Firefighting Specialist</option>
                     <option value="RESCUE">⛑️ Swift Water / Heavy Rescue</option>
@@ -328,7 +357,7 @@ export default function VolunteerDirectoryView() {
 
       {/* Volunteers Cards Grid */}
       <div className="volunteers-cards-grid">
-        {filteredVolunteers.length === 0 ? (
+        {loading ? null : filteredVolunteers.length === 0 && !error ? (
           <div className="empty-state-fullwidth">
             <Icon icon="mdi:account-search-outline" width="48" height="48" />
             <h3>No volunteers match your criteria</h3>
@@ -371,15 +400,24 @@ export default function VolunteerDirectoryView() {
                       </div>
                     )}
                   </div>
+                  {hasMore && (
+                    <div className="list-load-more">
+                      <p>Showing {volunteers.length} of {totalVolunteers} volunteers.</p>
+                      <button type="button" className="btn-header-refresh" onClick={() => loadVolunteers({ append: true })} disabled={loadingMore}>
+                        {loadingMore ? 'Loading...' : `Load next ${API_PAGE_SIZE}`}
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 <div className="card-footer-strip">
                   <span className="skill-chip">
-                    {vol.skills.replace('_', ' ')}
+                    {vol.skillSet.length > 0 ? vol.skillSet.join(', ') : vol.skills.replace('_', ' ')}
                   </span>
                   <button
                     className={`btn-toggle-status ${isAvail ? 'btn-mark-deploy' : 'btn-mark-avail'}`}
                     onClick={() => toggleAvailability(vol.id, isAvail)}
+                    disabled={updatingId === vol.id}
                     title={isAvail ? 'Deploy to active emergency' : 'Mark as Available on Standby'}
                   >
                     <Icon icon={isAvail ? 'mdi:truck-fast' : 'mdi:check-circle'} width="16" height="16" />

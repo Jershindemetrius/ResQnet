@@ -3,7 +3,7 @@ package com.resqnet.api;
 import com.resqnet.exception.ResourceNotFoundException;
 import com.resqnet.model.user.Volunteer;
 import com.resqnet.service.UserManager;
-import com.resqnet.storage.FileStorageManager;
+import com.resqnet.storage.SQLiteStorageManager;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import java.io.IOException;
@@ -13,9 +13,9 @@ import java.util.UUID;
 /** Lists, registers, and updates volunteer availability. */
 public class VolunteerHandler implements HttpHandler {
     private final UserManager users;
-    private final FileStorageManager storage;
+    private final SQLiteStorageManager storage;
 
-    public VolunteerHandler(UserManager users, FileStorageManager storage) {
+    public VolunteerHandler(UserManager users, SQLiteStorageManager storage) {
         this.users = users;
         this.storage = storage;
     }
@@ -28,7 +28,7 @@ public class VolunteerHandler implements HttpHandler {
                 return;
             }
             if ("GET".equalsIgnoreCase(exchange.getRequestMethod())) {
-                JsonSerializer.send(exchange, 200, users.getVolunteers());
+                JsonSerializer.send(exchange, 200, JsonSerializer.page(exchange, users.getVolunteers()));
                 return;
             }
             if (!"POST".equalsIgnoreCase(exchange.getRequestMethod())) {
@@ -45,7 +45,7 @@ public class VolunteerHandler implements HttpHandler {
                     existing.setAssignedEmergencyId(
                             JsonSerializer.optionalString(body, "assignedEmergencyId", ""));
                 }
-                storage.saveVolunteers(users.getVolunteers());
+                storage.saveVolunteer(existing);
                 JsonSerializer.send(exchange, 200, existing);
                 return;
             }
@@ -59,12 +59,14 @@ public class VolunteerHandler implements HttpHandler {
                     JsonSerializer.enumOrDefault(body, "status", Volunteer.Status.class, Volunteer.Status.AVAILABLE),
                     JsonSerializer.optionalString(body, "assignedEmergencyId", null));
             users.addUser(volunteer);
-            storage.saveVolunteers(users.getVolunteers());
+            storage.saveVolunteer(volunteer);
             JsonSerializer.send(exchange, 201, volunteer);
         } catch (ResourceNotFoundException exception) {
             JsonSerializer.sendError(exchange, 404, exception.getMessage());
         } catch (IllegalArgumentException exception) {
             JsonSerializer.sendError(exchange, 400, exception.getMessage());
+        } catch (JsonSerializer.ResponseWriteException exception) {
+            JsonSerializer.logResponseWriteFailure(exception);
         } catch (IOException exception) {
             JsonSerializer.sendServerError(exchange, "Unable to persist volunteer data", exception);
         } catch (RuntimeException exception) {

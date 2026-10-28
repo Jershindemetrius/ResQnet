@@ -3,38 +3,54 @@ package com.resqnet.service;
 import com.resqnet.model.user.AuthAccount;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
-import java.nio.file.StandardOpenOption;
 import java.security.GeneralSecurityException;
 import java.security.MessageDigest;
 import java.security.SecureRandom;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 
-/** File-backed account registration and password verification. */
+/** SQLite-backed account registration and password verification. */
 public class AuthManager {
+    private static final Logger LOGGER = Logger.getLogger(AuthManager.class.getName());
     private static final String HEADER = "id,name,email,salt,passwordHash";
+    private static final String MIGRATION_KEY = "legacy-auth-csv-v1";
     private static final int SALT_BYTES = 16;
     private static final int HASH_BITS = 256;
     private static final int ITERATIONS = 120_000;
     private static final SecureRandom RANDOM = new SecureRandom();
 
-    private final Path accountsFile;
+    private final Path databasePath;
+    private final Path legacyAccountsFile;
     private final Map<String, StoredAccount> accounts = new LinkedHashMap<String, StoredAccount>();
 
-    public AuthManager(Path accountsFile) throws IOException {
-        if (accountsFile == null) throw new IllegalArgumentException("accountsFile must not be null");
-        this.accountsFile = accountsFile;
+    public AuthManager(Path databasePath, Path legacyAccountsFile) throws IOException {
+        if (databasePath == null) throw new IllegalArgumentException("databasePath must not be null");
+        if (legacyAccountsFile == null) {
+            throw new IllegalArgumentException("legacyAccountsFile must not be null");
+        }
+        this.databasePath = databasePath.toAbsolutePath().normalize();
+        this.legacyAccountsFile = legacyAccountsFile;
+        Path parent = this.databasePath.getParent();
+        if (parent != null) Files.createDirectories(parent);
         loadAccounts();
     }
 
@@ -49,10 +65,7 @@ public class AuthManager {
         RANDOM.nextBytes(salt);
         StoredAccount account = new StoredAccount(UUID.randomUUID().toString(), normalizedName,
                 normalizedEmail, salt, hashPassword(password, salt));
-
-        List<StoredAccount> updatedAccounts = new ArrayList<StoredAccount>(accounts.values());
-        updatedAccounts.add(account);
-        persist(updatedAccounts);
+        persist(account);
         accounts.put(normalizedEmail, account);
         return account.toPublicAccount();
     }
@@ -69,55 +82,138 @@ public class AuthManager {
     }
 
     private void loadAccounts() throws IOException {
-        Files.createDirectories(accountsFile.toAbsolutePath().getParent());
-        if (!Files.exists(accountsFile)) {
-            Files.write(accountsFile, java.util.Collections.singletonList(HEADER), StandardCharsets.UTF_8,
-                    StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE);
-            return;
-        }
+        try (Connection connection = connect(); Statement statement = connection.createStatement()) {
+            statement.execute("CREATE TABLE IF NOT EXISTS auth_users ("
+                    + "id TEXT PRIMARY KEY, name TEXT NOT NULL, email TEXT NOT NULL UNIQUE, "
+                    + "salt TEXT NOT NULL, password_hash TEXT NOT NULL)");
+            statement.execute("CREATE TABLE IF NOT EXISTS schema_migrations ("
+                    + "migration_key TEXT PRIMARY KEY, applied_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)");
+            if (!migrationApplied(connection)) migrateLegacyAccounts(connection);
 
-        List<String> lines = Files.readAllLines(accountsFile, StandardCharsets.UTF_8);
-        if (lines.isEmpty() || !HEADER.equals(lines.get(0))) {
-            throw new IOException(accountsFile + ": missing or unsupported account file header");
-        }
-        for (int line = 1; line < lines.size(); line++) {
-            if (lines.get(line).trim().isEmpty()) continue;
-            String[] fields = lines.get(line).split(",", -1);
-            if (fields.length != 5) throw malformed(line + 1);
-            try {
-                StoredAccount account = new StoredAccount(decode(fields[0]), decode(fields[1]),
-                        decode(fields[2]), decode(fields[3]), decode(fields[4]));
-                if (account.salt.length != SALT_BYTES || account.passwordHash.length != HASH_BITS / 8
-                        || accounts.putIfAbsent(account.email, account) != null) {
-                    throw malformed(line + 1);
+            try (Statement query = connection.createStatement();
+                 ResultSet rows = query.executeQuery(
+                         "SELECT id, name, email, salt, password_hash FROM auth_users ORDER BY email")) {
+                while (rows.next()) {
+                    StoredAccount account = new StoredAccount(rows.getString("id"), rows.getString("name"),
+                            rows.getString("email"), rows.getString("salt"), rows.getString("password_hash"));
+                    if (account.salt.length != SALT_BYTES || account.passwordHash.length != HASH_BITS / 8
+                            || accounts.putIfAbsent(account.email, account) != null) {
+                        throw new IOException("SQLite contains malformed or duplicate account data");
+                    }
                 }
-            } catch (IllegalArgumentException exception) {
-                throw new IOException(accountsFile + ":" + (line + 1) + ": invalid account data", exception);
+            }
+        } catch (SQLException | IllegalArgumentException exception) {
+            throw new IOException("Unable to load account records from SQLite: " + exception.getMessage(),
+                    exception);
+        }
+    }
+
+    private void migrateLegacyAccounts(Connection connection) throws IOException, SQLException {
+        connection.setAutoCommit(false);
+        try {
+            if (accountCount(connection) == 0 && Files.exists(legacyAccountsFile)) {
+                importLegacyAccounts(connection);
+            }
+            try (PreparedStatement marker = connection.prepareStatement(
+                    "INSERT INTO schema_migrations (migration_key) VALUES (?)")) {
+                marker.setString(1, MIGRATION_KEY);
+                marker.executeUpdate();
+            }
+            connection.commit();
+        } catch (IOException | SQLException | RuntimeException exception) {
+            try {
+                connection.rollback();
+            } catch (SQLException rollbackFailure) {
+                exception.addSuppressed(rollbackFailure);
+            }
+            if (exception instanceof IOException) throw (IOException) exception;
+            throw exception;
+        } finally {
+            connection.setAutoCommit(true);
+        }
+    }
+
+    private void importLegacyAccounts(Connection connection) throws IOException, SQLException {
+        List<String> lines = Files.readAllLines(legacyAccountsFile, StandardCharsets.UTF_8);
+        if (lines.isEmpty() || !HEADER.equals(lines.get(0))) {
+            throw new IOException(legacyAccountsFile + ": missing or unsupported account file header");
+        }
+        Set<String> importedEmails = new HashSet<String>();
+        try (PreparedStatement insert = connection.prepareStatement(
+                "INSERT INTO auth_users (id, name, email, salt, password_hash) VALUES (?, ?, ?, ?, ?)")) {
+            for (int line = 1; line < lines.size(); line++) {
+                if (lines.get(line).trim().isEmpty()) continue;
+                String[] fields = lines.get(line).split(",", -1);
+                if (fields.length != 5) throw malformed(line + 1);
+                try {
+                    StoredAccount account = new StoredAccount(decode(fields[0]), decode(fields[1]),
+                            decode(fields[2]), fields[3], fields[4]);
+                    if (account.salt.length != SALT_BYTES || account.passwordHash.length != HASH_BITS / 8
+                            || !importedEmails.add(account.email)) {
+                        throw malformed(line + 1);
+                    }
+                    insert.setString(1, account.id);
+                    insert.setString(2, account.name);
+                    insert.setString(3, account.email);
+                    insert.setString(4, fields[3]);
+                    insert.setString(5, fields[4]);
+                    insert.executeUpdate();
+                } catch (IllegalArgumentException | SQLException exception) {
+                    throw new IOException(legacyAccountsFile + ":" + (line + 1)
+                            + ": invalid or duplicate account data", exception);
+                }
             }
         }
     }
 
-    private void persist(List<StoredAccount> values) throws IOException {
-        List<String> lines = new ArrayList<String>();
-        lines.add(HEADER);
-        for (StoredAccount account : values) {
-            lines.add(encode(account.id) + "," + encode(account.name) + "," + encode(account.email) + ","
-                    + encode(account.salt) + "," + encode(account.passwordHash));
+    private void persist(StoredAccount account) throws IOException, DuplicateAccountException {
+        try (Connection connection = connect();
+             PreparedStatement statement = connection.prepareStatement(
+                     "INSERT INTO auth_users (id, name, email, salt, password_hash) VALUES (?, ?, ?, ?, ?)")) {
+            statement.setString(1, account.id);
+            statement.setString(2, account.name);
+            statement.setString(3, account.email);
+            statement.setString(4, encode(account.salt));
+            statement.setString(5, encode(account.passwordHash));
+            statement.executeUpdate();
+        } catch (SQLException exception) {
+            if (exception.getErrorCode() == 19) throw new DuplicateAccountException();
+            throw new IOException("Unable to persist account data to SQLite: " + exception.getMessage(),
+                    exception);
         }
-        Path parent = accountsFile.toAbsolutePath().getParent();
-        Path temporary = Files.createTempFile(parent, "auth-users", ".tmp");
-        try {
-            Files.write(temporary, lines, StandardCharsets.UTF_8,
-                    StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE);
-            try {
-                Files.move(temporary, accountsFile, StandardCopyOption.REPLACE_EXISTING,
-                        StandardCopyOption.ATOMIC_MOVE);
-            } catch (AtomicMoveNotSupportedException exception) {
-                Files.move(temporary, accountsFile, StandardCopyOption.REPLACE_EXISTING);
+    }
+
+    private boolean migrationApplied(Connection connection) throws SQLException {
+        try (PreparedStatement statement = connection.prepareStatement(
+                "SELECT 1 FROM schema_migrations WHERE migration_key = ?")) {
+            statement.setString(1, MIGRATION_KEY);
+            try (ResultSet result = statement.executeQuery()) {
+                return result.next();
             }
-        } finally {
-            Files.deleteIfExists(temporary);
         }
+    }
+
+    private static int accountCount(Connection connection) throws SQLException {
+        try (Statement statement = connection.createStatement();
+             ResultSet result = statement.executeQuery("SELECT COUNT(*) FROM auth_users")) {
+            return result.next() ? result.getInt(1) : 0;
+        }
+    }
+
+    private Connection connect() throws SQLException {
+        Connection connection = DriverManager.getConnection("jdbc:sqlite:" + databasePath);
+        try (Statement statement = connection.createStatement()) {
+            statement.execute("PRAGMA busy_timeout = 5000");
+            statement.execute("PRAGMA foreign_keys = ON");
+        } catch (SQLException exception) {
+            connection.close();
+            throw exception;
+        }
+        return connection;
+    }
+
+    private IOException malformed(int line) {
+        return new IOException(legacyAccountsFile + ":" + line + ": malformed or duplicate account");
     }
 
     private static byte[] hashPassword(char[] password, byte[] salt) throws GeneralSecurityException {
@@ -155,24 +251,12 @@ public class AuthManager {
         }
     }
 
-    private static String encode(String value) {
-        return Base64.getUrlEncoder().withoutPadding().encodeToString(value.getBytes(StandardCharsets.UTF_8));
-    }
-
     private static String encode(byte[] value) {
         return Base64.getUrlEncoder().withoutPadding().encodeToString(value);
     }
 
     private static String decode(String value) {
         return new String(Base64.getUrlDecoder().decode(value), StandardCharsets.UTF_8);
-    }
-
-    private static byte[] decodeBytes(String value) {
-        return Base64.getUrlDecoder().decode(value);
-    }
-
-    private IOException malformed(int line) {
-        return new IOException(accountsFile + ":" + line + ": malformed or duplicate account");
     }
 
     public static final class DuplicateAccountException extends Exception {
@@ -195,7 +279,8 @@ public class AuthManager {
         }
 
         private StoredAccount(String id, String name, String email, String salt, String passwordHash) {
-            this(id, name, email, decodeBytes(salt), decodeBytes(passwordHash));
+            this(id, name, email, Base64.getUrlDecoder().decode(salt),
+                    Base64.getUrlDecoder().decode(passwordHash));
         }
 
         private AuthAccount toPublicAccount() {

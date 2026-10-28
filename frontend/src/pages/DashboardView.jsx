@@ -4,7 +4,6 @@ import {
   getDashboard,
   getEmergencies,
   getMatchingSuggestions,
-  getResources
 } from '../api/resqnetApi.js';
 import { Icon } from '@iconify/react';
 
@@ -15,6 +14,7 @@ export default function DashboardView() {
   const [suggestions, setSuggestions] = useState(null);
   const [dispatching, setDispatching] = useState(false);
   const [error, setError] = useState('');
+  const [suggestionError, setSuggestionError] = useState('');
   const [toastMessage, setToastMessage] = useState(null);
   const [currentTime, setCurrentTime] = useState(new Date().toLocaleTimeString());
 
@@ -34,22 +34,26 @@ export default function DashboardView() {
     try {
       setLoading(true);
       setError('');
-      const [counts, emergencies, resources] = await Promise.all([
+      const [counts, emergencies] = await Promise.all([
         getDashboard(),
-        getEmergencies(),
-        getResources()
+        getEmergencies({ limit: 8, offset: 0 })
       ]);
       const data = {
         ...counts,
-        availableResources: resources.filter(resource => resource.available).length,
-        recentEmergencies: emergencies.slice(0, 8)
+        recentEmergencies: emergencies
       };
       setDashboard(data);
       const selected = emergencies.find(item => item.id === selectedEmergency?.id) ?? emergencies[0] ?? null;
       setSelectedEmergency(selected);
-      setSuggestions(selected && selected.status !== 'RESOLVED'
-        ? await getMatchingSuggestions(selected.id)
-        : null);
+      setSuggestions(null);
+      setSuggestionError('');
+      if (selected && selected.status !== 'RESOLVED') {
+        try {
+          setSuggestions(await getMatchingSuggestions(selected.id));
+        } catch (suggestionError) {
+          setSuggestionError(suggestionError.message);
+        }
+      }
     } catch (loadError) {
       setError(loadError.message);
     } finally {
@@ -83,12 +87,13 @@ export default function DashboardView() {
   const handleSelectFromMapOrTable = async (item) => {
     setSelectedEmergency(item);
     setSuggestions(null);
+    setSuggestionError('');
     setError('');
     if (item.status === 'RESOLVED') return;
     try {
       setSuggestions(await getMatchingSuggestions(item.id));
     } catch (suggestionError) {
-      setError(suggestionError.message);
+      setSuggestionError(suggestionError.message);
     }
   };
 
@@ -129,7 +134,7 @@ export default function DashboardView() {
           <div className="telemetry-badge-row">
             <span className="live-cad-chip">
               <span className="cad-beacon-ping"></span>
-              BACKEND CONNECTED
+              {dashboard ? 'BACKEND CONNECTED' : 'BACKEND UNAVAILABLE'}
             </span>
             <span className="node-id-chip">NODE: TN-KOVILPATTI-01</span>
           </div>
@@ -300,6 +305,7 @@ export default function DashboardView() {
                   </div>
                 </div>
               )) : <p>{suggestions ? 'No compatible available units were found.' : 'Select an emergency to check current availability.'}</p>}
+              {suggestionError && <p className="matching-warning" role="status">Match suggestions are unavailable: {suggestionError}</p>}
               </div>
             <button
               className="btn-approve-dispatch"

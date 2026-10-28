@@ -56,7 +56,7 @@ export const AdminLayout: React.FC = () => {
       group: 'OPERATIONS & CAD',
       items: [
         { path: '/admin/overview', label: 'Command Overview', icon: LayoutDashboard },
-        { path: '/admin/dispatches', label: 'Active Dispatches', icon: Radio, badge: '12 Live' },
+        { path: '/admin/dispatches', label: 'Active Dispatches', icon: Radio, badge: 'Demo' },
         { path: '/admin/matcher', label: 'Automated Matcher', icon: Sliders }
       ]
     },
@@ -64,7 +64,7 @@ export const AdminLayout: React.FC = () => {
       group: 'FLEET & DIRECTORY',
       items: [
         { path: '/admin/fleet', label: 'Unit Registry & Rosters', icon: Ambulance },
-        { path: '/admin/hospitals', label: 'Hospital ICU Tracking', icon: Hospital, badge: '28 Beds' },
+        { path: '/admin/hospitals', label: 'Hospital ICU Tracking', icon: Hospital, badge: 'Demo' },
         { path: '/admin/users', label: 'Personnel & Responders', icon: Users }
       ]
     },
@@ -285,6 +285,9 @@ export const AdminLayout: React.FC = () => {
 
         {/* Main Admin Content Outlet */}
         <main className="flex-1 overflow-y-auto p-6 bg-slate-950">
+          <div role="note" className="mb-4 rounded-lg border border-amber-700 bg-amber-950/50 px-4 py-3 text-sm text-amber-100">
+            Admin pages are a local demo: users, hospital, fleet, audit, configuration, and broadcast data are stored in this browser and are not connected to backend records. Role checks here are not server-side authorization.
+          </div>
           <Outlet />
         </main>
       </div>

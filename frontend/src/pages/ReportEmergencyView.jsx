@@ -213,10 +213,10 @@ export default function ReportEmergencyView() {
                 <div>
                   <h2 style={{ margin: 0, fontSize: '20px', fontWeight: 800, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '10px' }}>
                     <Icon icon="mdi:ambulance" width="28" height="28" color="#e74c3c" />
-                    Ambulance Dispatch Active: {activeBooking.orderId}
+                    Demo Booking Created: {activeBooking.orderId}
                   </h2>
                   <p style={{ margin: '4px 0 0', fontSize: '13px', color: '#64748b' }}>
-                    Dispatch notification broadcast to nearby ambulances in Kovilpatti.
+                    This sample order is stored only in this browser; no live dispatch request was sent.
                   </p>
                 </div>
                 <div style={{ display: 'flex', gap: '8px' }}>
@@ -284,10 +284,10 @@ export default function ReportEmergencyView() {
                     <Icon icon="mdi:radar" width="36" height="36" color="#e74c3c" className="spin" />
                     <div>
                       <div style={{ fontSize: '16px', fontWeight: 700, color: '#0f172a' }}>
-                        Notifying nearby ambulance pilots in Kovilpatti...
+                        Demo order is waiting for a simulated driver...
                       </div>
                       <div style={{ fontSize: '13px', color: '#64748b' }}>
-                        Awaiting driver acceptance. The nearest unit will lock onto your GPS coordinate.
+                        Driver assignment and GPS tracking are not connected to the backend.
                       </div>
                     </div>
                   </div>

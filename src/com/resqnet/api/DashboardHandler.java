@@ -73,7 +73,9 @@ public class DashboardHandler implements HttpHandler {
         counts.put("medium", medium);
         counts.put("low", low);
         counts.put("availableVolunteers", availableVolunteers);
+        counts.put("totalVolunteers", users.getVolunteers().size());
         counts.put("availableResources", availableResources);
+        counts.put("totalResources", resources.getAllResources().size());
         counts.put("resolvedToday", resolvedToday);
         try {
             JsonSerializer.send(exchange, 200, counts);

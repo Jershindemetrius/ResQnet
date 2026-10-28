@@ -6,7 +6,7 @@ import com.resqnet.model.enums.EmergencyType;
 import com.resqnet.model.enums.PriorityLevel;
 import com.resqnet.model.enums.ResourceType;
 import com.resqnet.service.EmergencyManager;
-import com.resqnet.storage.FileStorageManager;
+import com.resqnet.storage.SQLiteStorageManager;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import java.io.IOException;
@@ -16,9 +16,9 @@ import java.util.UUID;
 /** Handles emergency creation and priority-ordered listing. */
 public class EmergencyHandler implements HttpHandler {
     private final EmergencyManager emergencies;
-    private final FileStorageManager storage;
+    private final SQLiteStorageManager storage;
 
-    public EmergencyHandler(EmergencyManager emergencies, FileStorageManager storage) {
+    public EmergencyHandler(EmergencyManager emergencies, SQLiteStorageManager storage) {
         this.emergencies = emergencies;
         this.storage = storage;
     }
@@ -32,7 +32,8 @@ public class EmergencyHandler implements HttpHandler {
             }
             String method = exchange.getRequestMethod();
             if ("GET".equalsIgnoreCase(method)) {
-                JsonSerializer.send(exchange, 200, emergencies.getPriorityOrderedEmergencies());
+                JsonSerializer.send(exchange, 200,
+                        JsonSerializer.page(exchange, emergencies.getPriorityOrderedEmergencies()));
             } else if ("POST".equalsIgnoreCase(method)) {
                 Map<String, Object> body = JsonSerializer.parseObject(exchange.getRequestBody());
                 EmergencyRequest request = new EmergencyRequest(
@@ -46,7 +47,7 @@ public class EmergencyHandler implements HttpHandler {
                         JsonSerializer.enumOrDefault(body, "priority", PriorityLevel.class, PriorityLevel.MEDIUM),
                         JsonSerializer.requiredEnum(body, "requiredResourceType", ResourceType.class));
                 emergencies.addEmergency(request);
-                storage.saveEmergencies(emergencies.getAllEmergencies());
+                storage.saveEmergency(request);
                 JsonSerializer.send(exchange, 201, request);
             } else {
                 exchange.getResponseHeaders().set("Allow", "GET, POST, OPTIONS");
@@ -54,6 +55,8 @@ public class EmergencyHandler implements HttpHandler {
             }
         } catch (InvalidEmergencyRequestException | IllegalArgumentException exception) {
             JsonSerializer.sendError(exchange, 400, exception.getMessage());
+        } catch (JsonSerializer.ResponseWriteException exception) {
+            JsonSerializer.logResponseWriteFailure(exception);
         } catch (IOException exception) {
             JsonSerializer.sendServerError(exchange, "Unable to persist emergency data", exception);
         } catch (RuntimeException exception) {

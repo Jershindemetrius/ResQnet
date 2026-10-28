@@ -1,4 +1,5 @@
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080/api').replace(/\/+$/, '');
+export const API_PAGE_SIZE = 100;
 
 async function request(path, options) {
   let response;
@@ -27,10 +28,30 @@ function jsonBody(value) {
   };
 }
 
+function pagedPath(path, pagination) {
+  if (!pagination) return path;
+  const params = new URLSearchParams({
+    limit: String(pagination.limit ?? API_PAGE_SIZE),
+    offset: String(pagination.offset ?? 0),
+  });
+  return `${path}?${params.toString()}`;
+}
+
 function displayEnum(value) {
   return typeof value === 'string'
     ? value.toLowerCase().replace(/_/g, ' ').replace(/\b\w/g, (letter) => letter.toUpperCase())
     : '';
+}
+
+function canonicalSkill(skill) {
+  const value = skill.toLowerCase();
+  if (value.includes('first aid')) return 'FIRST_AID';
+  if (value.includes('medical') || value.includes('nurs')) return 'MEDICAL';
+  if (value.includes('fire')) return 'FIREFIGHTING';
+  if (value.includes('rescue')) return 'RESCUE';
+  if (value.includes('driv')) return 'DRIVER';
+  if (value.includes('communication') || value.includes('radio')) return 'COMMUNICATION';
+  return 'GENERAL';
 }
 
 function normalizeEmergency(emergency) {
@@ -54,7 +75,7 @@ function normalizeVolunteer(volunteer) {
     ...volunteer,
     contactNumber: volunteer.contact ?? volunteer.contactNumber ?? '',
     skillSet,
-    skills: firstSkill.toUpperCase().replace(/[\s-]+/g, '_'),
+    skills: canonicalSkill(firstSkill),
     available: volunteer.status ? volunteer.status === 'AVAILABLE' : Boolean(volunteer.available),
   };
 }
@@ -94,8 +115,8 @@ export async function getDashboard() {
   };
 }
 
-export async function getEmergencies() {
-  const data = await request('/emergencies');
+export async function getEmergencies(pagination) {
+  const data = await request(pagedPath('/emergencies', pagination));
   return data.map(normalizeEmergency);
 }
 
@@ -115,8 +136,8 @@ export async function updateEmergencyStatus(id, status) {
   return normalizeEmergency(data);
 }
 
-export async function getResources() {
-  return request('/resources');
+export async function getResources(pagination) {
+  return request(pagedPath('/resources', pagination));
 }
 
 export async function createResource(resourceData) {
@@ -133,8 +154,8 @@ export async function updateResourceAvailability(id, available) {
   });
 }
 
-export async function getVolunteers() {
-  const data = await request('/volunteers');
+export async function getVolunteers(pagination) {
+  const data = await request(pagedPath('/volunteers', pagination));
   return data.map(normalizeVolunteer);
 }
 
