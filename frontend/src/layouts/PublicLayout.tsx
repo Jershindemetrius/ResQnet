@@ -3,7 +3,6 @@ import { Outlet, Link, useLocation } from 'react-router-dom';
 import {
   LifeBuoy,
   PhoneCall,
-  Lock,
   Menu,
   X,
   ShieldAlert,
@@ -21,7 +20,7 @@ export const PublicLayout: React.FC = () => {
 
   const publicNavLinks = [
     { path: '/', label: 'Citizen Overview', icon: Layers },
-    { path: '/report', label: 'Book Ambulance / SOS', icon: Ambulance, highlight: true },
+    { path: '/report', label: 'Report Emergency / SOS', icon: Ambulance, highlight: true },
     { path: '/emergencies', label: 'Public Incident Feed', icon: ShieldAlert },
     { path: '/resources', label: 'Relief Resources', icon: Package },
     { path: '/volunteers', label: 'Community Volunteers', icon: Users }
@@ -31,8 +30,7 @@ export const PublicLayout: React.FC = () => {
     <div className="public-shell">
       {/* --------------------------------------------------------------------
           MINIMALIST PUBLIC TOP BAR
-          Strict Requirement: Logo, "Call Emergency (112)", and subtle "Staff / Portal Login" link.
-          Zero internal telemetry, zero CAD dispatch feeds, and zero role switchers.
+          Public navigation uses emergency and inventory data served by the backend.
           -------------------------------------------------------------------- */}
       <header className="public-header">
         {/* Left: Brand Identity */}
@@ -91,15 +89,9 @@ export const PublicLayout: React.FC = () => {
           </a>
 
           {/* Subtle Staff / Portal Login link */}
-          {isAuthenticated && user && user.role !== 'CITIZEN' ? (
+          {isAuthenticated && user ? (
             <div className="public-auth-actions">
-              <Link
-                to={user.role === 'DRIVER' ? '/driver/console' : '/admin/overview'}
-                className="public-portal-link"
-              >
-                <Lock className="public-portal-icon" />
-                <span>Portal ({user.role})</span>
-              </Link>
+              <span className="public-account-name">{user.name}</span>
               <button
                 onClick={logout}
                 className="public-logout-button"
@@ -112,10 +104,9 @@ export const PublicLayout: React.FC = () => {
             <Link
               to="/login"
               className="public-login-link"
-              title="Authorized Personnel Sign-In"
+              title="Sign in or create an account"
             >
-              <Lock className="public-login-icon" />
-              <span className="public-login-label">Staff / Portal Login</span>
+              <span className="public-login-label">Sign in</span>
             </Link>
           )}
 
@@ -167,7 +158,7 @@ export const PublicLayout: React.FC = () => {
             <span>&bull;</span>
             <a href="tel:112">Dial 112</a>
             <span>&bull;</span>
-            <Link to="/login">Authorized Staff Access</Link>
+            <Link to="/login">Account sign in</Link>
           </div>
         </div>
       </footer>

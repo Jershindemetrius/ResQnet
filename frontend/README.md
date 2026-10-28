@@ -5,7 +5,7 @@ A modern, responsive React frontend for the ResQNet Emergency Resource Managemen
 ## 🎨 Features
 
 ### 📊 Dashboard View
-- Real-time overview of active emergencies
+- Backend-backed overview of active emergencies
 - Available resources and volunteers statistics
 - Priority breakdown visualization
 - Recent emergency requests display
@@ -20,15 +20,15 @@ A modern, responsive React frontend for the ResQNet Emergency Resource Managemen
 
 ### 🎯 Dispatch Center
 - **Main Feature**: Emergency management hub
-- View all emergency requests with filtering
+- View paginated emergency requests with filtering
 - Select emergencies to view detailed information
 - **Automatic Resource Matching**: System suggests best matching resources based on:
-  - Proximity to emergency location
+  - GPS proximity when coordinates are supplied, otherwise location-name similarity
   - Resource availability
   - Emergency type and requirements
-- Status timeline visualization (Pending → Resource Assigned → Responding → On Site → Resolved)
+- Backend-persisted status progression (Pending → Resource Assigned → Responding → On Site → Resolved)
 - One-click resource assignment
-- Real-time status updates
+- Backend-confirmed status updates
 
 ### 📦 Resource Inventory
 - Complete resource management system
@@ -82,12 +82,33 @@ npm run preview
 
 The API base URL can be configured using environment variables:
 
-Create a `.env` file in the frontend directory:
+Copy `.env.example` to `.env` in the frontend directory:
 ```env
 VITE_API_BASE_URL=http://localhost:8080/api
 ```
 
-Default: `http://localhost:8080/api`
+For local development, start the Java backend before using the dashboard, report
+form, directories, or account page. These pages display backend responses and
+show an error when the API cannot be reached; they do not fill in demo values.
+
+### Free map tiles
+
+The map uses OpenStreetMap tiles by default and does not require an API key.
+Incident markers are shown only for backend records whose location includes
+valid GPS coordinates. Name-only locations remain in the incident feed, but are
+not guessed or geocoded.
+
+To use a different tile provider, set `VITE_MAP_TILE_URL` to its URL template
+and `VITE_MAP_ATTRIBUTION` to the provider's required attribution, then restart
+Vite or rebuild:
+
+```env
+VITE_MAP_TILE_URL=https://tile-provider.example/{z}/{x}/{y}?key=YOUR_API_KEY
+VITE_MAP_ATTRIBUTION=Map tiles © Your provider
+```
+
+Vite variables are shipped to browsers. Only use a public, domain-restricted
+browser key; never put a private or secret key in frontend configuration.
 
 ## 📁 Project Structure
 
@@ -151,7 +172,7 @@ RESOLVED
 - **Responsive Design**: Works on desktop, tablet, and mobile devices
 - **Intuitive Navigation**: Clear routing with active state indicators
 - **Color-Coded Priority**: Visual priority system for quick assessment
-- **Status Timeline**: Visual representation of emergency progression
+- **Status Timeline**: Visual representation of backend-persisted emergency progression
 - **Backend-backed Updates**: Changes are shown only after the backend accepts them
 - **Empty States**: Helpful messages when no data is available
 - **Error Handling**: User-friendly error messages with retry options
@@ -163,6 +184,7 @@ The frontend communicates with the Java backend API:
 
 ### Endpoints Used
 - `GET /api/dashboard` - Dashboard statistics
+- `POST /api/auth/signup` and `POST /api/auth/login` - Create or verify an account
 - `GET /api/emergencies?limit=100&offset=0` - List a page of emergencies
 - `POST /api/emergencies` - Create an emergency (`reporterName`, `contact`, `type`, `location`, `affectedPeopleCount`, `priority`, and `requiredResourceType`)
 - `PUT /api/dispatch/status` - Update emergency status (`emergencyId` and `status` in the JSON body)
@@ -181,13 +203,18 @@ transferring the entire CSV-backed dataset in a single request; use the director
 “Load next” button to fetch subsequent batches. Requests without these parameters retain
 the unpaged array response for existing clients.
 
-The Java backend uses SQLite as its active store. Existing CSV files are imported once on first startup and kept unchanged as backups. See [BACKEND_SETUP.md](../BACKEND_SETUP.md) for database configuration and Eclipse/Maven setup.
+The Java backend uses SQLite as its active store. CSVs are read during one-time import and are not rewritten, but they may not contain complete historical backups. See [BACKEND_SETUP.md](../BACKEND_SETUP.md) for database configuration and Eclipse/Maven setup.
 
 List endpoints accept optional `limit` (1–500) and `offset` query parameters to keep large database responses bounded. Directories provide a “Load next” button to fetch subsequent pages.
 
-## Demo-only screens
+## Backend capability boundaries
 
-The public ambulance booking flow, staff role selection, driver MDT, and most admin sections are demonstrations. Ambulance orders, role sessions, driver telemetry, and admin data are stored or simulated in the browser; they are not sent to the Java backend. The login page does not authenticate against the backend, and frontend route guards are not server-side authorization. Do not use these demo screens for real emergency dispatch or security.
+Account sign-in and signup call the Java backend, which stores account
+credentials in SQLite. The backend currently does not issue browser session
+tokens or support staff roles, so the login UI does not claim to secure API
+routes. The driver telematics, vehicle GPS tracking, hospital capacity, audit,
+and system-configuration screens are not backed by APIs and are disabled;
+their old sample values are not presented as live operations.
 
 ## 🌟 Best Practices Implemented
 
@@ -202,7 +229,7 @@ The public ambulance booking flow, staff role selection, driver MDT, and most ad
 ## 🚀 Future Enhancements
 
 - Real-time notifications using WebSockets
-- Map integration for location visualization
+- GPS coordinate storage and live map locations
 - Advanced filtering and search capabilities
 - Export emergency reports
 - User authentication and role-based access
@@ -220,7 +247,7 @@ The public ambulance booking flow, staff role selection, driver MDT, and most ad
 
 ### Highlight These Points:
 1. **Automatic Resource Matching Algorithm**: Core innovation of the system
-2. **Real-time Status Tracking**: Visual timeline showing emergency progression
+2. **Persisted Status Tracking**: Visual timeline showing backend emergency progression
 3. **Comprehensive Resource Management**: Complete inventory system
 4. **Volunteer Coordination**: Skill-based volunteer matching
 5. **User-Friendly Interface**: Intuitive design for emergency situations

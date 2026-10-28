@@ -5,8 +5,7 @@ import AppRoutes from './routes/AppRoutes';
 
 /**
  * ResQNet Application Root
- * Protected by AuthProvider (RBAC session & token context)
- * Routed by AppRoutes (Public Portal, Driver MDT Hub, and Admin Center)
+ * Account state follows successful backend sign-in; operational data is loaded by the pages.
  */
 export default function App() {
   return (

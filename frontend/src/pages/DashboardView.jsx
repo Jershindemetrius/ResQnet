@@ -6,6 +6,7 @@ import {
   getMatchingSuggestions,
 } from '../api/resqnetApi.js';
 import { Icon } from '@iconify/react';
+import DispatchMap from '../components/DispatchMap.jsx';
 
 export default function DashboardView() {
   const [dashboard, setDashboard] = useState(null);
@@ -109,6 +110,18 @@ export default function DashboardView() {
     );
   }
 
+  if (error && !dashboard) {
+    return (
+      <div className="dashboard-container">
+        <div role="alert" className="empty-state-card">
+          <strong>Unable to load live dashboard data</strong>
+          <p>{error}</p>
+          <button type="button" className="btn-header-refresh" onClick={loadDashboard}>Retry</button>
+        </div>
+      </div>
+    );
+  }
+
   const activeTarget = selectedEmergency || dashboard?.recentEmergencies?.[0] || null;
 
   return (
@@ -136,9 +149,9 @@ export default function DashboardView() {
               <span className="cad-beacon-ping"></span>
               {dashboard ? 'BACKEND CONNECTED' : 'BACKEND UNAVAILABLE'}
             </span>
-            <span className="node-id-chip">NODE: TN-KOVILPATTI-01</span>
+            <span className="node-id-chip">LIVE DATABASE TOTALS</span>
           </div>
-          <h1 className="dashboard-main-title">Emergency Coordinator Command Console</h1>
+          <h1 className="dashboard-main-title">Community emergency dashboard</h1>
           <p className="dashboard-main-subtitle">
             Emergency, volunteer, and resource totals from the ResQNet backend.
           </p>
@@ -204,7 +217,7 @@ export default function DashboardView() {
         {/* Available Fleet Vehicles */}
         <div className="stat-card-glass stat-green">
           <div className="stat-card-top">
-            <div className="stat-card-label">FLEET ASSETS READY</div>
+            <div className="stat-card-label">AVAILABLE RESOURCES</div>
             <div className="stat-icon-wrapper green">
               <Icon icon="mdi:truck-fast" width="26" height="26" />
             </div>
@@ -244,25 +257,18 @@ export default function DashboardView() {
           <div className="panel-custom-header">
             <div className="panel-header-title">
               <Icon icon="mdi:map-marker-radius" width="18" height="18" className="header-icon-accent" />
-              <span>EMERGENCY LOCATIONS</span>
+              <span>INCIDENT MAP</span>
             </div>
             <div className="panel-header-tools">
               <span className="panel-badge-live">BACKEND RECORDS</span>
             </div>
           </div>
           <div className="matching-panel-content">
-            <p>Location descriptions from reports. GPS coordinates and live vehicle positions are not available in the backend.</p>
-            {dashboard?.recentEmergencies?.length ? dashboard.recentEmergencies.map(emergency => (
-              <button
-                type="button"
-                key={emergency.id}
-                className="matched-candidate-card"
-                onClick={() => handleSelectFromMapOrTable(emergency)}
-              >
-                <span className="candidate-title">#{emergency.id} · {emergency.location}</span>
-                <span className="candidate-meta">{emergency.type} · {emergency.status.replace('_', ' ')}</span>
-              </button>
-            )) : <p>No emergency reports are available.</p>}
+            <DispatchMap
+              emergencies={dashboard?.recentEmergencies ?? []}
+              onSelectEmergency={handleSelectFromMapOrTable}
+              selectedEmergency={selectedEmergency}
+            />
           </div>
         </div>
 
@@ -328,7 +334,7 @@ export default function DashboardView() {
           </div>
           <div className="panel-header-right">
             <span className="queue-count-tag">
-              Showing {dashboard?.recentEmergencies?.length ?? 0} reports
+              Showing {dashboard?.recentEmergencies?.length ?? 0} recent reports
             </span>
           </div>
         </div>

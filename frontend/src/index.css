@@ -1592,6 +1592,85 @@ button:disabled {
   gap: 8px;
 }
 
+.public-account-name {
+  max-width: 140px;
+  overflow: hidden;
+  color: #cbd5e1;
+  font-size: 11px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.backend-unavailable-page {
+  display: grid;
+  min-height: calc(100vh - 138px);
+  place-items: center;
+  padding: 32px 18px;
+  background:
+    radial-gradient(ellipse at 18% 12%, rgba(239, 68, 68, .1), transparent 34%),
+    #f1f5f9;
+}
+
+.backend-unavailable-card {
+  width: min(100%, 680px);
+  padding: clamp(24px, 5vw, 42px);
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 16px 48px rgba(15, 23, 42, .09);
+}
+
+.backend-unavailable-icon {
+  display: grid;
+  width: 48px;
+  height: 48px;
+  margin-bottom: 22px;
+  place-items: center;
+  border-radius: 14px;
+  background: #fff1f2;
+  color: #e11d48;
+}
+
+.backend-unavailable-card h1 {
+  margin: 8px 0 10px;
+  color: #0f172a;
+  font-size: clamp(24px, 4vw, 32px);
+  letter-spacing: -.04em;
+}
+
+.backend-unavailable-card > p:not(.account-brand-caption) {
+  color: #64748b;
+  font-size: 14px;
+  line-height: 1.75;
+}
+
+.backend-unavailable-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 24px;
+}
+
+.backend-unavailable-links a {
+  display: inline-flex;
+  min-height: 40px;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 9px;
+  color: #334155;
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.backend-unavailable-links a:hover {
+  border-color: #fda4af;
+  color: #be123c;
+}
+
 .public-logout-button {
   padding: 7px 5px;
   border: 0;

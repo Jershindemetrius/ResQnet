@@ -1,5 +1,38 @@
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080/api').replace(/\/+$/, '');
 export const API_PAGE_SIZE = 100;
+const MAX_RESPONSE_BYTES = 4 * 1024 * 1024;
+
+async function readJson(response) {
+  const reader = response.body?.getReader();
+  if (!reader) {
+    const text = await response.text();
+    if (new TextEncoder().encode(text).byteLength > MAX_RESPONSE_BYTES) {
+      throw new Error('The backend returned an oversized response. Restart it from the latest project source to enable paginated API responses.');
+    }
+    return JSON.parse(text);
+  }
+
+  const chunks = [];
+  let totalBytes = 0;
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    totalBytes += value.byteLength;
+    if (totalBytes > MAX_RESPONSE_BYTES) {
+      await reader.cancel();
+      throw new Error('The backend returned an oversized response. Restart it from the latest project source to enable paginated API responses.');
+    }
+    chunks.push(value);
+  }
+
+  const bytes = new Uint8Array(totalBytes);
+  let offset = 0;
+  for (const chunk of chunks) {
+    bytes.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return JSON.parse(new TextDecoder().decode(bytes));
+}
 
 async function request(path, options) {
   let response;
@@ -11,8 +44,11 @@ async function request(path, options) {
 
   let body;
   try {
-    body = await response.json();
-  } catch {
+    body = await readJson(response);
+  } catch (parseError) {
+    if (parseError instanceof Error && parseError.message.includes('oversized response')) {
+      throw parseError;
+    }
     throw new Error('The ResQNet backend returned an invalid JSON response.');
   }
   if (!response.ok) {
@@ -35,6 +71,16 @@ function pagedPath(path, pagination) {
     offset: String(pagination.offset ?? 0),
   });
   return `${path}?${params.toString()}`;
+}
+
+function pageRows(data, pagination) {
+  if (!Array.isArray(data)) {
+    throw new Error('The ResQNet backend returned an invalid list response.');
+  }
+  if (!pagination || data.length <= (pagination.limit ?? API_PAGE_SIZE)) return data;
+  const limit = pagination.limit ?? API_PAGE_SIZE;
+  const offset = pagination.offset ?? 0;
+  return data.slice(offset, offset + limit);
 }
 
 function displayEnum(value) {
@@ -116,7 +162,7 @@ export async function getDashboard() {
 }
 
 export async function getEmergencies(pagination) {
-  const data = await request(pagedPath('/emergencies', pagination));
+  const data = pageRows(await request(pagedPath('/emergencies', pagination)), pagination);
   return data.map(normalizeEmergency);
 }
 
@@ -137,7 +183,7 @@ export async function updateEmergencyStatus(id, status) {
 }
 
 export async function getResources(pagination) {
-  return request(pagedPath('/resources', pagination));
+  return pageRows(await request(pagedPath('/resources', pagination)), pagination);
 }
 
 export async function createResource(resourceData) {
@@ -155,7 +201,7 @@ export async function updateResourceAvailability(id, available) {
 }
 
 export async function getVolunteers(pagination) {
-  const data = await request(pagedPath('/volunteers', pagination));
+  const data = pageRows(await request(pagedPath('/volunteers', pagination)), pagination);
   return data.map(normalizeVolunteer);
 }
 
@@ -191,4 +237,18 @@ export async function assignResources(emergencyId) {
 export async function getMatchingSuggestions(emergencyId) {
   const data = await request(`/dispatch/${encodeURIComponent(emergencyId)}/suggestions`);
   return normalizeSuggestions(data);
+}
+
+export async function registerAccount({ name, email, password }) {
+  return request('/auth/signup', {
+    method: 'POST',
+    ...jsonBody({ name, email, password }),
+  });
+}
+
+export async function loginAccount({ email, password }) {
+  return request('/auth/login', {
+    method: 'POST',
+    ...jsonBody({ email, password }),
+  });
 }
