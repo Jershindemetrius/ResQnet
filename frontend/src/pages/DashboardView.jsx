@@ -7,8 +7,11 @@ import {
 } from '../api/resqnetApi.js';
 import { Icon } from '@iconify/react';
 import DispatchMap from '../components/DispatchMap.jsx';
+import { Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 export default function DashboardView() {
+  const { isAdmin } = useAuth();
   const [dashboard, setDashboard] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedEmergency, setSelectedEmergency] = useState(null);
@@ -29,7 +32,7 @@ export default function DashboardView() {
 
   useEffect(() => {
     loadDashboard();
-  }, []);
+  }, [isAdmin]);
 
   const loadDashboard = async () => {
     try {
@@ -48,7 +51,7 @@ export default function DashboardView() {
       setSelectedEmergency(selected);
       setSuggestions(null);
       setSuggestionError('');
-      if (selected && selected.status !== 'RESOLVED') {
+      if (isAdmin && selected && selected.status !== 'RESOLVED') {
         try {
           setSuggestions(await getMatchingSuggestions(selected.id));
         } catch (suggestionError) {
@@ -68,7 +71,7 @@ export default function DashboardView() {
   };
 
   const handleApproveDispatch = async () => {
-    if (!selectedEmergency || selectedEmergency.status !== 'PENDING') return;
+    if (!isAdmin || !selectedEmergency || selectedEmergency.status !== 'PENDING') return;
     try {
       setDispatching(true);
       setError('');
@@ -90,7 +93,7 @@ export default function DashboardView() {
     setSuggestions(null);
     setSuggestionError('');
     setError('');
-    if (item.status === 'RESOLVED') return;
+    if (!isAdmin || item.status === 'RESOLVED') return;
     try {
       setSuggestions(await getMatchingSuggestions(item.id));
     } catch (suggestionError) {
@@ -248,12 +251,12 @@ export default function DashboardView() {
           <div className="panel-custom-header">
             <div className="panel-header-title">
               <Icon icon="mdi:auto-fix" width="18" height="18" className="header-icon-accent" />
-              <span>AVAILABLE MATCHES{activeTarget ? ` (#${activeTarget.id})` : ''}</span>
+              <span>{isAdmin ? `AVAILABLE MATCHES${activeTarget ? ` (#${activeTarget.id})` : ''}` : 'DISPATCH ACCESS'}</span>
             </div>
           </div>
 
           <div className="matching-panel-content">
-            {activeTarget ? (<>
+            {isAdmin ? activeTarget ? (<>
               <div className="incident-target-banner">
               <div className="target-tag-row">
                 <span className={`target-priority-badge ${activeTarget.priority.toLowerCase()}`}>
@@ -292,7 +295,9 @@ export default function DashboardView() {
             >
               {dispatching ? 'Assigning...' : activeTarget?.status === 'PENDING' ? 'Match and assign available units' : 'Only pending reports can be matched'}
             </button>
-            </>) : <p>Select a report to view matches.</p>}
+            </>) : <p>Select a report to view matches.</p> : (
+              <p>Administrator sign-in is required to match and assign units. <Link to="/login">Sign in</Link>.</p>
+            )}
           </div>
         </div>
       </div>

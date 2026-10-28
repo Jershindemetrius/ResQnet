@@ -228,9 +228,12 @@ public final class SQLiteStorageManager {
 
     private void migrateLegacyCsv(Path legacyDataDirectory) throws IOException {
         try (Connection connection = connect()) {
-            if (migrationApplied(connection, MIGRATION_KEY)) return;
             connection.setAutoCommit(false);
             try {
+                if (!markMigration(connection, MIGRATION_KEY)) {
+                    connection.rollback();
+                    return;
+                }
                 FileStorageManager csv = new FileStorageManager(legacyDataDirectory, false);
                 Path emergenciesFile = legacyDataDirectory.resolve("emergencies.csv");
                 Path resourcesFile = legacyDataDirectory.resolve("resources.csv");
@@ -238,7 +241,6 @@ public final class SQLiteStorageManager {
                 if (Files.exists(emergenciesFile)) insertEmergencies(connection, csv.loadEmergencies());
                 if (Files.exists(resourcesFile)) insertResources(connection, csv.loadResources());
                 if (Files.exists(volunteersFile)) insertVolunteers(connection, csv.loadVolunteers());
-                markMigration(connection, MIGRATION_KEY);
                 connection.commit();
             } catch (IOException | SQLException | RuntimeException exception) {
                 rollback(connection, exception);
@@ -316,21 +318,11 @@ public final class SQLiteStorageManager {
         statement.setString(7, volunteer.getAssignedEmergencyId());
     }
 
-    private static boolean migrationApplied(Connection connection, String key) throws SQLException {
+    private static boolean markMigration(Connection connection, String key) throws SQLException {
         try (PreparedStatement statement = connection.prepareStatement(
-                "SELECT 1 FROM schema_migrations WHERE migration_key = ?")) {
+                "INSERT OR IGNORE INTO schema_migrations (migration_key) VALUES (?)")) {
             statement.setString(1, key);
-            try (ResultSet result = statement.executeQuery()) {
-                return result.next();
-            }
-        }
-    }
-
-    private static void markMigration(Connection connection, String key) throws SQLException {
-        try (PreparedStatement statement = connection.prepareStatement(
-                "INSERT INTO schema_migrations (migration_key) VALUES (?)")) {
-            statement.setString(1, key);
-            statement.executeUpdate();
+            return statement.executeUpdate() == 1;
         }
     }
 

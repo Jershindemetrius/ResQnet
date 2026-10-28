@@ -16,7 +16,7 @@ import AdminDashboardView from '../pages/AdminDashboardView.jsx';
 import AmbulanceBookingView from '../pages/AmbulanceBookingView.jsx';
 import { useAuth } from '../context/AuthContext';
 
-const AdminOnlyRoute: React.FC = () => {
+const AdminOnlyRoute: React.FC<{ children?: React.ReactNode }> = ({ children }) => {
   const { user, isAdmin, loading, authError, refreshSession } = useAuth();
   const location = useLocation();
   const [checkingAccess, setCheckingAccess] = useState(true);
@@ -55,7 +55,7 @@ const AdminOnlyRoute: React.FC = () => {
       </main>
     );
   }
-  return <AdminDashboardView />;
+  return <>{children ?? <AdminDashboardView />}</>;
 };
 
 export const AppRoutes: React.FC = () => {
@@ -67,7 +67,7 @@ export const AppRoutes: React.FC = () => {
         <Route path="/report" element={<ReportEmergencyView />} />
         <Route path="/book-ambulance" element={<AmbulanceBookingView />} />
         <Route path="/admin/*" element={<AdminOnlyRoute />} />
-        <Route path="/emergencies" element={<DispatchCenterView />} />
+        <Route path="/emergencies" element={<AdminOnlyRoute><DispatchCenterView /></AdminOnlyRoute>} />
         <Route path="/resources" element={<ResourceInventoryView />} />
         <Route path="/volunteers" element={<VolunteerDirectoryView />} />
       </Route>
