@@ -118,13 +118,13 @@ frontend/
 │   ├── api/
 │   │   └── resqnetApi.js          # API client functions
 │   ├── components/
-│   │   ├── Navbar.jsx              # Navigation bar with routing
+│   │   ├── DispatchMap.jsx         # OpenStreetMap with persisted GPS locations
 │   │   ├── PriorityBadge.jsx       # Priority level indicator
-│   │   ├── StatCard.jsx            # Dashboard statistics card
 │   │   └── StatusTimeline.jsx      # Emergency status progression
 │   ├── pages/
 │   │   ├── DashboardView.jsx       # Main dashboard
 │   │   ├── ReportEmergencyView.jsx # Emergency reporting form
+│   │   ├── auth/LoginPage.tsx      # Backend account sign-in and signup
 │   │   ├── DispatchCenterView.jsx  # Emergency management hub
 │   │   ├── ResourceInventoryView.jsx # Resource management
 │   │   └── VolunteerDirectoryView.jsx # Volunteer management
