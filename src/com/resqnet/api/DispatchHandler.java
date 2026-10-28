@@ -38,6 +38,7 @@ public class DispatchHandler implements HttpHandler {
 
     @Override
     public void handle(HttpExchange exchange) throws IOException {
+        if (!AuthGuard.requireAdmin(exchange, auth)) return;
         String path = exchange.getRequestURI().getPath();
         try {
             if (path.matches("/api/dispatch/[^/]+/suggestions")
