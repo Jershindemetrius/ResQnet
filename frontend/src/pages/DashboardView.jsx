@@ -188,6 +188,10 @@ export default function DashboardView() {
               <span className="pill-dot"></span>
               {dashboard?.mediumCount ?? 0} Medium
             </span>
+            <span className="stat-pill-item low">
+              <span className="pill-dot"></span>
+              {dashboard?.lowCount ?? 0} Low
+            </span>
           </div>
         </div>
 

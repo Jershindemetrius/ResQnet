@@ -4,7 +4,14 @@ import { createEmergency, getAmbulanceInventory } from '../api/resqnetApi.js';
 import usePolling from '../hooks/usePolling.js';
 import './AmbulanceBookingView.css';
 
-const initialForm = { reporterName: '', contact: '', location: '', affectedPeopleCount: '1', description: '' };
+const initialForm = {
+  reporterName: '',
+  contact: '',
+  location: '',
+  affectedPeopleCount: '1',
+  description: '',
+  priority: 'HIGH',
+};
 const PAGE_SIZE = 12;
 
 export default function AmbulanceBookingView() {
@@ -69,7 +76,7 @@ export default function AmbulanceBookingView() {
         location: `${form.location.trim()}${gpsSuffix}`,
         affectedPeopleCount: Number(form.affectedPeopleCount),
         description: form.description.trim() || 'Ambulance requested through the public booking page.',
-        priority: 'HIGH',
+        priority: form.priority,
         requiredResourceType: 'AMBULANCE',
       });
       setReport(created);
@@ -142,6 +149,15 @@ export default function AmbulanceBookingView() {
             <label>
               <span>People needing assistance</span>
               <input min="1" max="1000" name="affectedPeopleCount" onChange={updateField} required type="number" value={form.affectedPeopleCount} />
+            </label>
+            <label>
+              <span>Urgency</span>
+              <select name="priority" onChange={updateField} value={form.priority}>
+                <option value="CRITICAL">Critical</option>
+                <option value="HIGH">High</option>
+                <option value="MEDIUM">Medium</option>
+                <option value="LOW">Low</option>
+              </select>
             </label>
             <label>
               <span>Additional medical information <small>(optional)</small></span>
