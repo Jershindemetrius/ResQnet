@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Ambulance, CheckCircle2, Crosshair, MapPin, PhoneCall, RefreshCw } from 'lucide-react';
 import { createEmergency, getAmbulanceInventory } from '../api/resqnetApi.js';
+import usePolling from '../hooks/usePolling.js';
 import './AmbulanceBookingView.css';
 
 const initialForm = { reporterName: '', contact: '', location: '', affectedPeopleCount: '1', description: '' };
@@ -17,21 +18,24 @@ export default function AmbulanceBookingView() {
   const [inventoryError, setInventoryError] = useState('');
   const [report, setReport] = useState(null);
 
-  const refreshInventory = useCallback(async (offset = inventoryOffset) => {
-    setLoadingInventory(true);
-    setInventoryError('');
+  const refreshInventory = useCallback(async (offset = inventoryOffset, background = false) => {
+    if (!background) {
+      setLoadingInventory(true);
+      setInventoryError('');
+    }
     try {
       setInventory(await getAmbulanceInventory({ limit: PAGE_SIZE, offset }));
     } catch (requestError) {
       setInventoryError(requestError instanceof Error ? requestError.message : 'Unable to load ambulance inventory.');
     } finally {
-      setLoadingInventory(false);
+      if (!background) setLoadingInventory(false);
     }
   }, [inventoryOffset]);
 
   useEffect(() => {
     refreshInventory();
   }, [refreshInventory]);
+  usePolling(() => refreshInventory(inventoryOffset, true));
 
   const detectLocation = () => {
     if (!navigator.geolocation) {

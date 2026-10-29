@@ -1,4 +1,7 @@
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080/api').replace(/\/+$/, '');
+const configuredApiBaseUrl = import.meta.env.VITE_API_BASE_URL;
+const API_BASE_URL = configuredApiBaseUrl
+  ? `${configuredApiBaseUrl.replace(/\/+$/, '').replace(/\/api$/i, '')}/api`
+  : '/api';
 export const API_PAGE_SIZE = 100;
 const MAX_RESPONSE_BYTES = 4 * 1024 * 1024;
 
@@ -43,7 +46,8 @@ async function request(path, options) {
       credentials: 'include',
     });
   } catch {
-    throw new Error(`Cannot reach the ResQNet backend at ${API_BASE_URL}. Start the Java server and try again.`);
+    const target = import.meta.env.VITE_API_BASE_URL || 'the local Java backend through the Vite proxy';
+    throw new Error(`Cannot reach ${target}. Check that the Java backend is running on port 8080 and that the host firewall allows the connection.`);
   }
 
   let body;
@@ -78,14 +82,11 @@ function pagedPath(path, pagination) {
   return `${path}?${params.toString()}`;
 }
 
-function pageRows(data, pagination) {
+function listRows(data) {
   if (!Array.isArray(data)) {
     throw new Error('The ResQNet backend returned an invalid list response.');
   }
-  if (!pagination || data.length <= (pagination.limit ?? API_PAGE_SIZE)) return data;
-  const limit = pagination.limit ?? API_PAGE_SIZE;
-  const offset = pagination.offset ?? 0;
-  return data.slice(offset, offset + limit);
+  return data;
 }
 
 function displayEnum(value) {
@@ -179,12 +180,12 @@ export async function getAdminDashboard() {
 }
 
 export async function getAdminEmergencies(pagination) {
-  const data = pageRows(await request(pagedPath('/admin/incidents', pagination)), pagination);
+  const data = listRows(await request(pagedPath('/admin/incidents', pagination)));
   return data.map(normalizeEmergency);
 }
 
 export async function getEmergencies(pagination) {
-  const data = pageRows(await request(pagedPath('/emergencies', pagination)), pagination);
+  const data = listRows(await request(pagedPath('/emergencies', pagination)));
   return data.map(normalizeEmergency);
 }
 
@@ -205,7 +206,7 @@ export async function updateEmergencyStatus(id, status) {
 }
 
 export async function getResources(pagination) {
-  return pageRows(await request(pagedPath('/resources', pagination)), pagination);
+  return listRows(await request(pagedPath('/resources', pagination)));
 }
 
 export async function getAmbulanceInventory(pagination = { limit: 12, offset: 0 }) {
@@ -234,7 +235,7 @@ export async function updateResourceAvailability(id, available) {
 }
 
 export async function getVolunteers(pagination) {
-  const data = pageRows(await request(pagedPath('/volunteers', pagination)), pagination);
+  const data = listRows(await request(pagedPath('/volunteers', pagination)));
   return data.map(normalizeVolunteer);
 }
 

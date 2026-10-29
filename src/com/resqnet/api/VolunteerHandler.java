@@ -8,6 +8,8 @@ import com.resqnet.storage.SQLiteStorageManager;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Map;
 import java.util.UUID;
 
@@ -31,7 +33,9 @@ public class VolunteerHandler implements HttpHandler {
                 return;
             }
             if ("GET".equalsIgnoreCase(exchange.getRequestMethod())) {
-                JsonSerializer.send(exchange, 200, JsonSerializer.page(exchange, users.getVolunteers()));
+                ArrayList<Volunteer> allVolunteers = new ArrayList<Volunteer>(users.getVolunteers());
+                allVolunteers.sort(Comparator.comparing(Volunteer::getId));
+                JsonSerializer.send(exchange, 200, JsonSerializer.page(exchange, allVolunteers));
                 return;
             }
             if (!"POST".equalsIgnoreCase(exchange.getRequestMethod())) {

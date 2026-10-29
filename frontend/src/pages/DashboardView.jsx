@@ -8,7 +8,8 @@ import {
 import { Icon } from '@iconify/react';
 import DispatchMap from '../components/DispatchMap.jsx';
 import { Link } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/useAuth';
+import usePolling from '../hooks/usePolling.js';
 
 export default function DashboardView() {
   const { isAdmin } = useAuth();
@@ -34,9 +35,10 @@ export default function DashboardView() {
     loadDashboard();
   }, [isAdmin]);
 
-  const loadDashboard = async () => {
+  const loadDashboard = async ({ background = false } = {}) => {
+    if (background && (loading || dispatching)) return;
     try {
-      setLoading(true);
+      if (!background) setLoading(true);
       setError('');
       const [counts, emergencies] = await Promise.all([
         getDashboard(),
@@ -49,9 +51,11 @@ export default function DashboardView() {
       setDashboard(data);
       const selected = emergencies.find(item => item.id === selectedEmergency?.id) ?? emergencies[0] ?? null;
       setSelectedEmergency(selected);
-      setSuggestions(null);
-      setSuggestionError('');
-      if (isAdmin && selected && selected.status !== 'RESOLVED') {
+      if (!background) {
+        setSuggestions(null);
+        setSuggestionError('');
+      }
+      if (!background && isAdmin && selected && selected.status !== 'RESOLVED') {
         try {
           setSuggestions(await getMatchingSuggestions(selected.id));
         } catch (suggestionError) {
@@ -61,9 +65,11 @@ export default function DashboardView() {
     } catch (loadError) {
       setError(loadError.message);
     } finally {
-      setLoading(false);
+      if (!background) setLoading(false);
     }
   };
+
+  usePolling(() => loadDashboard({ background: true }));
 
   const showToast = (msg) => {
     setToastMessage(msg);

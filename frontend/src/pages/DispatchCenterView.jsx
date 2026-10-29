@@ -9,6 +9,7 @@ import {
 import PriorityBadge from '../components/PriorityBadge.jsx';
 import StatusTimeline from '../components/StatusTimeline.jsx';
 import { Icon } from '@iconify/react';
+import usePolling from '../hooks/usePolling.js';
 
 export default function DispatchCenterView() {
   const [emergencies, setEmergencies] = useState([]);
@@ -27,16 +28,20 @@ export default function DispatchCenterView() {
   useEffect(() => {
     loadEmergencies();
   }, []);
+  usePolling(() => loadEmergencies({ background: true }));
 
   const showToast = (msg) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3500);
   };
 
-  const loadEmergencies = async ({ append = false } = {}) => {
+  const loadEmergencies = async ({ append = false, background = false } = {}) => {
+    if (background && (loading || loadingMore || busy)) return;
     try {
-      if (append) setLoadingMore(true);
-      else setLoading(true);
+      if (!background) {
+        if (append) setLoadingMore(true);
+        else setLoading(true);
+      }
       setError('');
       const offset = append ? nextOffset : 0;
       const data = await getEmergencies({ limit: API_PAGE_SIZE, offset });
@@ -44,7 +49,7 @@ export default function DispatchCenterView() {
       setEmergencies(combined);
       setSelectedEmergency(previous => {
         const nextSelected = combined.find(item => item.id === previous?.id) ?? combined[0] ?? null;
-        if (nextSelected && (!previous || previous.id !== nextSelected.id)) {
+        if (!background && nextSelected && (!previous || previous.id !== nextSelected.id)) {
           getMatchingSuggestions(nextSelected.id).then(setSuggestions).catch(() => {});
         }
         return nextSelected;
@@ -54,8 +59,10 @@ export default function DispatchCenterView() {
     } catch (loadError) {
       setError(loadError.message);
     } finally {
-      setLoading(false);
-      setLoadingMore(false);
+      if (!background) {
+        setLoading(false);
+        setLoadingMore(false);
+      }
     }
   };
 

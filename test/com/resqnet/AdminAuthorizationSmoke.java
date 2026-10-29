@@ -36,7 +36,9 @@ public final class AdminAuthorizationSmoke {
         HttpServer server = null;
         try {
             AuthManager bootstrap = new AuthManager(database, directory.resolve("auth_users.csv"), Set.of());
-            bootstrap.register("Admin", ADMIN_EMAIL, ADMIN_PASSWORD.toCharArray());
+            if (bootstrap.register("Admin", ADMIN_EMAIL, ADMIN_PASSWORD.toCharArray()).isAdmin()) {
+                throw new AssertionError("An account must not become an administrator without an allowlist");
+            }
 
             AuthManager auth = new AuthManager(database, directory.resolve("auth_users.csv"), Set.of(ADMIN_EMAIL));
             auth.register("User", USER_EMAIL, USER_PASSWORD.toCharArray());

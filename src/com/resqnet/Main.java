@@ -21,6 +21,7 @@ import com.resqnet.storage.SQLiteStorageManager;
 import com.sun.net.httpserver.HttpServer;
 import java.io.IOException;
 import java.net.BindException;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.nio.file.Paths;
 import java.nio.file.Path;
@@ -77,8 +78,11 @@ public final class Main {
     }
 
     static HttpServer createServer(int port) throws IOException {
+        String configuredAddress = System.getenv("RESQNET_BIND_ADDRESS");
+        String bindAddress = configuredAddress == null || configuredAddress.trim().isEmpty()
+                ? "0.0.0.0" : configuredAddress.trim();
         try {
-            return HttpServer.create(new InetSocketAddress(port), 0);
+            return HttpServer.create(new InetSocketAddress(InetAddress.getByName(bindAddress), port), 0);
         } catch (BindException exception) {
             throw new IOException("Port " + port + " is already in use. Stop the existing ResQNet "
                     + "backend, or set RESQNET_PORT to an available port and update the frontend API URL.",

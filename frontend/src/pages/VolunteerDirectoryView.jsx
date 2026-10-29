@@ -7,6 +7,7 @@ import {
   updateVolunteerAvailability
 } from '../api/resqnetApi.js';
 import { Icon } from '@iconify/react';
+import usePolling from '../hooks/usePolling.js';
 
 export default function VolunteerDirectoryView() {
   const [volunteers, setVolunteers] = useState([]);
@@ -34,31 +35,44 @@ export default function VolunteerDirectoryView() {
   useEffect(() => {
     loadVolunteers();
   }, []);
+  usePolling(() => loadVolunteers({ background: true }));
 
   const showToast = (msg) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3500);
   };
 
-  const loadVolunteers = async ({ append = false } = {}) => {
+  const loadVolunteers = async ({ append = false, background = false } = {}) => {
+    if (background && (loading || loadingMore || saving || updatingId !== null)) return;
     try {
-      if (append) setLoadingMore(true);
-      else setLoading(true);
+      if (!background) {
+        if (append) setLoadingMore(true);
+        else setLoading(true);
+      }
       setError('');
-      const offset = append ? nextOffset : 0;
-      const [data, counts] = await Promise.all([
-        getVolunteers({ limit: API_PAGE_SIZE, offset }),
+      const offsets = background && nextOffset > 0
+        ? Array.from({ length: Math.ceil(nextOffset / API_PAGE_SIZE) },
+          (_, index) => index * API_PAGE_SIZE)
+        : [append ? nextOffset : 0];
+      const [pages, counts] = await Promise.all([
+        Promise.all(offsets.map(offset => getVolunteers({ limit: API_PAGE_SIZE, offset }))),
         getDashboard()
       ]);
+      const data = pages.flat();
       setVolunteers(previous => append ? [...previous, ...data] : data);
       setSummary(counts);
-      setNextOffset(offset + data.length);
-      setHasMore(data.length === API_PAGE_SIZE);
+      if (!background) {
+        const offset = append ? nextOffset : 0;
+        setNextOffset(offset + data.length);
+        setHasMore(data.length === API_PAGE_SIZE);
+      }
     } catch (loadError) {
       setError(loadError.message);
     } finally {
-      setLoading(false);
-      setLoadingMore(false);
+      if (!background) {
+        setLoading(false);
+        setLoadingMore(false);
+      }
     }
   };
 

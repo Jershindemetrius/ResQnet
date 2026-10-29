@@ -121,8 +121,6 @@ public class AuthManager {
         String configured = System.getenv("RESQNET_ADMIN_EMAILS");
         Set<String> result = new LinkedHashSet<String>();
         if (configured == null || configured.trim().isEmpty()) {
-            result.add(validateEmail("admin@resqnet.org"));
-            result.add(validateEmail("jeslin@gmail.com"));
             return result;
         }
         for (String email : configured.split(",")) {

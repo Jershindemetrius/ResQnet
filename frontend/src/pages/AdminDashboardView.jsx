@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { getAdminDashboard, getAdminEmergencies } from '../api/resqnetApi.js';
+import usePolling from '../hooks/usePolling.js';
 import './AdminDashboardView.css';
 
 const formatStatus = (value) => value?.toLowerCase().replaceAll('_', ' ') ?? 'Unknown';
@@ -45,8 +46,9 @@ export default function AdminDashboardView() {
   const [error, setError] = useState('');
   const [lastUpdated, setLastUpdated] = useState(null);
 
-  const refresh = useCallback(async () => {
-    setLoading(true);
+  const refresh = useCallback(async ({ background = false } = {}) => {
+    if (background && loading) return;
+    if (!background) setLoading(true);
     setError('');
     try {
       const [dashboard, recent] = await Promise.all([
@@ -59,13 +61,14 @@ export default function AdminDashboardView() {
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : 'Unable to load operations data.');
     } finally {
-      setLoading(false);
+      if (!background) setLoading(false);
     }
   }, []);
 
   useEffect(() => {
     refresh();
   }, [refresh]);
+  usePolling(() => refresh({ background: true }));
 
   const stats = overview ? [
     { label: 'Active incidents', value: overview.activeEmergencies ?? 0, icon: ShieldAlert, tone: 'red' },

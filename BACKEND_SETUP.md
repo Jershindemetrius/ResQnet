@@ -17,6 +17,9 @@ project, the historical emergency records were recovered directly into
 Keep a backup of `data/resqnet.db` while the backend is stopped. To use another
 database file, set `RESQNET_DB_PATH` to its path before starting the backend.
 The default server port remains 8080 and can be changed with `RESQNET_PORT`.
+By default, the backend binds to `0.0.0.0` so a private-LAN frontend can reach
+it. Set `RESQNET_BIND_ADDRESS=127.0.0.1` to restrict the backend to this
+computer, or set it to a specific local interface address.
 
 ## Administrator access
 
@@ -45,13 +48,144 @@ role-checked by the backend; the frontend route guard is an additional usability
 layer, not the security boundary. Public incident/resource feeds and citizen
 reporting remain public.
 
-Credentialed browser requests are limited to `http://localhost:5173` by
-default. Set `RESQNET_ALLOWED_ORIGINS` to a comma-separated list of exact
-frontend origins for other environments (no wildcards). Production deployments
-must use HTTPS; when TLS terminates at a reverse proxy, set
+In Vite development mode, the browser sends API calls to the same-origin
+`/api` path. Vite proxies these requests to the Java backend on the host and
+removes the browser Origin header, so LAN browser addresses do not need to be
+added to the backend CORS allowlist. Direct browser-to-backend requests remain
+restricted to `http://localhost:5173` by default; set
+`RESQNET_ALLOWED_ORIGINS` to a comma-separated list of exact frontend origins
+if direct requests are needed. Never use wildcard origins with credentials.
+Production deployments must use HTTPS; when TLS terminates at a reverse proxy, set
 `RESQNET_SECURE_COOKIES=true` so the session cookie is marked `Secure`.
-Keep the frontend and API on the same site so the `SameSite=Strict` session
-cookie is sent with browser API requests.
+
+## Private Wi-Fi/LAN demonstration
+
+The application uses one Java backend and one SQLite database on the host. A
+client computer must open the host's Vite URL; do not start a second backend or
+use a client computer's local database. By default, the frontend calls `/api`
+on its current origin and Vite proxies those calls to `http://127.0.0.1:8080`.
+This avoids hard-coded IP addresses and browser CORS errors. `VITE_API_BASE_URL`
+is an optional override for direct API access; leave it unset for the LAN demo.
+
+The host Wi-Fi IPv4 address detected in this environment is
+`10.84.181.130`. Vite also advertises `192.168.56.1` and `169.254.83.107` for other local
+interfaces. The same-origin proxy works on all three addresses, although only
+the Wi-Fi address is normally reachable from another computer. If you choose
+direct browser-to-backend requests instead, configure the exact CORS origins:
+
+```powershell
+$env:RESQNET_ALLOWED_ORIGINS = "http://localhost:5173,http://10.84.181.130:5173,http://192.168.56.1:5173,http://169.254.83.107:5173"
+```
+
+The `169.254.*` address is link-local and the `192.168.56.*` address may be a
+virtual-machine adapter; they generally are not suitable for a separate
+computer over Wi-Fi. Prefer the host's Wi-Fi address (`10.84.181.130` here).
+Addresses can change when interfaces or networks change. Confirm the current
+Wi-Fi address on the host with:
+
+```powershell
+Get-NetIPAddress -AddressFamily IPv4 |
+  Where-Object { $_.InterfaceAlias -match 'Wi-Fi' -and $_.AddressState -eq 'Preferred' } |
+  Select-Object -ExpandProperty IPAddress
+```
+
+The Wi-Fi profile detected for this host is currently **Public**. Do not open
+inbound development-server ports on a public/untrusted network. Only if this is
+a trusted private Wi-Fi network, change its profile in an elevated PowerShell
+window before adding the private-profile firewall rules:
+
+```powershell
+Set-NetConnectionProfile -InterfaceAlias "Wi-Fi" -NetworkCategory Private
+```
+
+If the Wi-Fi is not trusted, do not change its profile or add inbound rules;
+use a trusted private network instead.
+
+In the host's first PowerShell terminal, from the repository root, start the
+only backend process. Leave `RESQNET_ALLOWED_ORIGINS` unset when using the Vite
+proxy:
+
+```powershell
+$env:RESQNET_BIND_ADDRESS = "127.0.0.1"
+mvn exec:java
+```
+
+Replace the example address with the current host Wi-Fi address. In a second
+host terminal:
+
+```powershell
+Set-Location "C:\Karunya\Sem 3\OOPS\ResQNet-Project\frontend"
+npm run dev -- --host 0.0.0.0
+```
+
+The Vite configuration binds to all interfaces on port 5173 and refuses to
+silently select a different port. Open locally on the host:
+
+- `http://localhost:5173/book-ambulance`
+- `http://localhost:5173/emergencies`
+
+On each client computer connected to the same reachable private Wi-Fi, open:
+
+- `http://10.84.181.130:5173/book-ambulance`
+- `http://10.84.181.130:5173/emergencies`
+
+Use the current Wi-Fi address in place of `10.84.181.130` when it changes.
+Client computers run only a browser; they do not run Vite, Java, or SQLite.
+Direct nested URLs are handled by the Vite SPA fallback.
+
+### Windows Firewall
+
+The Vite proxy connects to Java on the host loopback interface, so only port
+5173 needs to be reachable from client computers. If Windows Firewall blocks
+the frontend, run this command in an elevated PowerShell window on a trusted
+Private network. It allows only TCP connections from the local subnet:
+
+```powershell
+New-NetFirewallRule -DisplayName "ResQNet Vite (Private LAN)" -Direction Inbound -Action Allow -Protocol TCP -LocalPort 5173 -RemoteAddress LocalSubnet -Profile Private
+```
+
+Do not create public-profile or internet-wide firewall rules. A router's
+wireless client isolation, guest Wi-Fi, VPN policy, or endpoint firewall can
+still prevent clients from reaching the host. Do not expose these development
+servers to the public internet.
+
+### Shared data and synchronization
+
+SQLite at `data/resqnet.db` is the shared source of truth. Keep the backend
+running on the host and back up that file while the backend is stopped. The
+dashboard and operational lists refresh from the backend about every 2.5
+seconds; synchronization is polling-based, not instantaneous or guaranteed
+while a client is offline. Browser form input is not part of the shared state.
+Authentication sessions are held in backend memory and must be re-established
+after a backend restart. With no `RESQNET_ADMIN_EMAILS` configured, no account
+has administrator access.
+
+### Implemented API routes
+
+All paths below are under `/api`. Emergency creation and public listing,
+resource/volunteer listing, ambulance inventory, and dashboard summary are
+available without an administrator session. Resource and volunteer creation
+and availability updates, dispatch, and admin routes require a server-validated
+administrator session.
+
+| Method | Route | Purpose |
+|---|---|---|
+| POST | `/auth/signup`, `/auth/login`, `/auth/logout` | Account registration, login, and logout |
+| GET | `/auth/session` | Check the current server session |
+| GET, POST | `/emergencies` | List emergencies or submit a report |
+| GET | `/ambulances` | Read paginated ambulance inventory and totals |
+| GET, POST | `/resources` | List or register resources |
+| PUT | `/resources/{id}/availability` | Change resource availability |
+| GET, POST | `/volunteers` | List or register volunteers; admin POST with an ID updates status |
+| GET | `/dispatch/{id}/suggestions` | Suggest compatible resources and volunteers |
+| POST | `/dispatch/match` | Assign available resources/volunteers to a pending emergency |
+| PUT | `/dispatch/status` | Advance an emergency through its supported lifecycle |
+| GET | `/dashboard` | Read shared operational statistics |
+| GET | `/admin/dashboard`, `/admin/incidents` | Read administrator dashboard and incident data |
+
+Status progression is `PENDING` → `RESOURCE_ASSIGNED` → `RESPONDING` →
+`ON_SITE` → `RESOLVED`. The current model does not implement cancellation,
+driver telemetry, hospital management, or separate dispatch-record queries.
 
 ## Build and run
 
